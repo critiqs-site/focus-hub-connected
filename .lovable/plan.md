@@ -1,63 +1,41 @@
 
-
-# Fix SPA Routing + Improve Download Page
+# Fix Physique Rater - Use Correct API Key and Gateway
 
 ## Problem
 
-The 404 errors on `/auth` and `/download` happen because there is no server-side rewrite configuration. When someone directly visits these URLs (not via client-side navigation), the server looks for a real file and returns 404.
+The physique-rater edge function is using `POLLINATIONS_API_KEY` with the Pollinations API endpoint. This is causing server errors. The user wants it to use the same setup as the therapist AI chat: the `LOVABLE_API_KEY` with the Lovable AI gateway.
 
 ## Solution
 
-### 1. Add `vercel.json` for Vercel deployments
+Update `supabase/functions/physique-rater/index.ts` to:
 
-Create `vercel.json` in the project root with SPA rewrites. This ensures all routes serve `index.html`.
-
-### 2. Add `_redirects` for Netlify (just in case)
-
-Create `public/_redirects` with `/* /index.html 200` as a safety net.
-
-### 3. Improve Download page for PC users
-
-Update `src/pages/Download.tsx`:
-- When `beforeinstallprompt` is not supported (PC Safari, Firefox), show **specific browser instructions**:
-  - Chrome/Edge: "Look for the install icon in the address bar"
-  - Safari: "Use File > Add to Dock (macOS)"
-  - Firefox: "Firefox does not support PWA install. Use Chrome or Edge."
-- Add browser detection to show the right instructions
-
-## Deployment Clarification
-
-Lovable hosts your app at `thought-haven-link.lovable.app`. If you also deploy to Vercel or GitHub Pages, the `vercel.json` / `_redirects` files will handle routing there. Lovable's own hosting already handles SPA routing -- so if you're only using Lovable, the 404 should not happen on the Lovable URLs.
-
-If you're seeing 404 on the Lovable preview URL, it may be a caching issue -- try a hard refresh (Ctrl+Shift+R).
-
----
+1. **Use `LOVABLE_API_KEY`** instead of `POLLINATIONS_API_KEY`
+2. **Use the Lovable AI gateway** (`https://ai.gateway.lovable.dev/v1/chat/completions`) instead of Pollinations
+3. **Use model `openai-large`** as primary, with a **fallback to `openai-fast`** if the first call fails
+4. Keep everything else the same (image URL upload flow, error handling, response parsing)
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `vercel.json` | Create -- SPA rewrite rules |
-| `public/_redirects` | Create -- Netlify fallback |
-| `src/pages/Download.tsx` | Update -- add browser-specific install instructions for PC |
-
----
+| `supabase/functions/physique-rater/index.ts` | Update API key, endpoint, model, add fallback |
 
 ## Technical Details
 
-**vercel.json:**
-```json
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
+Key changes in the edge function:
 
-**_redirects:**
-```
-/* /index.html 200
-```
+- Replace `Deno.env.get("POLLINATIONS_API_KEY")` with `Deno.env.get("LOVABLE_API_KEY")`
+- Replace `https://gen.pollinations.ai/v1/chat/completions` with `https://ai.gateway.lovable.dev/v1/chat/completions`
+- Set model to `openai-large` for the primary attempt
+- If the primary call fails (non-200 response or parse error), retry with model `openai-fast` as fallback
+- The vision message format stays the same (OpenAI-compatible `image_url` content block)
 
-**Browser detection** in Download.tsx will use `navigator.userAgent` to detect Chrome, Edge, Safari, or Firefox and show tailored instructions when the `beforeinstallprompt` event is not available.
-
+```
+Primary call: openai-large model
+  |
+  |-- Success --> parse & return
+  |-- Fail --> Retry with openai-fast
+                  |
+                  |-- Success --> parse & return
+                  |-- Fail --> return server error
+```
