@@ -1,90 +1,122 @@
 
 
-# Changes Plan
+# Full UI/UX Overhaul Plan
 
-## 1. Rename Section Tabs
-
-In `Header.tsx`, rename:
-- "Habits" to "Todos"
-- "AI" to "Therapist"
-
-Also update the tab id from `"ai"` to `"therapist"` and update the matching logic in `Index.tsx`.
+This plan covers all your requested changes across the Auth page, main app layout, edge function, profile menu, and toast notifications.
 
 ---
 
-## 2. Therapist Section Improvements
+## 1. Edge Function: Switch from Gemini to OpenAI-fast
 
-### 2a. Loading States: "Sending Requests..." then "Analyzing..."
+**File:** `supabase/functions/ai-chat/index.ts`
 
-Add a `loadingPhase` state to `AIChat.tsx`:
-- When user sends a message, show **"Sending Requests..."** for 1.5 seconds
-- After 1.5s (or when first chunk arrives), switch to **"Analyzing..."**
-- Replace the current spinning loader with these text labels
-
-### 2b. Smooth Streaming (ChatGPT-style)
-
-Instead of rendering tokens instantly as they arrive, buffer incoming tokens and display them character-by-character with a small delay (~20-30ms per character) using `setInterval`. This creates a smooth typing effect even when the backend streams fast.
-
-### 2c. Fix AI System Prompt / Initial Message
-
-- Change the initial greeting from "I'm your personal therapy guide" to something like: "Hey there! I'm your personal therapist. I'm here to listen and help. What's on your mind today?"
-- The header text changes from "Therapy Guide" to "Therapist"
-- The subtitle changes to "Your personal AI therapist"
-- The system prompt sent to the edge function must instruct the AI to **never reveal or list the user's todos/notes/habits directly**. The context is for the AI to understand the user better, not to recite back.
-
-This requires updating the edge function. Since `supabase/functions` is empty, we need to create the `ai-chat` edge function with proper system instructions.
-
-### 2d. Create the `ai-chat` Edge Function
-
-Create `supabase/functions/ai-chat/index.ts` with:
-- CORS headers
-- System prompt: "You are a compassionate therapist. You have access to the user's habits and mood journal entries as background context to understand them better. NEVER list, mention, or reveal their specific todos, habits, or notes unless the user explicitly asks about them. Use this context silently to provide more personalized, empathetic advice."
-- Streaming response via OpenAI API
-- This requires an `OPENAI_API_KEY` secret
+Change `model: "google/gemini-2.5-flash"` to `model: "openai-fast"` (or `"claude-fast"` as fallback).
 
 ---
 
-## 3. Notes Section: Yearly Calendar with Mood Colors
+## 2. Auth Page (`src/pages/Auth.tsx`) -- Major Overhaul
 
-### 3a. New `YearlyCalendar` Component
+### Welcome Screen Changes:
+- Remove the "Let's Go!" speech bubble/border entirely (lines 88-90)
+- Remove ALL floating dots/blobs (lines 71-78, and the dot indicators lines 106-109)
+- Remove `animate-wave` from the wave emoji -- keep it as a static 👋
+- Remove `animate-bounce-gentle` from mascot
+- Remove floating background blobs from auth step too (lines 117-121)
 
-Add a yearly calendar grid (Jan-Dec, all days) at the top of `NotesSection.tsx`:
-- Each day is a small colored cell
-- Days with mood entries are colored by mood:
-  - `super_happy` / `happy` -> green/emerald
-  - `neutral` -> yellow/amber
-  - `sad` -> orange/red
-  - `depressed` -> red/rose
-- Days without entries -> default dark/muted
-- Clicking a day sets the `selectedDate` in NotesSection, showing that day's entry below
+### Auth Form Changes:
+- Default to **Register** (`isLogin` starts as `false` instead of `true`)
+- Login heading: "Welcome Back!" (no sparkle emoji) / subtitle: "Great to see you again"
+- Register heading: "Register!" / subtitle: "One step away from being the beast!"
+- Email placeholder: `name@domain.com` instead of `you@example.com`
+- Add **"Continue with Google"** and **"Continue with GitHub"** buttons above the email form with OAuth via `supabase.auth.signInWithOAuth` using `skipBrowserRedirect: true` for custom domain support
+- Add **"Guest Mode"** button -- navigates directly to Index, stores a `guestMode: true` flag in localStorage
 
-### 3b. Integration
-
-Place the yearly calendar above the existing date navigation in `NotesSection.tsx`. When a date is clicked in the calendar, it updates `selectedDate` which already controls what entry is shown.
+### OAuth Redirect Fix:
+- Use `skipBrowserRedirect: true` + manual redirect with URL validation (as described in the stack overflow solution) to prevent redirecting to `localhost:3000`
+- The user also needs to set their **Site URL** to `https://www.critiqs.site` and add it as a **Redirect URL** in Supabase Dashboard > Authentication > URL Configuration
 
 ---
 
-## Files to Create/Modify
+## 3. Guest Mode Support
+
+**Files:** `src/pages/Auth.tsx`, `src/pages/Index.tsx`, `src/hooks/useTodos.ts`, `src/hooks/useNotes.ts`
+
+- Auth page gets a "Continue as Guest" button that sets `localStorage.setItem("guestMode", "true")` and navigates to `/`
+- `Index.tsx` updated: if no user but `guestMode` is set, allow access (don't redirect to `/auth`)
+- `useTodos` and `useNotes` hooks: if no userId, fall back to localStorage for storing/retrieving data
+- Guest mode shows a banner or indicator that data is local-only
+
+---
+
+## 4. Toast Notifications -- Show in Form, Not Bottom-Right
+
+**File:** `src/pages/Auth.tsx`
+
+- Replace `toast.error()` / `toast.success()` with inline state-based messages
+- Add a `formMessage` state: `{ type: "success" | "error", text: string } | null`
+- Display it as a colored banner inside the form card (green for success, red for error)
+- Remove sonner toast calls from the auth flow
+
+---
+
+## 5. Profile Menu -- Remove Change Password
+
+**File:** `src/components/UserProfileMenu.tsx`
+
+- Remove the "Change Password" menu item (lines 76-82)
+- Remove the entire password dialog (lines 93-139)
+- Remove unused state variables and imports (`KeyRound`, `Dialog`, etc.)
+
+---
+
+## 6. Navbar Restructure
+
+### New Top Navbar (`src/components/Navbar.tsx` -- new file)
+- Full-width bar at the very top
+- Left: "CRITIQS" logo text
+- Right: External links -- DOCS (docs.critiqs.site), GITHUB (https://github.com/critiqs-site), DONATE (donate.critiqs.site)
+
+### Updated Header (`src/components/Header.tsx`)
+- Remove the "CRITIQS" title (it moves to navbar)
+- Keep only the section tabs (Todos, Analytics, Notes, Therapist)
+- Profile icon moves here (passed as prop or rendered alongside)
+
+### Updated Index (`src/pages/Index.tsx`)
+- Render `<Navbar />` at the top (outside the max-w-4xl container, full width)
+- Below that, the existing content with Header (tabs + profile) and sections
+
+---
+
+## 7. Clean Up Animations in `src/index.css`
+
+Remove or keep but stop using:
+- `animate-float`, `animate-float-delayed` -- no longer used after auth cleanup
+- `animate-bounce-gentle` -- no longer used
+- Keep `animate-fade-in`, `animate-slide-up`, `animate-scale-in` as they're used in the main app
+
+---
+
+## Files Summary
 
 | File | Action |
 |------|--------|
-| `src/components/Header.tsx` | Rename tabs |
-| `src/pages/Index.tsx` | Update `"ai"` tab id to `"therapist"` |
-| `src/components/AIChat.tsx` | Loading phases, smooth streaming, updated greeting/labels |
-| `supabase/functions/ai-chat/index.ts` | Create edge function with therapist system prompt |
-| `supabase/config.toml` | Add ai-chat function config |
-| `src/components/YearlyCalendar.tsx` | New yearly mood calendar component |
-| `src/components/NotesSection.tsx` | Integrate YearlyCalendar |
+| `supabase/functions/ai-chat/index.ts` | Change model to `openai-fast` |
+| `src/pages/Auth.tsx` | Major rewrite: remove animations, add OAuth, Guest Mode, inline toasts, default to Register |
+| `src/pages/Index.tsx` | Add Navbar, support guest mode |
+| `src/components/Navbar.tsx` | New -- top navbar with CRITIQS + external links |
+| `src/components/Header.tsx` | Remove CRITIQS title, keep tabs only, add profile icon |
+| `src/components/UserProfileMenu.tsx` | Remove change password option and dialog |
+| `src/hooks/useTodos.ts` | Add localStorage fallback for guest mode |
+| `src/hooks/useNotes.ts` | Add localStorage fallback for guest mode |
+| `src/index.css` | Clean up unused animation classes |
 
 ---
 
-## Technical Details
+## User Action Required
 
-**Smooth streaming implementation:** Buffer all incoming SSE tokens into a queue. A `setInterval` (25ms) pops characters from the queue and appends to the displayed message, creating a smooth typing effect regardless of backend speed.
-
-**Loading phases:** Use a `loadingPhase` state (`"sending"` | `"analyzing"` | null`). Set to `"sending"` on submit, use `setTimeout(1500)` to switch to `"analyzing"`, clear when first token arrives or response completes.
-
-**Yearly calendar:** A simple CSS grid (7 columns for days of week, 12 month sections). Each cell is ~12x12px. Mood colors use Tailwind classes. The component receives the `notes` array and `selectedDate`/`onSelectDate` props.
-
-**Edge function secret needed:** `OPENAI_API_KEY` - will prompt user to add it before proceeding.
+Before OAuth (Google/GitHub) login works:
+1. Go to **Supabase Dashboard > Authentication > URL Configuration**
+2. Set **Site URL** to: `https://www.critiqs.site` (or your preview URL for testing)
+3. Add **Redirect URLs**: `https://www.critiqs.site/**` and your Lovable preview URL
+4. Ensure Google and GitHub providers are enabled under **Authentication > Providers**
 
