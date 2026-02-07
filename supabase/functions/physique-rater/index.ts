@@ -19,10 +19,10 @@ Step 3: If the image is a valid, appropriate body/physique photo, rate it and re
 
 ONLY output raw JSON. No extra text.`;
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const POLLINATIONS_URL = "https://gen.pollinations.ai/v1/chat/completions";
 
 async function callAI(apiKey: string, model: string, imageUrl: string) {
-  const response = await fetch(AI_GATEWAY, {
+  const response = await fetch(POLLINATIONS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -44,7 +44,7 @@ async function callAI(apiKey: string, model: string, imageUrl: string) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`AI Gateway error (${model}):`, response.status, errorText);
+    console.error(`Pollinations error (${model}):`, response.status, errorText);
     return null;
   }
 
@@ -74,9 +74,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
     if (!apiKey) {
-      console.error("LOVABLE_API_KEY not set");
+      console.error("POLLINATIONS_API_KEY not set");
       return new Response(
         JSON.stringify({ status: "error", message: "Server configuration error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     try {
       parsed = await callAI(apiKey, "openai-large", imageUrl);
     } catch (e) {
-      console.error("Primary model parse error:", e);
+      console.error("Primary model error:", e);
     }
 
     // Fallback: openai-fast
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
       try {
         parsed = await callAI(apiKey, "openai-fast", imageUrl);
       } catch (e) {
-        console.error("Fallback model parse error:", e);
+        console.error("Fallback model error:", e);
       }
     }
 

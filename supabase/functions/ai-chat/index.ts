@@ -26,9 +26,9 @@ Deno.serve(async (req) => {
   try {
     const { messages, context } = await req.json();
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
     if (!apiKey) {
-      console.error("LOVABLE_API_KEY not set");
+      console.error("POLLINATIONS_API_KEY not set");
       return new Response(JSON.stringify({ error: "API key not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -59,23 +59,22 @@ Deno.serve(async (req) => {
 
     console.log("Sending chat request with", messages.length, "messages");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5-mini",
+        model: "openai-large",
         messages: [systemMessage, ...messages],
         stream: true,
-        max_completion_tokens: 1024,
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI Gateway error:", response.status, errText);
+      console.error("Pollinations API error:", response.status, errText);
       return new Response(JSON.stringify({ error: "AI service error" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
