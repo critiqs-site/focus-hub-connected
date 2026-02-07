@@ -2,3 +2,6 @@ project_id = "toxnaophisiylhqoprsv"
 
 [functions.ai-chat]
 verify_jwt = false
+
+[functions.physique-rater]
+verify_jwt = false
