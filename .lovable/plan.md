@@ -1,41 +1,44 @@
 
-# Fix Physique Rater - Use Correct API Key and Gateway
+
+# Fix Physique Rater - Use Base64 Image Instead of URL
 
 ## Problem
 
-The physique-rater edge function is using `POLLINATIONS_API_KEY` with the Pollinations API endpoint. This is causing server errors. The user wants it to use the same setup as the therapist AI chat: the `LOVABLE_API_KEY` with the Lovable AI gateway.
+The Pollinations API cannot access the image URLs from Supabase storage. The error is:
+`"The provided image url can not be accessed. status code: 429"`
+
+The AI model needs to receive the image data directly rather than fetching it from a URL.
 
 ## Solution
 
-Update `supabase/functions/physique-rater/index.ts` to:
+Send the image as a **base64 data URL** directly to the edge function, bypassing Supabase storage entirely. The OpenAI vision format supports `data:image/jpeg;base64,...` URLs natively.
 
-1. **Use `LOVABLE_API_KEY`** instead of `POLLINATIONS_API_KEY`
-2. **Use the Lovable AI gateway** (`https://ai.gateway.lovable.dev/v1/chat/completions`) instead of Pollinations
-3. **Use model `openai-large`** as primary, with a **fallback to `openai-fast`** if the first call fails
-4. Keep everything else the same (image URL upload flow, error handling, response parsing)
+## Changes
 
-## Files
+### 1. `src/components/PhysiqueRater.tsx`
+- Remove the Supabase storage upload step entirely
+- Read the file as a base64 data URL using `FileReader`
+- Send the base64 string directly to the edge function in the request body
+- Remove the `uploadToSupabase` function
+- Simplify the flow: select file -> read as base64 -> send to edge function
 
-| File | Action |
-|------|--------|
-| `supabase/functions/physique-rater/index.ts` | Update API key, endpoint, model, add fallback |
+### 2. `supabase/functions/physique-rater/index.ts`
+- Accept `imageBase64` (a data URL string like `data:image/jpeg;base64,...`) instead of `imageUrl`
+- Pass it directly to the Pollinations API as the `image_url` value (OpenAI vision format supports data URLs)
+- No other changes needed to the AI call logic or response parsing
+
+## Flow
+
+```text
+Before (broken):
+  File -> Upload to Supabase Storage -> Get public URL -> Send URL to Pollinations -> Pollinations fails to fetch URL
+
+After (fix):
+  File -> Read as base64 data URL -> Send base64 to edge function -> Pass to Pollinations directly -> Works
+```
 
 ## Technical Details
 
-Key changes in the edge function:
-
-- Replace `Deno.env.get("POLLINATIONS_API_KEY")` with `Deno.env.get("LOVABLE_API_KEY")`
-- Replace `https://gen.pollinations.ai/v1/chat/completions` with `https://ai.gateway.lovable.dev/v1/chat/completions`
-- Set model to `openai-large` for the primary attempt
-- If the primary call fails (non-200 response or parse error), retry with model `openai-fast` as fallback
-- The vision message format stays the same (OpenAI-compatible `image_url` content block)
-
-```
-Primary call: openai-large model
-  |
-  |-- Success --> parse & return
-  |-- Fail --> Retry with openai-fast
-                  |
-                  |-- Success --> parse & return
-                  |-- Fail --> return server error
-```
+- The OpenAI-compatible vision API accepts both HTTP URLs and base64 data URLs in the `image_url.url` field
+- Max file size remains 5MB (enforced client-side)
+- The Supabase storage bucket (`physique-uploads`) is no longer needed for this feature but can remain for future use
