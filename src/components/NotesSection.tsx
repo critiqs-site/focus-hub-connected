@@ -63,17 +63,6 @@ const NotesSection = ({ notes, onAddNote, onEditNote, onDeleteNote }: NotesSecti
 
   return (
     <div className="space-y-6">
-      {/* Yearly Calendar */}
-      <YearlyCalendar
-        notes={notes}
-        selectedDate={selectedDate}
-        onSelectDate={(date) => {
-          setSelectedDate(date);
-          setSelectedMood(null);
-          setNoteText("");
-        }}
-      />
-
       {/* Date Navigation */}
       <div className="glass-card p-4 animate-fade-in">
         <div className="flex items-center justify-center gap-4">
@@ -216,6 +205,17 @@ const NotesSection = ({ notes, onAddNote, onEditNote, onDeleteNote }: NotesSecti
           </p>
         </div>
       )}
+
+      {/* Yearly Calendar */}
+      <YearlyCalendar
+        notes={notes}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => {
+          setSelectedDate(date);
+          setSelectedMood(null);
+          setNoteText("");
+        }}
+      />
     </div>
   );
 };

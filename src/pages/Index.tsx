@@ -14,6 +14,7 @@ import NotesSection from "@/components/NotesSection";
 import OnboardingDialog from "@/components/OnboardingDialog";
 import UserProfileMenu from "@/components/UserProfileMenu";
 import AnalyticsView from "@/components/AnalyticsView";
+import ToolsView from "@/components/ToolsView";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
@@ -136,6 +137,8 @@ const Index = () => {
           <AnalyticsView todos={todos} dividers={dividers} />
         ) : activeTab === "notes" ? (
           <NotesSection notes={notes} onAddNote={handleAddNote} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
+        ) : activeTab === "tools" ? (
+          <ToolsView />
         ) : activeTab === "therapist" ? (
           <AIChat todos={todos} dividers={dividers} notes={notes} />
         ) : (
