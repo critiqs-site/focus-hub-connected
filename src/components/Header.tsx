@@ -7,10 +7,10 @@ interface HeaderProps {
 
 const Header = ({ activeTab, onTabChange }: HeaderProps) => {
   const tabs = [
-    { id: "todos", label: "Habits", comingSoon: false },
+    { id: "todos", label: "Todos", comingSoon: false },
     { id: "analytics", label: "Analytics", comingSoon: false },
     { id: "notes", label: "Notes", comingSoon: false },
-    { id: "ai", label: "AI", comingSoon: false },
+    { id: "therapist", label: "Therapist", comingSoon: false },
   ];
 
   return (

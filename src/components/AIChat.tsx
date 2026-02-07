@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Todo, Divider, MoodNote } from "@/types/todo";
 
@@ -17,24 +18,69 @@ interface AIChatProps {
   notes: MoodNote[];
 }
 
-const CHAT_URL = "https://toxnaophisiylhqoprsv.supabase.co/functions/v1/ai-chat";
+type LoadingPhase = "sending" | "analyzing" | null;
 
 const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hey there! 👋 I'm your personal therapy guide. I can see your habits and mood entries, so feel free to talk about how things are going. What's on your mind today?",
+      content: "Hey there! 👋 I'm your personal therapist. I'm here to listen, support, and help you navigate whatever you're going through. What's on your mind today?",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const charQueueRef = useRef<string[]>([]);
+  const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const displayedRef = useRef("");
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Smooth typing ticker
+  const startTicker = useCallback(() => {
+    if (tickerRef.current) return;
+    tickerRef.current = setInterval(() => {
+      if (charQueueRef.current.length > 0) {
+        const char = charQueueRef.current.shift()!;
+        displayedRef.current += char;
+        const displayed = displayedRef.current;
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: displayed };
+          return updated;
+        });
+      }
+    }, 20);
+  }, []);
+
+  const stopTicker = useCallback(() => {
+    if (tickerRef.current) {
+      clearInterval(tickerRef.current);
+      tickerRef.current = null;
+    }
+  }, []);
+
+  // Flush remaining chars quickly when stream ends
+  const flushQueue = useCallback(() => {
+    stopTicker();
+    if (charQueueRef.current.length > 0) {
+      displayedRef.current += charQueueRef.current.join("");
+      charQueueRef.current = [];
+      const final = displayedRef.current;
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: "assistant", content: final };
+        return updated;
+      });
+    }
+  }, [stopTicker]);
+
+  useEffect(() => () => stopTicker(), [stopTicker]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -43,39 +89,49 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setLoadingPhase("sending");
 
-    let assistantContent = "";
+    // Switch to analyzing after 1.5s
+    const phaseTimer = setTimeout(() => setLoadingPhase("analyzing"), 1500);
+
+    charQueueRef.current = [];
+    displayedRef.current = "";
 
     try {
-      const response = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRveG5hb3BoaXNpeWxocW9wcnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzE1MzgsImV4cCI6MjA4NTkwNzUzOH0.OLVTkMudZD1xwxJd10Q3TiN2kEK1sslWQGOVJ5TYTS4`,
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          context: { todos, dividers, notes },
-        }),
-      });
+      const response = await fetch(
+        "https://toxnaophisiylhqoprsv.supabase.co/functions/v1/ai-chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRveG5hb3BoaXNpeWxocW9wcnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzE1MzgsImV4cCI6MjA4NTkwNzUzOH0.OLVTkMudZD1xwxJd10Q3TiN2kEK1sslWQGOVJ5TYTS4`,
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage].map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+            context: { todos, dividers, notes },
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to get response");
       }
 
-      if (!response.body) {
-        throw new Error("No response body");
-      }
+      if (!response.body) throw new Error("No response body");
+
+      // Add empty assistant message and start ticker
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      clearTimeout(phaseTimer);
+      setLoadingPhase(null);
+      startTicker();
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
-
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -99,15 +155,10 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              assistantContent += content;
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: "assistant",
-                  content: assistantContent,
-                };
-                return updated;
-              });
+              // Push chars into queue for smooth typing
+              for (const ch of content) {
+                charQueueRef.current.push(ch);
+              }
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -115,14 +166,21 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
           }
         }
       }
+
+      // Wait a bit for ticker to drain, then flush
+      await new Promise((r) => setTimeout(r, 300));
+      flushQueue();
     } catch (error) {
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to send message");
-      if (!assistantContent) {
+      clearTimeout(phaseTimer);
+      flushQueue();
+      if (!displayedRef.current) {
         setMessages((prev) => prev.slice(0, -1));
       }
     } finally {
       setIsLoading(false);
+      setLoadingPhase(null);
     }
   };
 
@@ -138,10 +196,10 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
       <div className="p-4 border-b border-primary/20">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h3 className="font-medium text-foreground">Therapy Guide</h3>
+          <h3 className="font-medium text-foreground">Therapist</h3>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          Your personal AI companion for habits & mood
+          Your personal AI therapist
         </p>
       </div>
 
@@ -150,9 +208,7 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`flex gap-3 ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {message.role === "assistant" && (
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
@@ -175,13 +231,15 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
               )}
             </div>
           ))}
-          {isLoading && messages[messages.length - 1]?.role === "user" && (
+          {loadingPhase && (
             <div className="flex gap-3 justify-start">
               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                 <Bot className="h-4 w-4 text-primary" />
               </div>
               <div className="bg-secondary/50 p-3 rounded-2xl rounded-bl-md">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  {loadingPhase === "sending" ? "Sending Request..." : "Analyzing..."}
+                </p>
               </div>
             </div>
           )}
