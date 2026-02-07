@@ -110,7 +110,7 @@ const Index = () => {
           <AnalyticsView todos={todos} dividers={dividers} />
         ) : activeTab === "notes" ? (
           <NotesSection notes={notes} onAddNote={handleAddNote} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
-        ) : activeTab === "ai" ? (
+        ) : activeTab === "therapist" ? (
           <AIChat todos={todos} dividers={dividers} notes={notes} />
         ) : (
           <ComingSoon section={activeTab} />

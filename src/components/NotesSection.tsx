@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import MoodSelector, { getMoodSuggestion } from "./MoodSelector";
 import NoteEntry from "./NoteEntry";
+import YearlyCalendar from "./YearlyCalendar";
 import type { MoodNote, MoodType } from "@/types/todo";
 
 interface NotesSectionProps {
@@ -62,6 +63,17 @@ const NotesSection = ({ notes, onAddNote, onEditNote, onDeleteNote }: NotesSecti
 
   return (
     <div className="space-y-6">
+      {/* Yearly Calendar */}
+      <YearlyCalendar
+        notes={notes}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => {
+          setSelectedDate(date);
+          setSelectedMood(null);
+          setNoteText("");
+        }}
+      />
+
       {/* Date Navigation */}
       <div className="glass-card p-4 animate-fade-in">
         <div className="flex items-center justify-center gap-4">
