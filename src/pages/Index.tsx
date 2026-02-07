@@ -79,7 +79,7 @@ const Index = () => {
 
       <Navbar />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
           {isGuest ? (

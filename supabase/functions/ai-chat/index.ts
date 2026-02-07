@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         model: "openai/gpt-5-mini",
         messages: [systemMessage, ...messages],
         stream: true,
-        max_tokens: 1024,
+        max_completion_tokens: 1024,
       }),
     });
 

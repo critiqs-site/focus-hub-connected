@@ -192,7 +192,7 @@ const AIChat = ({ todos, dividers, notes }: AIChatProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[600px] glass-card animate-fade-in">
+    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px] glass-card animate-fade-in">
       <div className="p-4 border-b border-primary/20">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
