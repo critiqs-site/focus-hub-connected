@@ -2,9 +2,8 @@ import { useState, useCallback } from "react";
 import { Upload, AlertTriangle, ServerCrash, ShieldAlert, Loader2, X, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 
-type RaterStatus = "idle" | "uploading" | "analyzing" | "success" | "error" | "not_body" | "inappropriate";
+type RaterStatus = "idle" | "analyzing" | "success" | "error" | "not_body" | "inappropriate";
 
 interface RatingResult {
   rating: number;
@@ -17,8 +16,16 @@ interface RatingResult {
   };
 }
 
+const readFileAsDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 const PhysiqueRater = () => {
-  const { user } = useAuth();
   const [status, setStatus] = useState<RaterStatus>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<RatingResult | null>(null);
@@ -32,24 +39,6 @@ const PhysiqueRater = () => {
     setErrorMsg("");
   };
 
-  const uploadToSupabase = async (file: File): Promise<string | null> => {
-    if (!user) return null;
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
-
-    const { error } = await supabase.storage
-      .from("physique-uploads")
-      .upload(path, file, { contentType: file.type });
-
-    if (error) {
-      console.error("Upload error:", error);
-      return null;
-    }
-
-    const { data } = supabase.storage.from("physique-uploads").getPublicUrl(path);
-    return data.publicUrl;
-  };
-
   const analyzeImage = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       setErrorMsg("File too large. Max 5MB.");
@@ -57,25 +46,13 @@ const PhysiqueRater = () => {
       return;
     }
 
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
-
-    // Upload to Supabase
-    setStatus("uploading");
-    const imageUrl = await uploadToSupabase(file);
-    if (!imageUrl) {
-      setErrorMsg("Failed to upload image. Please try again.");
-      setStatus("error");
-      return;
-    }
-
-    // Analyze
     setStatus("analyzing");
     try {
+      const imageBase64 = await readFileAsDataURL(file);
+      setPreview(imageBase64);
+
       const { data, error } = await supabase.functions.invoke("physique-rater", {
-        body: { imageUrl },
+        body: { imageBase64 },
       });
 
       if (error) {
@@ -155,15 +132,13 @@ const PhysiqueRater = () => {
             onChange={handleFileInput}
           />
         </label>
-      ) : status === "uploading" || status === "analyzing" ? (
+      ) : status === "analyzing" ? (
         <div className="glass-card p-8 flex flex-col items-center gap-4">
           {preview && (
             <img src={preview} alt="Preview" className="w-40 h-40 object-cover rounded-xl border border-primary/20" />
           )}
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            {status === "uploading" ? "Uploading image..." : "AI is analyzing your physique..."}
-          </p>
+          <p className="text-sm text-muted-foreground">AI is analyzing your physique...</p>
         </div>
       ) : status === "success" && result ? (
         <div className="space-y-4 animate-fade-in">

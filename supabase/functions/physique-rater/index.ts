@@ -65,11 +65,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { imageUrl } = await req.json();
+    const { imageBase64 } = await req.json();
 
-    if (!imageUrl) {
+    if (!imageBase64) {
       return new Response(
-        JSON.stringify({ status: "error", message: "No image URL provided" }),
+        JSON.stringify({ status: "error", message: "No image data provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -83,12 +83,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Analyzing image with openai-large...");
+    console.log("Analyzing image with openai-large (base64)...");
 
     // Primary: openai-large
     let parsed = null;
     try {
-      parsed = await callAI(apiKey, "openai-large", imageUrl);
+      parsed = await callAI(apiKey, "openai-large", imageBase64);
     } catch (e) {
       console.error("Primary model error:", e);
     }
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
     if (!parsed) {
       console.log("Falling back to openai-fast...");
       try {
-        parsed = await callAI(apiKey, "openai-fast", imageUrl);
+        parsed = await callAI(apiKey, "openai-fast", imageBase64);
       } catch (e) {
         console.error("Fallback model error:", e);
       }
