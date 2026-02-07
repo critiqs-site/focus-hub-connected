@@ -1,98 +1,79 @@
 
 
-# Full UI/UX Overhaul Plan
+# Fix AI, Calendar, Analytics, Responsiveness, and Add PWA
 
-This plan covers all your requested changes across the Auth page, main app layout, edge function, profile menu, and toast notifications.
+## Issues Found
+
+1. **AI not working**: The edge function uses `max_tokens` which is unsupported by the model. Error: `"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."` -- confirmed in the edge function logs.
+
+2. **Yearly Calendar too big / no date numbers**: The `YearlyCalendar.tsx` shows all 12 months as tiny 3x3px dot grids with no date numbers. It needs to show individual months with actual date numbers, like a real calendar.
+
+3. **Analytics calculations**: The analytics code already calculates monthly (uses `startOfMonth`/`endOfMonth` and filters by `isSameMonth`). The streaks are calculated across all time (longest) and from today backwards (current). This is correct. No changes needed here.
+
+4. **Responsiveness**: The app uses `max-w-4xl` (896px max) which looks narrow on desktop. Need to make it wider and responsive.
+
+5. **PWA**: Need manifest.json, service worker, `/download` route with auto-download and fallback button.
 
 ---
 
-## 1. Edge Function: Switch from Gemini to OpenAI-fast
+## Changes
+
+### 1. Fix AI Edge Function
 
 **File:** `supabase/functions/ai-chat/index.ts`
 
-Change `model: "google/gemini-2.5-flash"` to `model: "openai-fast"` (or `"claude-fast"` as fallback).
+- Change `max_tokens: 1024` to `max_completion_tokens: 1024` (line 72)
 
----
+### 2. Redesign Yearly Calendar
 
-## 2. Auth Page (`src/pages/Auth.tsx`) -- Major Overhaul
+**File:** `src/components/YearlyCalendar.tsx`
 
-### Welcome Screen Changes:
-- Remove the "Let's Go!" speech bubble/border entirely (lines 88-90)
-- Remove ALL floating dots/blobs (lines 71-78, and the dot indicators lines 106-109)
-- Remove `animate-wave` from the wave emoji -- keep it as a static 👋
-- Remove `animate-bounce-gentle` from mascot
-- Remove floating background blobs from auth step too (lines 117-121)
+Complete rewrite to show a proper monthly grid layout:
+- Show 4 columns on desktop (3 months per row), 2 on tablet, 1 on mobile
+- Each month shows day-of-week headers (S M T W T F S)
+- Each day cell shows the **date number** (1-31)
+- Cells are colored by mood (green for happy, amber for neutral, red for sad, default muted for no entry)
+- Clicking a date calls `onSelectDate`
+- Responsive sizing: cells are larger and readable
 
-### Auth Form Changes:
-- Default to **Register** (`isLogin` starts as `false` instead of `true`)
-- Login heading: "Welcome Back!" (no sparkle emoji) / subtitle: "Great to see you again"
-- Register heading: "Register!" / subtitle: "One step away from being the beast!"
-- Email placeholder: `name@domain.com` instead of `you@example.com`
-- Add **"Continue with Google"** and **"Continue with GitHub"** buttons above the email form with OAuth via `supabase.auth.signInWithOAuth` using `skipBrowserRedirect: true` for custom domain support
-- Add **"Guest Mode"** button -- navigates directly to Index, stores a `guestMode: true` flag in localStorage
+### 3. Improve Responsiveness
 
-### OAuth Redirect Fix:
-- Use `skipBrowserRedirect: true` + manual redirect with URL validation (as described in the stack overflow solution) to prevent redirecting to `localhost:3000`
-- The user also needs to set their **Site URL** to `https://www.critiqs.site` and add it as a **Redirect URL** in Supabase Dashboard > Authentication > URL Configuration
+**File:** `src/pages/Index.tsx`
+- Change `max-w-4xl` to `max-w-6xl` for wider desktop layout
 
----
+**File:** `src/components/Header.tsx`
+- Ensure tabs wrap properly on small screens
 
-## 3. Guest Mode Support
+**File:** `src/components/AIChat.tsx`
+- Change `max-h-[600px]` to `max-h-[700px]` for better desktop use
 
-**Files:** `src/pages/Auth.tsx`, `src/pages/Index.tsx`, `src/hooks/useTodos.ts`, `src/hooks/useNotes.ts`
+### 4. PWA Implementation
 
-- Auth page gets a "Continue as Guest" button that sets `localStorage.setItem("guestMode", "true")` and navigates to `/`
-- `Index.tsx` updated: if no user but `guestMode` is set, allow access (don't redirect to `/auth`)
-- `useTodos` and `useNotes` hooks: if no userId, fall back to localStorage for storing/retrieving data
-- Guest mode shows a banner or indicator that data is local-only
+**New file:** `public/manifest.json`
+- App name: "CRITIQS - Daily Focus Hub"
+- Theme color: orange (#f97316)
+- Icons (use placeholder SVG for now)
+- `display: "standalone"`, `start_url: "/"`
 
----
+**New file:** `public/sw.js`
+- Basic service worker with cache-first strategy for static assets
+- Network-first for API calls
 
-## 4. Toast Notifications -- Show in Form, Not Bottom-Right
+**File:** `index.html`
+- Add `<link rel="manifest" href="/manifest.json">`
+- Add `<meta name="theme-color" content="#f97316">`
+- Add apple-touch-icon meta tags
+- Register service worker via inline script
 
-**File:** `src/pages/Auth.tsx`
+**New file:** `src/pages/Download.tsx`
+- On mount, trigger a `beforeinstallprompt` event listener
+- If PWA is installable, auto-trigger the install prompt
+- Show text: "Download has started. Click the button below if not."
+- Show a "Download CRITIQS" button that triggers the install prompt
+- If already installed or not supported, show appropriate message
 
-- Replace `toast.error()` / `toast.success()` with inline state-based messages
-- Add a `formMessage` state: `{ type: "success" | "error", text: string } | null`
-- Display it as a colored banner inside the form card (green for success, red for error)
-- Remove sonner toast calls from the auth flow
-
----
-
-## 5. Profile Menu -- Remove Change Password
-
-**File:** `src/components/UserProfileMenu.tsx`
-
-- Remove the "Change Password" menu item (lines 76-82)
-- Remove the entire password dialog (lines 93-139)
-- Remove unused state variables and imports (`KeyRound`, `Dialog`, etc.)
-
----
-
-## 6. Navbar Restructure
-
-### New Top Navbar (`src/components/Navbar.tsx` -- new file)
-- Full-width bar at the very top
-- Left: "CRITIQS" logo text
-- Right: External links -- DOCS (docs.critiqs.site), GITHUB (https://github.com/critiqs-site), DONATE (donate.critiqs.site)
-
-### Updated Header (`src/components/Header.tsx`)
-- Remove the "CRITIQS" title (it moves to navbar)
-- Keep only the section tabs (Todos, Analytics, Notes, Therapist)
-- Profile icon moves here (passed as prop or rendered alongside)
-
-### Updated Index (`src/pages/Index.tsx`)
-- Render `<Navbar />` at the top (outside the max-w-4xl container, full width)
-- Below that, the existing content with Header (tabs + profile) and sections
-
----
-
-## 7. Clean Up Animations in `src/index.css`
-
-Remove or keep but stop using:
-- `animate-float`, `animate-float-delayed` -- no longer used after auth cleanup
-- `animate-bounce-gentle` -- no longer used
-- Keep `animate-fade-in`, `animate-slide-up`, `animate-scale-in` as they're used in the main app
+**File:** `src/App.tsx`
+- Add route: `/download` -> `<Download />`
 
 ---
 
@@ -100,23 +81,25 @@ Remove or keep but stop using:
 
 | File | Action |
 |------|--------|
-| `supabase/functions/ai-chat/index.ts` | Change model to `openai-fast` |
-| `src/pages/Auth.tsx` | Major rewrite: remove animations, add OAuth, Guest Mode, inline toasts, default to Register |
-| `src/pages/Index.tsx` | Add Navbar, support guest mode |
-| `src/components/Navbar.tsx` | New -- top navbar with CRITIQS + external links |
-| `src/components/Header.tsx` | Remove CRITIQS title, keep tabs only, add profile icon |
-| `src/components/UserProfileMenu.tsx` | Remove change password option and dialog |
-| `src/hooks/useTodos.ts` | Add localStorage fallback for guest mode |
-| `src/hooks/useNotes.ts` | Add localStorage fallback for guest mode |
-| `src/index.css` | Clean up unused animation classes |
+| `supabase/functions/ai-chat/index.ts` | Fix `max_tokens` to `max_completion_tokens` |
+| `src/components/YearlyCalendar.tsx` | Rewrite with proper month grids and date numbers |
+| `src/pages/Index.tsx` | Widen container to `max-w-6xl` |
+| `src/components/AIChat.tsx` | Increase max height |
+| `public/manifest.json` | New PWA manifest |
+| `public/sw.js` | New service worker |
+| `index.html` | Add manifest, theme-color, SW registration |
+| `src/pages/Download.tsx` | New download/install page |
+| `src/App.tsx` | Add `/download` route |
 
 ---
 
-## User Action Required
+## Technical Details
 
-Before OAuth (Google/GitHub) login works:
-1. Go to **Supabase Dashboard > Authentication > URL Configuration**
-2. Set **Site URL** to: `https://www.critiqs.site` (or your preview URL for testing)
-3. Add **Redirect URLs**: `https://www.critiqs.site/**` and your Lovable preview URL
-4. Ensure Google and GitHub providers are enabled under **Authentication > Providers**
+**AI Fix**: The `openai/gpt-5-mini` model requires `max_completion_tokens` instead of `max_tokens`. This is a one-line change in the edge function.
+
+**Calendar Redesign**: Each month renders a 7-column grid. Day cells are ~28x28px with the date number inside. Mood colors use background classes. The grid is `grid-cols-2 md:grid-cols-3 lg:grid-cols-4` for responsiveness.
+
+**PWA Service Worker**: Uses the Cache API with a versioned cache name. Caches the app shell on install, serves from cache with network fallback. The `/download` page captures the `beforeinstallprompt` event and provides both auto-prompt and manual button triggers.
+
+**PWA Icons**: Will use a simple generated icon using the existing favicon or placeholder. For production, the user should replace with proper icons.
 
