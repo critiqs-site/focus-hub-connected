@@ -28,9 +28,28 @@ ADVICE RULES:
 - If user shares a body image: give 3-4 specific tips max, be encouraging but real
 
 CONTEXT RULES:
-- You have access to user's habit data and mood entries as BACKGROUND CONTEXT ONLY
-- NEVER mention or list their data unless they ask about it
-- Use it silently to personalize advice`;
+- You have access to user's habit data, mood entries, and profile info as context
+- You can reference their todos/habits when they ask about them
+- Use their interests to personalize suggestions
+
+TODO MANAGEMENT:
+You can help users manage their habits/todos. When the user asks to add, delete, or get suggestions for todos, include ACTION MARKERS in your response.
+
+ACTION MARKER FORMAT (use these EXACTLY):
+- To delete a todo: [ACTION:DELETE:todoId:todoText]
+- To suggest adding a todo: [ACTION:SUGGEST:dividerName:todoText:iconName]
+- To add an "Add All" button after suggestions: [ACTION:ADD_ALL]
+
+ICON NAMES available: Dumbbell, Heart, Brain, BookOpen, Droplets, Sun, Moon, Star, Target, Flame, Apple, Coffee, Music, Pencil, Clock, Zap, Trophy, Smile, Shield, Leaf
+
+RULES FOR ACTIONS:
+- When user asks to DELETE a todo, find the matching todo from context by name, use its exact ID
+- When SUGGESTING todos, check user's interests and existing habits to avoid duplicates
+- Suggest 3-5 todos max, pick the best divider/section for each
+- Keep action text SHORT (2-5 words max)
+- Write your text response FIRST, then put action markers on separate lines at the end
+- If user asks "can you see X todo" — confirm yes/no, reference the section it's in
+- If a divider/section doesn't exist, use the closest matching one from their existing dividers`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -49,21 +68,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build context summary for system prompt
+    // Build rich context for system prompt
     let contextSummary = "";
     if (context) {
-      const { todos, dividers, notes } = context;
-      if (todos?.length) {
-        contextSummary += `\n\n[INTERNAL CONTEXT - DO NOT SHARE WITH USER]\nUser's habits: ${todos.map((t: any) => t.text).join(", ")}`;
-      }
+      const { todos, dividers, notes, interests } = context;
       if (dividers?.length) {
-        contextSummary += `\nHabit categories: ${dividers.map((d: any) => d.name).join(", ")}`;
+        contextSummary += `\n\n[USER CONTEXT]\nHabit sections: ${dividers.map((d: any) => `${d.name} (id:${d.id}, icon:${d.icon})`).join(", ")}`;
+      }
+      if (todos?.length) {
+        contextSummary += `\nUser's habits:\n${todos.map((t: any) => `- "${t.text}" (id:${t.id}, section:${t.dividerName || "unknown"}, icon:${t.icon})`).join("\n")}`;
+      }
+      if (interests?.length) {
+        contextSummary += `\nUser interests: ${interests.join(", ")}`;
       }
       if (notes?.length) {
-        const recentNotes = notes.slice(0, 7);
-        contextSummary += `\nRecent mood entries: ${recentNotes.map((n: any) => `${n.date}: ${n.mood}${n.note ? ` - "${n.note}"` : ""}`).join("; ")}`;
+        const recentNotes = notes.slice(0, 5);
+        contextSummary += `\nRecent mood: ${recentNotes.map((n: any) => `${n.date}: ${n.mood}${n.note ? ` - "${n.note}"` : ""}`).join("; ")}`;
       }
-      contextSummary += "\n[END INTERNAL CONTEXT]";
+      contextSummary += "\n[END CONTEXT]";
     }
 
     const systemMessage = {
@@ -85,7 +107,7 @@ Deno.serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    console.log("Sending chat request with", messages.length, "messages using openai-fast");
+    console.log("Sending chat request with", messages.length, "messages (non-streaming)");
 
     const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
       method: "POST",
@@ -96,7 +118,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "openai-fast",
         messages: [systemMessage, ...processedMessages],
-        stream: true,
+        stream: false,
       }),
     });
 
@@ -109,13 +131,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(response.body, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
+
+    return new Response(JSON.stringify({ reply }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Edge function error:", error);

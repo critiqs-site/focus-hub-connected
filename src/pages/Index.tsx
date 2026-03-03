@@ -159,6 +159,9 @@ const Index = () => {
         todos={todos}
         dividers={dividers}
         notes={notes}
+        interests={profile?.interests || []}
+        onAddTodo={handleAddTodo}
+        onDeleteTodo={handleDelete}
       />
     </div>
   );
