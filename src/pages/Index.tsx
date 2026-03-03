@@ -35,6 +35,7 @@ const Index = () => {
   const {
     todos, dividers, loading: todosLoading,
     handleToggleDay, handleEdit, handleDelete,
+    handleUpdateIcon, handleTransferTodo,
     handleAddTodo, handleAddDivider, handleDeleteDivider,
     refetch: refetchTodos,
   } = useTodos(user?.id);
@@ -162,6 +163,9 @@ const Index = () => {
         interests={profile?.interests || []}
         onAddTodo={handleAddTodo}
         onDeleteTodo={handleDelete}
+        onRenameTodo={handleEdit}
+        onTransferTodo={handleTransferTodo}
+        onUpdateIcon={handleUpdateIcon}
       />
     </div>
   );
