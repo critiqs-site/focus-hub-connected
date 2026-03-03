@@ -1,7 +1,11 @@
 import { Dumbbell } from "lucide-react";
 import PhysiqueRater from "./PhysiqueRater";
 
-const ToolsView = () => {
+interface ToolsViewProps {
+  onAskAI?: (image: string, message: string) => void;
+}
+
+const ToolsView = ({ onAskAI }: ToolsViewProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="glass-card p-5">
@@ -14,7 +18,7 @@ const ToolsView = () => {
             <p className="text-xs text-muted-foreground">Upload a body photo and get an AI rating out of 10</p>
           </div>
         </div>
-        <PhysiqueRater />
+        <PhysiqueRater onAskAI={onAskAI} />
       </div>
     </div>
   );
