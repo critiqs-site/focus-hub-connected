@@ -33,7 +33,7 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
   const calculateStats = (todo: Todo) => {
     const completions = getCompletionsForMonth(todo);
     const completedDays = completions.length;
-    const totalDays = daysUpToToday.length;
+    const totalDays = daysInMonth.length;
     const percentage = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
     let currentStreak = 0;
