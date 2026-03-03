@@ -163,6 +163,9 @@ const Index = () => {
         interests={profile?.interests || []}
         onAddTodo={handleAddTodo}
         onDeleteTodo={handleDelete}
+        onRenameTodo={handleEdit}
+        onTransferTodo={handleTransferTodo}
+        onUpdateIcon={handleUpdateIcon}
       />
     </div>
   );
