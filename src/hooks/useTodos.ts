@@ -89,6 +89,22 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to delete"); fetchData(); } else toast.success("Habit deleted");
   };
 
+  const handleUpdateIcon = async (id: string, icon: string) => {
+    const newTodos = todos.map((t) => t.id === id ? { ...t, icon } : t);
+    setTodos(newTodos);
+    if (isGuest) { persistGuest(newTodos); toast.success("Icon updated"); return; }
+    const { error } = await supabase.from("todos").update({ icon }).eq("id", id);
+    if (error) { toast.error("Failed to update icon"); fetchData(); } else toast.success("Icon updated");
+  };
+
+  const handleTransferTodo = async (id: string, newDividerId: string) => {
+    const newTodos = todos.map((t) => t.id === id ? { ...t, dividerId: newDividerId } : t);
+    setTodos(newTodos);
+    if (isGuest) { persistGuest(newTodos); toast.success("Habit moved"); return; }
+    const { error } = await supabase.from("todos").update({ divider_id: newDividerId }).eq("id", id);
+    if (error) { toast.error("Failed to move"); fetchData(); } else toast.success("Habit moved");
+  };
+
   const handleAddTodo = async (text: string, dividerId: string, icon: string) => {
     if (isGuest) {
       const newTodo: Todo = { id: crypto.randomUUID(), text, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [] };
