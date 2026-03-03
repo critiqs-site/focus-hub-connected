@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    console.log("Sending chat request with", messages.length, "messages");
+    console.log("Sending chat request with", messages.length, "messages using openai-fast");
 
     const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
       method: "POST",
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-fast",
+        model: "openai-fast",
         messages: [systemMessage, ...processedMessages],
         stream: true,
       }),
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errText = await response.text();
       console.error("Pollinations API error:", response.status, errText);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
+      return new Response(JSON.stringify({ error: "AI service error. Please try again." }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
