@@ -9,7 +9,6 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
     { id: "analytics", label: "Analytics" },
     { id: "notes", label: "Notes" },
     { id: "tools", label: "Tools" },
-    { id: "therapist", label: "Therapist" },
   ];
 
   return (

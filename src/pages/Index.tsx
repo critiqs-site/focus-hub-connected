@@ -9,12 +9,12 @@ import TodoDivider from "@/components/TodoDivider";
 import ComingSoon from "@/components/ComingSoon";
 import AddTodoDialog from "@/components/AddTodoDialog";
 import AddDividerDialog from "@/components/AddDividerDialog";
-import AIChat from "@/components/AIChat";
 import NotesSection from "@/components/NotesSection";
 import OnboardingDialog from "@/components/OnboardingDialog";
 import UserProfileMenu from "@/components/UserProfileMenu";
 import AnalyticsView from "@/components/AnalyticsView";
 import ToolsView from "@/components/ToolsView";
+import FloatingAIChat from "@/components/FloatingAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
@@ -29,6 +29,8 @@ const Index = () => {
   const [showAddTodo, setShowAddTodo] = useState(false);
   const [showAddDivider, setShowAddDivider] = useState(false);
   const [selectedDividerId, setSelectedDividerId] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInitialMessage, setChatInitialMessage] = useState<{ text: string; image?: string } | null>(null);
 
   const {
     todos, dividers, loading: todosLoading,
@@ -50,6 +52,11 @@ const Index = () => {
     localStorage.removeItem("guestMode");
     await signOut();
     navigate("/auth");
+  };
+
+  const handleAskAI = (image: string, message: string) => {
+    setChatInitialMessage({ text: message, image });
+    setChatOpen(true);
   };
 
   if (authLoading) {
@@ -138,13 +145,21 @@ const Index = () => {
         ) : activeTab === "notes" ? (
           <NotesSection notes={notes} onAddNote={handleAddNote} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
         ) : activeTab === "tools" ? (
-          <ToolsView />
-        ) : activeTab === "therapist" ? (
-          <AIChat todos={todos} dividers={dividers} notes={notes} />
+          <ToolsView onAskAI={handleAskAI} />
         ) : (
           <ComingSoon section={activeTab} />
         )}
       </div>
+
+      <FloatingAIChat
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+        initialMessage={chatInitialMessage}
+        onInitialMessageConsumed={() => setChatInitialMessage(null)}
+        todos={todos}
+        dividers={dividers}
+        notes={notes}
+      />
     </div>
   );
 };
