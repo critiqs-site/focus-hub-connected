@@ -4,7 +4,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a fitness and physique analysis AI. Analyze the provided image and respond ONLY with valid JSON (no markdown, no code fences).
+const SYSTEM_PROMPT = `You are a friendly fitness coach. Analyze the provided body photo and respond ONLY with valid JSON (no markdown, no code fences).
 
 Follow these steps strictly:
 
@@ -14,8 +14,16 @@ Step 1: Check if the image contains inappropriate/explicit content (visible priv
 Step 2: Check if the image shows a human body/physique (torso, full body, shirtless, gym photo, mirror selfie showing body). Face-only selfies, landscapes, animals, objects, or non-body images are NOT valid. If not a body image, respond:
 {"status":"not_body"}
 
-Step 3: If the image is a valid, appropriate body/physique photo, rate it and respond:
-{"status":"success","rating":<number 1-10>,"feedback":{"muscleDefinition":"<assessment>","proportions":"<assessment>","estimatedBodyFat":"<percentage range>","strengths":"<what looks good>","improvements":"<actionable tips>"}}
+Step 3: If the image is a valid, appropriate body/physique photo, rate it and respond with SIMPLE, FRIENDLY language that anyone can understand. No fitness jargon. Talk like you're explaining to a friend.
+
+Response format:
+{"status":"success","rating":<number 1-10>,"feedback":{"muscleDefinition":"<simple friendly assessment>","bodyShape":"<simple friendly assessment>","estimatedBodyFat":"<simple range like 'About 20-25%'>","strengths":["<point 1>","<point 2>","<point 3>"],"improvements":["<tip 1>","<tip 2>","<tip 3>","<tip 4>","<tip 5>"]}}
+
+IMPORTANT:
+- strengths must be an array of short, simple bullet points
+- improvements must be an array of short, actionable tips anyone can follow
+- Use everyday language, no technical terms
+- Be encouraging and friendly
 
 ONLY output raw JSON. No extra text.`;
 
@@ -83,17 +91,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Analyzing image with openai-large (base64)...");
+    console.log("Analyzing image with gemini-fast...");
 
-    // Primary: openai-large
     let parsed = null;
     try {
-      parsed = await callAI(apiKey, "openai-large", imageBase64);
+      parsed = await callAI(apiKey, "gemini-fast", imageBase64);
     } catch (e) {
       console.error("Primary model error:", e);
     }
 
-    // Fallback: openai-fast
     if (!parsed) {
       console.log("Falling back to openai-fast...");
       try {

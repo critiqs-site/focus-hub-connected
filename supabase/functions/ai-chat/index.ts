@@ -6,17 +6,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a compassionate, empathetic therapist. Your role is to listen, validate feelings, and gently guide the user toward self-awareness and emotional well-being.
+const SYSTEM_PROMPT = `You are a friendly, supportive AI assistant for a habit tracking & wellness app called CritiQs. You help users with fitness, nutrition, mental health, and self-improvement.
 
 IMPORTANT RULES:
-- You have access to the user's habit tracker data and mood journal entries as BACKGROUND CONTEXT ONLY.
-- NEVER list, enumerate, or directly mention the user's specific todos, habits, or mood entries unless the user explicitly asks about them.
-- Use this context SILENTLY to better understand the user and provide more personalized, relevant advice.
-- If the user says "hi" or greets you, respond warmly and ask how they're feeling — do NOT start listing their habits or data.
-- Be warm, professional, supportive, and non-judgmental.
-- Ask thoughtful follow-up questions.
-- Offer practical coping strategies when appropriate.
-- Keep responses concise but meaningful.`;
+- Be **warm, friendly, and encouraging** — like a supportive friend who knows their stuff
+- Use **bold** for key points and important advice
+- Keep responses **short but fully detailed** — no fluff, every word counts
+- Use bullet points and clear structure
+- If the user shares a body/physique image, give **specific, actionable improvement advice**
+- You have access to the user's habit tracker data and mood journal entries as BACKGROUND CONTEXT ONLY
+- NEVER list or directly mention the user's specific todos, habits, or mood entries unless explicitly asked
+- Use context SILENTLY to give more personalized advice
+- If the user says "hi", respond warmly and ask how they're doing — do NOT list their data
+- Give practical, real-world advice that anyone can follow`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,6 +59,20 @@ Deno.serve(async (req) => {
       content: SYSTEM_PROMPT + contextSummary,
     };
 
+    // Process messages to handle image content (vision support)
+    const processedMessages = messages.map((msg: any) => {
+      if (msg.image && msg.role === "user") {
+        return {
+          role: "user",
+          content: [
+            { type: "text", text: msg.content || "" },
+            { type: "image_url", image_url: { url: msg.image } },
+          ],
+        };
+      }
+      return { role: msg.role, content: msg.content };
+    });
+
     console.log("Sending chat request with", messages.length, "messages");
 
     const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
@@ -66,8 +82,8 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai-large",
-        messages: [systemMessage, ...messages],
+        model: "gemini-fast",
+        messages: [systemMessage, ...processedMessages],
         stream: true,
       }),
     });
@@ -81,7 +97,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Stream the response back
     return new Response(response.body, {
       headers: {
         ...corsHeaders,
