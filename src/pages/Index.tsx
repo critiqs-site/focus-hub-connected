@@ -35,6 +35,7 @@ const Index = () => {
   const {
     todos, dividers, loading: todosLoading,
     handleToggleDay, handleEdit, handleDelete,
+    handleUpdateIcon, handleTransferTodo,
     handleAddTodo, handleAddDivider, handleDeleteDivider,
     refetch: refetchTodos,
   } = useTodos(user?.id);
