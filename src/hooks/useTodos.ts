@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, addDays, isAfter, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import type { Todo, Divider } from "@/types/todo";
 
 const GUEST_TODOS_KEY = "guest_todos";
@@ -47,20 +47,16 @@ export const useTodos = (userId: string | undefined) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Helper to persist guest state
   const persistGuest = (newTodos?: Todo[], newDividers?: Divider[]) => {
     if (newTodos) saveGuest(GUEST_TODOS_KEY, newTodos);
     if (newDividers) saveGuest(GUEST_DIVIDERS_KEY, newDividers);
   };
 
-  const handleToggleDay = async (id: string, dayIndex: number) => {
+  // Toggle by date string directly
+  const handleToggleDay = async (id: string, dateStr: string) => {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
-    const targetDate = addDays(new Date(todo.createdAt), dayIndex);
-    const todayDate = new Date();
-    if (isAfter(targetDate, todayDate) && !isSameDay(targetDate, todayDate)) return;
 
-    const dateStr = format(targetDate, "yyyy-MM-dd");
     const newCompletions = todo.completions.includes(dateStr)
       ? todo.completions.filter((d) => d !== dateStr)
       : [...todo.completions, dateStr];
@@ -71,6 +67,12 @@ export const useTodos = (userId: string | undefined) => {
     if (isGuest) { persistGuest(newTodos); return; }
     const { error } = await supabase.from("todos").update({ completions: newCompletions }).eq("id", id);
     if (error) { toast.error("Failed to update"); fetchData(); }
+  };
+
+  // Convenience: toggle today
+  const handleToggleToday = async (id: string) => {
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    await handleToggleDay(id, todayStr);
   };
 
   const handleEdit = async (id: string, text: string) => {
@@ -145,5 +147,5 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to delete section"); fetchData(); } else toast.success("Section deleted");
   };
 
-  return { todos, dividers, loading, handleToggleDay, handleEdit, handleDelete, handleUpdateIcon, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, refetch: fetchData };
+  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, refetch: fetchData };
 };

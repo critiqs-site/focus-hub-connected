@@ -4,7 +4,7 @@ import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { MoodNote, MoodType } from "@/types/todo";
-import { getMoodIcon, getMoodLabel } from "./MoodSelector";
+import { getMoodEmoji, getMoodLabel } from "./MoodSelector";
 import MoodSelector from "./MoodSelector";
 
 interface NoteEntryProps {
@@ -60,7 +60,7 @@ const NoteEntry = ({ note, onEdit, onDelete }: NoteEntryProps) => {
   return (
     <div className="group glass-card p-4 transition-all duration-300 hover:border-primary/30 animate-fade-in">
       <div className="flex items-start gap-3">
-        <span className="text-3xl text-primary">{getMoodIcon(note.mood)}</span>
+        <span className="text-3xl">{getMoodEmoji(note.mood)}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-foreground">
