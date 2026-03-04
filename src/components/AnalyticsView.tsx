@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, TrendingUp, Flame, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, TrendingUp, Flame, Target, ChevronDown, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, addMonths, subMonths } from "date-fns";
 import type { Todo, Divider } from "@/types/todo";
@@ -12,16 +12,15 @@ interface AnalyticsViewProps {
 
 const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(todos[0] || null);
+  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null); // null = Overall
+  const [showAll, setShowAll] = useState(false);
+
+  const selectedTodo = selectedTodoId ? todos.find(t => t.id === selectedTodoId) || null : null;
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
   const today = new Date();
-  const daysUpToToday = daysInMonth.filter(day =>
-    isBefore(day, today) || isToday(day)
-  );
 
   const getCompletionsForMonth = (todo: Todo) => {
     return todo.completions.filter(dateStr => {
@@ -57,20 +56,12 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
     let longestStreak = 0;
     let tempStreak = 0;
     const allCompletions = [...todo.completions].sort();
-
     for (let i = 0; i < allCompletions.length; i++) {
-      if (i === 0) {
-        tempStreak = 1;
-      } else {
+      if (i === 0) { tempStreak = 1; } else {
         const prevDate = new Date(allCompletions[i - 1]);
         const currDate = new Date(allCompletions[i]);
         const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
-
-        if (diffDays === 1) {
-          tempStreak++;
-        } else {
-          tempStreak = 1;
-        }
+        tempStreak = diffDays === 1 ? tempStreak + 1 : 1;
       }
       longestStreak = Math.max(longestStreak, tempStreak);
     }
@@ -78,10 +69,54 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
     return { completedDays, totalDays, percentage, currentStreak, longestStreak };
   };
 
-  const selectedStats = selectedTodo ? calculateStats(selectedTodo) : null;
-  const selectedCompletions = selectedTodo ? getCompletionsForMonth(selectedTodo) : [];
+  // Overall stats: aggregate across all todos
+  const calculateOverallStats = () => {
+    if (todos.length === 0) return { completedDays: 0, totalDays: 0, percentage: 0, currentStreak: 0, longestStreak: 0 };
+    const totalPossible = daysInMonth.length * todos.length;
+    let totalCompleted = 0;
+    todos.forEach(todo => {
+      totalCompleted += getCompletionsForMonth(todo).length;
+    });
+    const percentage = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
 
-  const IconComponent = selectedTodo ? getIconComponent(selectedTodo.icon) : Target;
+    // Average current streak
+    const avgCurrentStreak = todos.length > 0
+      ? Math.round(todos.reduce((sum, t) => sum + calculateStats(t).currentStreak, 0) / todos.length)
+      : 0;
+    const avgLongestStreak = todos.length > 0
+      ? Math.round(todos.reduce((sum, t) => sum + calculateStats(t).longestStreak, 0) / todos.length)
+      : 0;
+
+    return { completedDays: totalCompleted, totalDays: totalPossible, percentage, currentStreak: avgCurrentStreak, longestStreak: avgLongestStreak };
+  };
+
+  const isOverall = selectedTodoId === null;
+  const stats = isOverall ? calculateOverallStats() : (selectedTodo ? calculateStats(selectedTodo) : null);
+
+  // For calendar: overall shows aggregated heat, individual shows single
+  const getCalendarCompletions = () => {
+    if (isOverall) {
+      // Aggregate: a day is "completed" if majority of todos are done
+      const dayCounts: Record<string, number> = {};
+      todos.forEach(todo => {
+        todo.completions.forEach(dateStr => {
+          dayCounts[dateStr] = (dayCounts[dateStr] || 0) + 1;
+        });
+      });
+      return Object.keys(dayCounts).filter(dateStr => {
+        const date = new Date(dateStr);
+        return isSameMonth(date, currentMonth) && dayCounts[dateStr] >= Math.ceil(todos.length / 2);
+      });
+    }
+    return selectedTodo ? getCompletionsForMonth(selectedTodo) : [];
+  };
+
+  const calendarCompletions = getCalendarCompletions();
+
+  // Show More logic
+  const INITIAL_SHOW = 3;
+  const visibleTodos = showAll ? todos : todos.slice(0, INITIAL_SHOW);
+  const hasMore = todos.length > INITIAL_SHOW;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -89,13 +124,26 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
       <div className="glass-card p-4">
         <h3 className="text-sm font-medium text-muted-foreground mb-3">Select Habit</h3>
         <div className="flex flex-wrap gap-2">
-          {todos.map((todo) => {
+          {/* Overall button */}
+          <button
+            onClick={() => setSelectedTodoId(null)}
+            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-300 ${
+              isOverall
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                : "bg-secondary/50 text-foreground hover:bg-secondary"
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="text-sm font-medium">Overall</span>
+          </button>
+
+          {visibleTodos.map((todo) => {
             const Icon = getIconComponent(todo.icon);
-            const isSelected = selectedTodo?.id === todo.id;
+            const isSelected = selectedTodoId === todo.id;
             return (
               <button
                 key={todo.id}
-                onClick={() => setSelectedTodo(todo)}
+                onClick={() => setSelectedTodoId(todo.id)}
                 className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-300 ${
                   isSelected
                     ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
@@ -107,10 +155,20 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
               </button>
             );
           })}
+
+          {hasMore && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="px-4 py-2 rounded-xl flex items-center gap-1 bg-secondary/30 text-muted-foreground hover:bg-secondary/50 transition-all"
+            >
+              <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
+              <span className="text-sm font-medium">{showAll ? "Show Less" : `+${todos.length - INITIAL_SHOW} More`}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {selectedTodo && selectedStats && (
+      {stats && (
         <>
           {/* Stats cards */}
           <div className="grid grid-cols-3 gap-4">
@@ -118,54 +176,42 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
               <div className="flex items-center justify-center mb-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-primary">{selectedStats.percentage}%</div>
+              <div className="text-3xl font-bold text-primary">{stats.percentage}%</div>
               <div className="text-xs text-muted-foreground">Completion Rate</div>
             </div>
             <div className="glass-card p-4 text-center">
               <div className="flex items-center justify-center mb-2">
                 <Flame className="h-5 w-5 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-foreground">{selectedStats.currentStreak}</div>
-              <div className="text-xs text-muted-foreground">Current Streak</div>
+              <div className="text-3xl font-bold text-foreground">{stats.currentStreak}</div>
+              <div className="text-xs text-muted-foreground">{isOverall ? "Avg Streak" : "Current Streak"}</div>
             </div>
             <div className="glass-card p-4 text-center">
               <div className="flex items-center justify-center mb-2">
                 <Flame className="h-5 w-5 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-foreground">{selectedStats.longestStreak}</div>
-              <div className="text-xs text-muted-foreground">Longest Streak</div>
+              <div className="text-3xl font-bold text-foreground">{stats.longestStreak}</div>
+              <div className="text-xs text-muted-foreground">{isOverall ? "Avg Best" : "Longest Streak"}</div>
             </div>
           </div>
 
           {/* Calendar */}
           <div className="glass-card p-6">
             <div className="flex items-center justify-between mb-6">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="h-8 w-8"
-              >
+              <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="h-8 w-8">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <h3 className="text-lg font-semibold text-foreground">
                 {format(currentMonth, "MMMM yyyy")}
               </h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="h-8 w-8"
-              >
+              <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="h-8 w-8">
                 <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-2">
               {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                <div key={i} className="text-center text-xs text-muted-foreground font-medium py-2">
-                  {day}
-                </div>
+                <div key={i} className="text-center text-xs text-muted-foreground font-medium py-2">{day}</div>
               ))}
             </div>
 
@@ -173,13 +219,11 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
               {Array.from({ length: monthStart.getDay() }).map((_, i) => (
                 <div key={`empty-${i}`} className="aspect-square" />
               ))}
-
               {daysInMonth.map((day) => {
                 const dateStr = format(day, "yyyy-MM-dd");
-                const isCompleted = selectedCompletions.includes(dateStr);
+                const isCompleted = calendarCompletions.includes(dateStr);
                 const isTodayDate = isToday(day);
                 const isFuture = !isBefore(day, today) && !isTodayDate;
-
                 return (
                   <div
                     key={dateStr}
@@ -199,7 +243,7 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
             <div className="mt-6 pt-4 border-t border-border">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {selectedStats.completedDays} of {selectedStats.totalDays} days completed
+                  {stats.completedDays} of {stats.totalDays} {isOverall ? "total completions" : "days completed"}
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded bg-primary" />

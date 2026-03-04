@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, CheckCircle2, Circle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Header from "@/components/Header";
-import DateDisplay from "@/components/DateDisplay";
 import TodoItem from "@/components/TodoItem";
 import TodoDivider from "@/components/TodoDivider";
 import ComingSoon from "@/components/ComingSoon";
@@ -19,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
 import { useNotes } from "@/hooks/useNotes";
+import { format } from "date-fns";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -71,6 +71,28 @@ const Index = () => {
   if (!user && !isGuest) return null;
 
   const isLoading = todosLoading || notesLoading;
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+
+  // Split todos into Remaining and Done for today
+  const remainingTodos = todos.filter(t => !t.completions.includes(todayStr));
+  const doneTodos = todos.filter(t => t.completions.includes(todayStr));
+
+  const renderTodoSection = (sectionTodos: typeof todos, sectionDividers: typeof dividers) => {
+    return sectionDividers.map((divider, index) => {
+      const dividerTodos = sectionTodos.filter((t) => t.dividerId === divider.id);
+      if (dividerTodos.length === 0) return null;
+      return (
+        <div key={divider.id} style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
+          <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
+          <div className="space-y-3">
+            {dividerTodos.map((todo) => (
+              <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} />
+            ))}
+          </div>
+        </div>
+      );
+    }).filter(Boolean);
+  };
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -91,13 +113,11 @@ const Index = () => {
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
-          {isGuest ? (
+          {isGuest && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full">Guest</span>
               <button onClick={handleSignOut} className="text-xs text-primary hover:underline">Sign in</button>
             </div>
-          ) : (
-            <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} />
           )}
         </div>
 
@@ -112,24 +132,50 @@ const Index = () => {
                 Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
               </div>
             )}
-            {todos.length > 0 && (
-              <DateDisplay weekStart={new Date(todos.reduce((oldest, todo) => todo.createdAt < oldest ? todo.createdAt : oldest, todos[0].createdAt))} />
+
+            {/* Remaining Section */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <Circle className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold text-foreground">Remaining</h2>
+                <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
+                  {remainingTodos.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {remainingTodos.length > 0 ? (
+                  renderTodoSection(remainingTodos, dividers)
+                ) : todos.length > 0 ? (
+                  <p className="text-muted-foreground text-sm italic pl-8 mb-4">All done for today! 🎉</p>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Done Section */}
+            {doneTodos.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4 px-1">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">Done</h2>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    {doneTodos.length}
+                  </span>
+                </div>
+                <div className="space-y-4 opacity-80">
+                  {renderTodoSection(doneTodos, dividers)}
+                </div>
+              </div>
             )}
+
+            {/* Divider management (always visible) */}
             <div className="space-y-4">
-              {dividers.map((divider, index) => {
+              {dividers.map((divider) => {
                 const dividerTodos = todos.filter((t) => t.dividerId === divider.id);
+                if (dividerTodos.length > 0) return null; // Already rendered above
                 return (
-                  <div key={divider.id} style={{ animationDelay: `${0.2 + index * 0.1}s` }}>
+                  <div key={divider.id}>
                     <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
-                    {dividerTodos.length > 0 ? (
-                      <div className="space-y-3">
-                        {dividerTodos.map((todo) => (
-                          <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} />
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-sm italic pl-8 mb-4">No habits yet</p>
-                    )}
+                    <p className="text-muted-foreground text-sm italic pl-8 mb-4">No habits yet</p>
                   </div>
                 );
               })}
@@ -151,6 +197,11 @@ const Index = () => {
           <ComingSoon section={activeTab} />
         )}
       </div>
+
+      {/* Profile menu - fixed bottom-left */}
+      {!isGuest && (
+        <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} />
+      )}
 
       <FloatingAIChat
         open={chatOpen}

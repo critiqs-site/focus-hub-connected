@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
-import { format, addDays, isSameDay, isAfter } from "date-fns";
+import { format, subDays, isSameDay, isAfter } from "date-fns";
 
 interface TodoItemProps {
   todo: Todo;
-  onToggleDay: (id: string, dayIndex: number) => void;
+  onToggleDay: (id: string, dateStr: string) => void;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
 }
@@ -31,19 +31,27 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
 
   const IconComponent = getIconComponent(todo.icon || "Target");
   const completions = todo.completions || [];
-  const percentage = Math.round((completions.length / 7) * 100);
-  const createdDate = new Date(todo.createdAt || new Date());
   const today = new Date();
+  const todayStr = format(today, "yyyy-MM-dd");
+  const isTodayCompleted = completions.includes(todayStr);
 
+  // Rolling 7-day window: today + 6 previous days
   const days = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(createdDate, i);
-    const dateStr = format(date, 'yyyy-MM-dd');
+    const date = subDays(today, 6 - i); // oldest first, today last
+    const dateStr = format(date, "yyyy-MM-dd");
     const isCompleted = completions.includes(dateStr);
     const isToday = isSameDay(date, today);
-    const isFuture = isAfter(date, today) && !isToday;
-    const dayLabel = format(date, 'd');
-    return { date, dateStr, isCompleted, isToday, isFuture, dayLabel, index: i };
+    const dayLabel = format(date, "d");
+    return { date, dateStr, isCompleted, isToday, dayLabel };
   });
+
+  // Percentage based on rolling 7 days
+  const completedCount = days.filter(d => d.isCompleted).length;
+  const percentage = Math.round((completedCount / 7) * 100);
+
+  const handleQuickToggle = () => {
+    onToggleDay(todo.id, todayStr);
+  };
 
   return (
     <div className="group glass-card p-4 pt-6 transition-all duration-300 hover:border-primary/30 animate-scroll-fade-in relative overflow-hidden">
@@ -58,9 +66,21 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
         {/* Top row on mobile / Left side on desktop */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="relative p-2.5 md:p-3 rounded-xl bg-primary/20 orange-glow shrink-0">
+          {/* Clickable icon area to toggle today */}
+          <button
+            onClick={handleQuickToggle}
+            className={`relative p-2.5 md:p-3 rounded-xl shrink-0 transition-all duration-300 ${
+              isTodayCompleted
+                ? "bg-primary/20 orange-glow ring-2 ring-primary"
+                : "bg-primary/10 hover:bg-primary/20"
+            }`}
+            title={isTodayCompleted ? "Mark as not done today" : "Mark as done today"}
+          >
+            {isTodayCompleted && (
+              <Check className="absolute -top-1 -right-1 h-4 w-4 text-primary-foreground bg-primary rounded-full p-0.5" />
+            )}
             <IconComponent className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-          </div>
+          </button>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -119,43 +139,47 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
           )}
         </div>
 
-        {/* 7 day circles */}
-        <div className="flex items-center justify-between md:justify-end gap-1 md:gap-1.5 shrink-0">
-          {days.map((day) => (
-            <button
-              key={day.dateStr}
-              disabled={day.isFuture}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!day.isFuture) {
-                  onToggleDay(todo.id, day.index);
-                }
-              }}
-              className={`
-                relative w-8 h-8 md:w-8 md:h-8 rounded-full flex items-center justify-center
-                transition-all duration-300
-                ${day.isFuture
-                  ? "opacity-40 cursor-not-allowed border-2 border-muted-foreground/20 text-muted-foreground/50"
-                  : day.isCompleted
-                    ? "bg-primary text-primary-foreground hover:scale-110"
-                    : "border-2 border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110"
-                }
-                ${day.isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
-              `}
-              title={format(day.date, 'MMM d')}
-            >
-              {day.isCompleted ? (
-                <Check className="h-4 w-4 animate-scale-in" />
-              ) : (
-                <span className="text-xs font-medium">{day.dayLabel}</span>
-              )}
-            </button>
-          ))}
+        {/* 7 day circles - scrollable on mobile */}
+        <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-1 md:gap-1.5 flex-nowrap">
+            {days.map((day) => {
+              const isCompletedToday = day.isToday && day.isCompleted;
+              const isCompletedPast = !day.isToday && day.isCompleted;
+
+              return (
+                <button
+                  key={day.dateStr}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleDay(todo.id, day.dateStr);
+                  }}
+                  className={`
+                    relative min-w-[2rem] w-8 h-8 rounded-full flex items-center justify-center
+                    transition-all duration-300 flex-shrink-0
+                    ${isCompletedToday
+                      ? "bg-primary text-primary-foreground hover:scale-110"
+                      : isCompletedPast
+                        ? "bg-muted-foreground/40 text-background hover:scale-110"
+                        : "border-2 border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110"
+                    }
+                    ${day.isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
+                  `}
+                  title={format(day.date, "MMM d")}
+                >
+                  {day.isCompleted ? (
+                    <Check className="h-4 w-4 animate-scale-in" />
+                  ) : (
+                    <span className="text-xs font-medium">{day.dayLabel}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Mobile-only action buttons */}
           {!isEditing && (
             <div
-              className="flex md:hidden gap-1 ml-2"
+              className="flex md:hidden gap-1 ml-2 flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               <Button
