@@ -72,22 +72,16 @@ const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
   // Overall stats: aggregate across all todos
   const calculateOverallStats = () => {
     if (todos.length === 0) return { completedDays: 0, totalDays: 0, percentage: 0, currentStreak: 0, longestStreak: 0 };
+    
+    // Average of individual todo percentages
+    const individualStats = todos.map(t => calculateStats(t));
+    const avgPercentage = Math.round(individualStats.reduce((sum, s) => sum + s.percentage, 0) / todos.length);
+    const totalCompleted = individualStats.reduce((sum, s) => sum + s.completedDays, 0);
     const totalPossible = daysInMonth.length * todos.length;
-    let totalCompleted = 0;
-    todos.forEach(todo => {
-      totalCompleted += getCompletionsForMonth(todo).length;
-    });
-    const percentage = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+    const avgCurrentStreak = Math.round(individualStats.reduce((sum, s) => sum + s.currentStreak, 0) / todos.length);
+    const avgLongestStreak = Math.round(individualStats.reduce((sum, s) => sum + s.longestStreak, 0) / todos.length);
 
-    // Average current streak
-    const avgCurrentStreak = todos.length > 0
-      ? Math.round(todos.reduce((sum, t) => sum + calculateStats(t).currentStreak, 0) / todos.length)
-      : 0;
-    const avgLongestStreak = todos.length > 0
-      ? Math.round(todos.reduce((sum, t) => sum + calculateStats(t).longestStreak, 0) / todos.length)
-      : 0;
-
-    return { completedDays: totalCompleted, totalDays: totalPossible, percentage, currentStreak: avgCurrentStreak, longestStreak: avgLongestStreak };
+    return { completedDays: totalCompleted, totalDays: totalPossible, percentage: avgPercentage, currentStreak: avgCurrentStreak, longestStreak: avgLongestStreak };
   };
 
   const isOverall = selectedTodoId === null;
