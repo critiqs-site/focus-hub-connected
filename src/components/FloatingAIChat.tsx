@@ -115,23 +115,57 @@ const FloatingAIChat = ({
   const sendToAI = useCallback(async (allMessages: Message[]) => {
     setIsLoading(true);
     try {
-      const enrichedTodos = todos.map(t => ({
-        id: t.id, text: t.text, icon: t.icon,
-        dividerName: dividers.find(d => d.id === t.dividerId)?.name || "Unknown",
-      }));
+      // Build context summary
+      let contextSummary = "";
+      if (dividers.length) {
+        contextSummary += `\n\n[USER DATA]\nSections:\n${dividers.map(d => `- "${d.name}" (id: ${d.id}, icon: ${d.icon})`).join("\n")}`;
+      }
+      if (todos.length) {
+        const enrichedTodos = todos.map(t => ({
+          id: t.id, text: t.text, icon: t.icon,
+          dividerName: dividers.find(d => d.id === t.dividerId)?.name || "Unknown",
+        }));
+        contextSummary += `\n\nTodos:\n${enrichedTodos.map(t => `- "${t.text}" (id: ${t.id}, section: "${t.dividerName}", icon: ${t.icon})`).join("\n")}`;
+      }
+      if (interests.length) {
+        contextSummary += `\n\nUser interests: ${interests.join(", ")}`;
+      }
+      if (notes.length) {
+        const recentNotes = notes.slice(0, 5);
+        contextSummary += `\n\nRecent mood: ${recentNotes.map((n: any) => `${n.date}: ${n.mood}${n.note ? ` - "${n.note}"` : ""}`).join("; ")}`;
+      }
+      if (contextSummary) contextSummary += "\n[END USER DATA]";
 
-      const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: {
-          messages: allMessages.map(m => ({
-            role: m.role, content: m.content,
-            ...(m.image ? { image: m.image } : {}),
-          })),
-          context: { todos: enrichedTodos, dividers, notes, interests },
-        },
+      const processedMessages = allMessages.map(m => {
+        if (m.image && m.role === "user") {
+          return {
+            role: "user",
+            content: [
+              { type: "text", text: m.content || "" },
+              { type: "image_url", image_url: { url: m.image } },
+            ],
+          };
+        }
+        return { role: m.role, content: m.content };
       });
 
-      if (error) throw error;
-      const reply = data?.reply || "Sorry, something went wrong.";
+      const response = await fetch("https://text.pollinations.ai/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai-fast",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT + contextSummary },
+            ...processedMessages,
+          ],
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) throw new Error("AI service error");
+
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || "Sorry, something went wrong.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (e) {
       console.error("Chat error:", e);
