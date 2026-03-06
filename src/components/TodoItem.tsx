@@ -140,7 +140,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
         </div>
 
         {/* 7 day circles - scrollable on mobile */}
-        <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
           <div className="flex items-center gap-1 md:gap-1.5 flex-nowrap">
             {days.map((day) => {
               const isCompletedToday = day.isToday && day.isCompleted;
