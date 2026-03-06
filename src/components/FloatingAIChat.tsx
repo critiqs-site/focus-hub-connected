@@ -93,26 +93,21 @@ const FloatingAIChat = ({
   const sendToAI = useCallback(async (allMessages: Message[]) => {
     setIsLoading(true);
     try {
-      // Build context summary
-      let contextSummary = "";
-      if (dividers.length) {
-        contextSummary += `\n\n[USER DATA]\nSections:\n${dividers.map(d => `- "${d.name}" (id: ${d.id}, icon: ${d.icon})`).join("\n")}`;
+      // Build compact context
+      let ctx = "";
+      if (dividers.length || todos.length) {
+        const todoLines = todos.map(t => {
+          const sec = dividers.find(d => d.id === t.dividerId)?.name || "?";
+          return `${t.id}|${t.text}|${sec}|${t.icon}`;
+        });
+        const divLines = dividers.map(d => `${d.id}|${d.name}|${d.icon}`);
+        ctx += `\n[DATA]\nSections: ${divLines.join("; ")}\nTodos: ${todoLines.join("; ")}`;
       }
-      if (todos.length) {
-        const enrichedTodos = todos.map(t => ({
-          id: t.id, text: t.text, icon: t.icon,
-          dividerName: dividers.find(d => d.id === t.dividerId)?.name || "Unknown",
-        }));
-        contextSummary += `\n\nTodos:\n${enrichedTodos.map(t => `- "${t.text}" (id: ${t.id}, section: "${t.dividerName}", icon: ${t.icon})`).join("\n")}`;
-      }
-      if (interests.length) {
-        contextSummary += `\n\nUser interests: ${interests.join(", ")}`;
-      }
+      if (interests.length) ctx += `\nInterests: ${interests.join(",")}`;
       if (notes.length) {
-        const recentNotes = notes.slice(0, 5);
-        contextSummary += `\n\nRecent mood: ${recentNotes.map((n: any) => `${n.date}: ${n.mood}${n.note ? ` - "${n.note}"` : ""}`).join("; ")}`;
+        ctx += `\nMoods: ${notes.slice(0, 3).map((n: any) => `${n.mood}`).join(",")}`;
       }
-      if (contextSummary) contextSummary += "\n[END USER DATA]";
+      if (ctx) ctx += "\n[/DATA]";
 
       const processedMessages = allMessages.map(m => {
         if (m.image && m.role === "user") {
@@ -133,10 +128,9 @@ const FloatingAIChat = ({
         body: JSON.stringify({
           model: "openai-fast",
           messages: [
-            { role: "system", content: SYSTEM_PROMPT + contextSummary },
+            { role: "system", content: SYSTEM_PROMPT + ctx },
             ...processedMessages,
           ],
-          stream: false,
         }),
       });
 
