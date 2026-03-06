@@ -1,8 +1,42 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageSquare, X, Send, Plus, Loader2, Bot, User, Check, Trash2, Pencil, ArrowRight, ImageIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import type { Todo, Divider } from "@/types/todo";
+
+const SYSTEM_PROMPT = `You are CritiQs AI — a chill, smart fitness & wellness buddy. You text like a friend, not a professor.
+
+RESPONSE RULES:
+- MAX 3-5 sentences for casual chat
+- MAX 8-10 short bullets for advice
+- 1-3 emojis per message, natural placement
+- Be direct, no fluff
+
+GREETING: Short greeting + emoji + ONE question. Nothing else.
+
+TODO MANAGEMENT:
+You can manage user's habits/todos. You have FULL access to their todo list via context.
+
+When the user asks about their todos, you can:
+1. LIST todos — just tell them what you see from context
+2. DELETE a todo — use [ACTION:DELETE:todoId:todoText]
+3. RENAME a todo — use [ACTION:RENAME:todoId:newText:oldText]
+4. TRANSFER a todo to another section — use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName]
+5. CHANGE ICON — use [ACTION:ICON:todoId:newIconName:todoText]
+6. SUGGEST todos — use [ACTION:SUGGEST:dividerName:todoText:iconName] (max 5 suggestions)
+7. ADD ALL suggested — use [ACTION:ADD_ALL] after suggestions
+
+ICON NAMES: Dumbbell, Heart, Brain, BookOpen, Droplets, Sun, Moon, Star, Target, Flame, Apple, Coffee, Music, Pencil, Clock, Zap, Trophy, Smile, Shield, Leaf, Utensils, Bed, Eye, Footprints, Wind
+
+ACTION RULES:
+- Match todo names LOOSELY — if user says "dinner" match "Dinner for 10 Minutes"
+- Use EXACT todo IDs from context for delete/rename/transfer/icon
+- For transfer, use the target divider's EXACT ID from context
+- Write your casual text FIRST, then action markers on NEW LINES at the end
+- For suggestions, check user interests and avoid duplicating existing habits
+- When user says "add top 3" or similar after suggestions, generate ADD actions for those specific items
+- Keep action text SHORT (2-5 words)
+
+CONTEXT: You silently see user's todos, sections, interests, and mood entries. Reference them when asked.`;
 
 type Message = { role: "user" | "assistant"; content: string; image?: string };
 
@@ -81,23 +115,57 @@ const FloatingAIChat = ({
   const sendToAI = useCallback(async (allMessages: Message[]) => {
     setIsLoading(true);
     try {
-      const enrichedTodos = todos.map(t => ({
-        id: t.id, text: t.text, icon: t.icon,
-        dividerName: dividers.find(d => d.id === t.dividerId)?.name || "Unknown",
-      }));
+      // Build context summary
+      let contextSummary = "";
+      if (dividers.length) {
+        contextSummary += `\n\n[USER DATA]\nSections:\n${dividers.map(d => `- "${d.name}" (id: ${d.id}, icon: ${d.icon})`).join("\n")}`;
+      }
+      if (todos.length) {
+        const enrichedTodos = todos.map(t => ({
+          id: t.id, text: t.text, icon: t.icon,
+          dividerName: dividers.find(d => d.id === t.dividerId)?.name || "Unknown",
+        }));
+        contextSummary += `\n\nTodos:\n${enrichedTodos.map(t => `- "${t.text}" (id: ${t.id}, section: "${t.dividerName}", icon: ${t.icon})`).join("\n")}`;
+      }
+      if (interests.length) {
+        contextSummary += `\n\nUser interests: ${interests.join(", ")}`;
+      }
+      if (notes.length) {
+        const recentNotes = notes.slice(0, 5);
+        contextSummary += `\n\nRecent mood: ${recentNotes.map((n: any) => `${n.date}: ${n.mood}${n.note ? ` - "${n.note}"` : ""}`).join("; ")}`;
+      }
+      if (contextSummary) contextSummary += "\n[END USER DATA]";
 
-      const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: {
-          messages: allMessages.map(m => ({
-            role: m.role, content: m.content,
-            ...(m.image ? { image: m.image } : {}),
-          })),
-          context: { todos: enrichedTodos, dividers, notes, interests },
-        },
+      const processedMessages = allMessages.map(m => {
+        if (m.image && m.role === "user") {
+          return {
+            role: "user",
+            content: [
+              { type: "text", text: m.content || "" },
+              { type: "image_url", image_url: { url: m.image } },
+            ],
+          };
+        }
+        return { role: m.role, content: m.content };
       });
 
-      if (error) throw error;
-      const reply = data?.reply || "Sorry, something went wrong.";
+      const response = await fetch("https://text.pollinations.ai/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai-fast",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT + contextSummary },
+            ...processedMessages,
+          ],
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) throw new Error("AI service error");
+
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || "Sorry, something went wrong.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (e) {
       console.error("Chat error:", e);
