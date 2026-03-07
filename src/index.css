@@ -200,4 +200,84 @@
     0%, 90%, 100% { transform: scaleY(1); }
     95% { transform: scaleY(0.1); }
   }
+
+  @keyframes vortexSuck {
+    0% {
+      transform: scale(1) rotate(0deg) translateY(0);
+      opacity: 1;
+    }
+    40% {
+      transform: scale(0.8) rotate(180deg) translateY(10px);
+      opacity: 0.8;
+    }
+    70% {
+      transform: scale(0.3) rotate(540deg) translateY(30px);
+      opacity: 0.4;
+    }
+    100% {
+      transform: scale(0) rotate(720deg) translateY(50px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes popConfetti {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+    40% { transform: scale(1.4); box-shadow: 0 0 16px 4px hsl(var(--primary) / 0.5); }
+    70% { transform: scale(0.95); box-shadow: 0 0 8px 2px hsl(var(--primary) / 0.2); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 10px 25px -5px hsl(var(--primary) / 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 10px 35px -3px hsl(var(--primary) / 0.6); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .animate-vortex-suck {
+    animation: vortexSuck 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+    pointer-events: none;
+  }
+
+  .animate-pop-confetti {
+    animation: popConfetti 0.4s ease-out;
+  }
+
+  .animate-breathe {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  .shimmer-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary-foreground) / 0.15) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Disable all custom animations when no-effects is active */
+  .no-effects .animate-vortex-suck,
+  .no-effects .animate-pop-confetti,
+  .no-effects .animate-breathe,
+  .no-effects .animate-scroll-fade-in,
+  .no-effects .animate-scale-in,
+  .no-effects .animate-fade-in,
+  .no-effects .animate-slide-up,
+  .no-effects .animate-float,
+  .no-effects .animate-bounce-slow {
+    animation: none !important;
+  }
+
+  .no-effects .shimmer-bar::after {
+    animation: none !important;
+  }
 }

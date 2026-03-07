@@ -1,4 +1,4 @@
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,6 +6,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { useEffects } from "@/contexts/EffectsContext";
 
 interface UserProfileMenuProps {
   email: string;
@@ -14,6 +16,8 @@ interface UserProfileMenuProps {
 }
 
 const UserProfileMenu = ({ email, name, onSignOut }: UserProfileMenuProps) => {
+  const { effectsEnabled, toggleEffects } = useEffects();
+
   return (
     <div className="fixed bottom-6 left-6 z-50">
       <DropdownMenu>
@@ -28,6 +32,17 @@ const UserProfileMenu = ({ email, name, onSignOut }: UserProfileMenuProps) => {
               <p className="font-semibold text-foreground">{name}</p>
             )}
             <p className="text-sm text-muted-foreground truncate">{email}</p>
+          </div>
+          <DropdownMenuSeparator className="bg-primary/10" />
+          <div className="px-3 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm text-foreground">Effects</span>
+            </div>
+            <Switch
+              checked={effectsEnabled}
+              onCheckedChange={toggleEffects}
+            />
           </div>
           <DropdownMenuSeparator className="bg-primary/10" />
           <DropdownMenuItem

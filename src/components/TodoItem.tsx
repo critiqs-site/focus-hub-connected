@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
-import { format, subDays, isSameDay, isAfter } from "date-fns";
+import { format, subDays, isSameDay } from "date-fns";
+import { useEffects } from "@/contexts/EffectsContext";
 
 interface TodoItemProps {
   todo: Todo;
@@ -16,6 +17,9 @@ interface TodoItemProps {
 const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
+  const [isBeingSucked, setIsBeingSucked] = useState(false);
+  const [popCircle, setPopCircle] = useState<string | null>(null);
+  const { effectsEnabled } = useEffects();
 
   const handleSave = () => {
     if (editText.trim()) {
@@ -35,9 +39,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
   const todayStr = format(today, "yyyy-MM-dd");
   const isTodayCompleted = completions.includes(todayStr);
 
-  // Rolling 7-day window: today + 6 previous days
   const days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(today, 6 - i); // oldest first, today last
+    const date = subDays(today, 6 - i);
     const dateStr = format(date, "yyyy-MM-dd");
     const isCompleted = completions.includes(dateStr);
     const isToday = isSameDay(date, today);
@@ -45,28 +48,57 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
     return { date, dateStr, isCompleted, isToday, dayLabel };
   });
 
-  // Percentage based on rolling 7 days
   const completedCount = days.filter(d => d.isCompleted).length;
   const percentage = Math.round((completedCount / 7) * 100);
 
   const handleQuickToggle = () => {
-    onToggleDay(todo.id, todayStr);
+    const willComplete = !isTodayCompleted;
+    if (willComplete && effectsEnabled) {
+      setIsBeingSucked(true);
+      setTimeout(() => {
+        onToggleDay(todo.id, todayStr);
+        setIsBeingSucked(false);
+      }, 600);
+    } else {
+      onToggleDay(todo.id, todayStr);
+    }
+  };
+
+  const handleDayToggle = (dateStr: string) => {
+    const willComplete = !completions.includes(dateStr);
+    if (willComplete && effectsEnabled) {
+      setPopCircle(dateStr);
+      setTimeout(() => setPopCircle(null), 400);
+    }
+    if (dateStr === todayStr && willComplete && effectsEnabled) {
+      setIsBeingSucked(true);
+      setTimeout(() => {
+        onToggleDay(todo.id, dateStr);
+        setIsBeingSucked(false);
+      }, 600);
+    } else {
+      onToggleDay(todo.id, dateStr);
+    }
   };
 
   return (
-    <div className="group glass-card p-4 pt-6 transition-all duration-300 hover:border-primary/30 animate-scroll-fade-in relative overflow-hidden">
-      {/* Progress bar */}
+    <div
+      className={`group glass-card p-4 pt-6 transition-all duration-300 hover:border-primary/30 animate-scroll-fade-in relative overflow-hidden ${
+        isBeingSucked && effectsEnabled ? "animate-vortex-suck" : ""
+      }`}
+    >
+      {/* Progress bar with shimmer */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-muted/30">
         <div
-          className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
+          className={`h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 relative overflow-hidden ${
+            effectsEnabled ? "shimmer-bar" : ""
+          }`}
           style={{ width: `${percentage}%` }}
         />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-        {/* Top row on mobile / Left side on desktop */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          {/* Clickable icon area to toggle today */}
           <button
             onClick={handleQuickToggle}
             className={`relative p-2.5 md:p-3 rounded-xl shrink-0 transition-all duration-300 ${
@@ -113,45 +145,34 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
             )}
           </div>
 
-          {/* Hover actions - desktop only */}
           {!isEditing && (
             <div
               className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsEditing(true)}
-                className="h-8 w-8 p-0 glass-button"
-              >
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)} className="h-8 w-8 p-0 glass-button">
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onDelete(todo.id)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/20"
-              >
+              <Button size="sm" variant="ghost" onClick={() => onDelete(todo.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/20">
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
           )}
         </div>
 
-        {/* 7 day circles - scrollable on mobile */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
           <div className="flex items-center gap-1 md:gap-1.5 flex-nowrap">
             {days.map((day) => {
               const isCompletedToday = day.isToday && day.isCompleted;
               const isCompletedPast = !day.isToday && day.isCompleted;
+              const isPoppingNow = popCircle === day.dateStr && effectsEnabled;
 
               return (
                 <button
                   key={day.dateStr}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleDay(todo.id, day.dateStr);
+                    handleDayToggle(day.dateStr);
                   }}
                   className={`
                     relative min-w-[2rem] w-8 h-8 rounded-full flex items-center justify-center
@@ -163,6 +184,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
                         : "border-2 border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110"
                     }
                     ${day.isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
+                    ${isPoppingNow ? "animate-pop-confetti" : ""}
                   `}
                   title={format(day.date, "MMM d")}
                 >
@@ -176,26 +198,15 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
             })}
           </div>
 
-          {/* Mobile-only action buttons */}
           {!isEditing && (
             <div
               className="flex md:hidden gap-1 ml-2 flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsEditing(true)}
-                className="h-8 w-8 p-0 glass-button"
-              >
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)} className="h-8 w-8 p-0 glass-button">
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onDelete(todo.id)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/20"
-              >
+              <Button size="sm" variant="ghost" onClick={() => onDelete(todo.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/20">
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
