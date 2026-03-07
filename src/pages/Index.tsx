@@ -155,7 +155,7 @@ const Index = () => {
             {doneTodos.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4 px-1">
-                  <CheckCircle2 className="h-5 w-5 text-primary animate-pulse" />
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
                   <h2 className="text-lg font-semibold text-foreground">Done</h2>
                   <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                     {doneTodos.length}
