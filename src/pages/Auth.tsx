@@ -145,7 +145,6 @@ const Auth = () => {
         <div className="flex justify-center mb-4 animate-scale-in">
           <img src={logoFavicon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-xl" />
         </div>
-        </div>
 
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-1">
