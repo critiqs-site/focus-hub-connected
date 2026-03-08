@@ -103,9 +103,10 @@ const Index = () => {
           onComplete={() => { completeOnboarding(); refetchTodos(); }}
         />
       )}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/3 rounded-full blur-3xl" />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="ambient-orb top-[-10%] left-[-5%] w-[600px] h-[600px] bg-primary/10" />
+        <div className="ambient-orb bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/6" />
+        <div className="ambient-orb top-[20%] right-[10%] w-[400px] h-[400px] bg-secondary/20" />
       </div>
 
       <Navbar />

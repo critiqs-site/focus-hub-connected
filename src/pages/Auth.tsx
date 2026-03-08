@@ -136,8 +136,12 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="ambient-orb top-[-10%] right-[5%] w-[450px] h-[450px] bg-primary/10" />
+        <div className="ambient-orb bottom-[10%] left-[-5%] w-[350px] h-[350px] bg-primary/6" />
+      </div>
+      <div className="w-full max-w-md relative z-10">
         <button
           onClick={() => setStep("welcome")}
           className="mb-4 text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group"
