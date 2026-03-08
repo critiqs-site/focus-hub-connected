@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DIVIDER_ICONS } from "@/lib/icons";
+import IconPickerGrid from "@/components/IconPickerGrid";
 
 interface AddDividerDialogProps {
   open: boolean;
