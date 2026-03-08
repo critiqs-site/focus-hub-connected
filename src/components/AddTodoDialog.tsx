@@ -68,16 +68,11 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
     }
   }, []);
 
-  // Debounce text input for AI suggestions
-  useEffect(() => {
-    if (!open) return;
-    const timer = setTimeout(() => {
-      if (text.trim().length >= 2) {
-        fetchAiIcons(text);
-      }
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [text, open, fetchAiIcons]);
+  const handleAiSuggest = () => {
+    if (text.trim().length >= 2) {
+      fetchAiIcons(text);
+    }
+  };
 
   const handleSubmit = () => {
     if (text.trim() && dividerId) {
@@ -133,37 +128,51 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
             </p>
           </div>
 
+          {/* AI Suggest Button */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAiSuggest}
+            disabled={text.trim().length < 2 || aiLoading}
+            className="w-full border-primary/30 hover:border-primary hover:bg-primary/10 text-primary"
+          >
+            {aiLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
+            {aiLoading ? "Finding icons..." : "AI Suggest Icons"}
+          </Button>
+
           {/* AI Suggested Icons */}
-          {(aiSuggestions.length > 0 || aiLoading) && (
+          {aiSuggestions.length > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <label className="text-sm font-medium text-primary">AI Suggested Icons</label>
-                {aiLoading && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+              <label className="text-sm font-medium text-primary flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI Suggested
+              </label>
+              <div className="flex gap-2">
+                {aiSuggestions.map((iconName, idx) => {
+                  const IconComp = getIconComponent(iconName);
+                  const isSelected = selectedIcon === iconName;
+                  return (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => setSelectedIcon(iconName)}
+                      className={`p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
+                        isSelected
+                          ? "bg-primary/20 border-2 border-primary orange-glow"
+                          : "bg-secondary/50 border-2 border-primary/40 hover:border-primary/60"
+                      }`}
+                    >
+                      <IconComp className={`h-6 w-6 ${isSelected ? "text-primary" : "text-primary/70"}`} />
+                      <span className="text-[10px] text-primary font-medium">#{idx + 1}</span>
+                    </button>
+                  );
+                })}
               </div>
-              {aiSuggestions.length > 0 && (
-                <div className="flex gap-2">
-                  {aiSuggestions.map((iconName, idx) => {
-                    const IconComp = getIconComponent(iconName);
-                    const isSelected = selectedIcon === iconName;
-                    return (
-                      <button
-                        key={iconName}
-                        type="button"
-                        onClick={() => setSelectedIcon(iconName)}
-                        className={`p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
-                          isSelected
-                            ? "bg-primary/20 border-2 border-primary orange-glow"
-                            : "bg-secondary/50 border-2 border-primary/40 hover:border-primary/60"
-                        }`}
-                      >
-                        <IconComp className={`h-6 w-6 ${isSelected ? "text-primary" : "text-primary/70"}`} />
-                        <span className="text-[10px] text-primary font-medium">#{idx + 1}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           )}
 
