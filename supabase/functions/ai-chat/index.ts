@@ -41,6 +41,12 @@ ICON MATCHING:
 - Pick icons that visually match the task (e.g., Dumbbell for exercise, BookOpen for reading, Droplets for water)
 - When user says "move X to Y", use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName]
 
+DESCRIPTION RULES:
+- When user says "add description" or "describe X", use [ACTION:DESCRIBE:todoId:description:todoText]
+- Descriptions are SHORT (5-15 words), practical tips or timing info
+- Examples: "30 min at mid-day", "Before breakfast, 10 reps", "Evening wind-down routine"
+- You can also proactively add descriptions when suggesting new todos
+
 TASK INSPIRATION (use these as ideas when suggesting habits):
 - Go Outside at Mid-day, Watch Self Improvement Videos, Do One Skill (Content/Editing/Coding)
 - Use Less Screen Time, Drink 2L Water, Read 10 Pages, Walk 10K Steps
