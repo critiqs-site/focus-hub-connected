@@ -106,7 +106,7 @@ const Index = () => {
       return (
         <div key={divider.id} style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
           <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {dividerTodos.map((todo) => (
               <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
