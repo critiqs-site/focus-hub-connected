@@ -38,7 +38,7 @@ export const useTodos = (userId: string | undefined) => {
 
     if (todosRes.error) console.error("Todos error:", todosRes.error);
     else setTodos(todosRes.data.map((t) => ({
-      id: t.id, text: t.text, dividerId: t.divider_id, icon: t.icon,
+      id: t.id, text: t.text, description: (t as any).description || null, dividerId: t.divider_id, icon: t.icon,
       createdAt: format(new Date(t.created_at), "yyyy-MM-dd"), completions: t.completions || [],
     })));
 

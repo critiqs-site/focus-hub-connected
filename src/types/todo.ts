@@ -1,6 +1,7 @@
 export interface Todo {
   id: string;
   text: string;
+  description?: string | null;
   dividerId: string;
   icon: string;
   createdAt: string;

@@ -92,12 +92,19 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
           </button>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{percentage}%</span>
-              {!isEditing && (
-                <span className="text-sm lg:text-base font-medium text-foreground truncate">
-                  {todo.text}
-                </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{percentage}%</span>
+                {!isEditing && (
+                  <span className="text-sm lg:text-base font-medium text-foreground truncate">
+                    {todo.text}
+                  </span>
+                )}
+              </div>
+              {!isEditing && todo.description && (
+                <p className="hidden md:block text-xs text-muted-foreground mt-0.5 truncate max-w-[300px] lg:max-w-[400px]">
+                  {todo.description}
+                </p>
               )}
             </div>
             {isEditing && (
