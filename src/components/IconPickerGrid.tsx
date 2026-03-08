@@ -24,32 +24,37 @@ const IconPickerGrid = ({ icons, selectedIcon, onSelect, batchSize = 15, columns
   const hasMore = visibleCount < icons.length;
 
   return (
-    <div className="space-y-2">
-      <div className={cn("grid gap-2", `grid-cols-${columns}`)}>
-        {visibleIcons.map((iconItem) => {
-          const IconComp = getIconComponent(iconItem.name);
-          return (
-            <button
-              key={iconItem.name}
-              type="button"
-              onClick={() => onSelect(iconItem.name)}
-              className={cn(
-                "p-3 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-1",
-                selectedIcon === iconItem.name
-                  ? "bg-primary/20 border-2 border-primary orange-glow"
-                  : "bg-secondary/50 border-2 border-transparent hover:border-primary/30"
-              )}
-              title={iconItem.label}
-            >
-              <IconComp className={cn(
-                "h-5 w-5 transition-colors",
-                selectedIcon === iconItem.name ? "text-primary" : "text-muted-foreground"
-              )} />
-              <span className="text-[9px] text-muted-foreground truncate w-full text-center">{iconItem.label}</span>
-            </button>
-          );
-        })}
-      </div>
+    <TooltipProvider delayDuration={200}>
+      <div className="space-y-2">
+        <div className={cn("grid gap-2", `grid-cols-${columns}`)}>
+          {visibleIcons.map((iconItem) => {
+            const IconComp = getIconComponent(iconItem.name);
+            return (
+              <Tooltip key={iconItem.name}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(iconItem.name)}
+                    className={cn(
+                      "p-3 rounded-xl transition-all duration-200 flex items-center justify-center",
+                      selectedIcon === iconItem.name
+                        ? "bg-primary/20 border-2 border-primary orange-glow"
+                        : "bg-secondary/50 border-2 border-transparent hover:border-primary/30"
+                    )}
+                  >
+                    <IconComp className={cn(
+                      "h-5 w-5 transition-colors",
+                      selectedIcon === iconItem.name ? "text-primary" : "text-muted-foreground"
+                    )} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {iconItem.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
       {hasMore && (
         <button
           type="button"
