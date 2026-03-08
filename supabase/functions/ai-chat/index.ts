@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "deepseek-r1",
+        model: "mistral",
         messages: [systemMessage, ...processedMessages],
         stream: false,
       }),
