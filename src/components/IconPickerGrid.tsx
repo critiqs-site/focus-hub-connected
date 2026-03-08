@@ -55,17 +55,18 @@ const IconPickerGrid = ({ icons, selectedIcon, onSelect, batchSize = 15, columns
             );
           })}
         </div>
-      {hasMore && (
-        <button
-          type="button"
-          onClick={() => setVisibleCount(prev => Math.min(prev + batchSize, icons.length))}
-          className="w-full flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-secondary/50"
-        >
-          <ChevronDown className="h-3 w-3" />
-          Show more ({icons.length - visibleCount} remaining)
-        </button>
-      )}
-    </div>
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount(prev => Math.min(prev + batchSize, icons.length))}
+            className="w-full flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-secondary/50"
+          >
+            <ChevronDown className="h-3 w-3" />
+            Show more ({icons.length - visibleCount} remaining)
+          </button>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 
