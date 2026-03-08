@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageSquare, X, Send, Plus, Loader2, Bot, User, Check, Trash2, Pencil, ArrowRight, ImageIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import type { Todo, Divider } from "@/types/todo";
+import { supabase } from "@/integrations/supabase/client";
 
 const SYSTEM_PROMPT = `You are CritiQs AI — a chill, smart fitness & wellness buddy.
 
