@@ -129,6 +129,7 @@ const Index = () => {
           </div>
         ) : activeTab === "todos" ? (
           <>
+            <CompletionBanner todos={todos} />
             {isGuest && (
               <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/20 text-sm text-muted-foreground text-center">
                 Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
