@@ -38,7 +38,7 @@ TASK INSPIRATION (real human habits for suggestions):
 type Message = { role: "user" | "assistant"; content: string; image?: string };
 
 interface ActionButton {
-  type: "DELETE" | "SUGGEST" | "ADD_ALL" | "RENAME" | "TRANSFER" | "ICON";
+  type: "DELETE" | "SUGGEST" | "ADD_ALL" | "RENAME" | "TRANSFER" | "ICON" | "DESCRIBE";
   todoId?: string;
   todoText?: string;
   dividerName?: string;
