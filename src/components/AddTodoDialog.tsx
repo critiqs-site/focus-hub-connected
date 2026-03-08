@@ -161,6 +161,7 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
   const [dividerId, setDividerId] = useState(preselectedDividerId || dividers[0]?.id || "");
   const [selectedIcon, setSelectedIcon] = useState("PersonStanding");
   const [suggestedIcons, setSuggestedIcons] = useState<string[]>([]);
+  const [isAutoDetecting, setIsAutoDetecting] = useState(false);
 
   useEffect(() => {
     if (open && preselectedDividerId) {
