@@ -380,9 +380,24 @@ const FloatingAIChat = ({
               </div>
             )}
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-center gap-2 opacity-60">
-                <Bot className="w-10 h-10 text-primary" />
-                <p className="text-sm text-muted-foreground">Hey! Ask me anything about fitness, nutrition, or manage your habits 💪</p>
+              <div className="flex flex-col items-center justify-center h-full text-center gap-3">
+                <Bot className="w-10 h-10 text-primary opacity-60" />
+                <p className="text-sm text-muted-foreground opacity-60">Hey! Ask me anything about fitness, nutrition, or manage your habits 💪</p>
+                <div className="flex flex-col gap-2 w-full mt-2">
+                  {[
+                    { label: "✨ Suggest me 3 tasks", msg: "Suggest me 3 tasks please" },
+                    { label: "🗑️ Remove my first todo", msg: "Remove my first todo" },
+                    { label: "⚡ Get tasks done faster", msg: "How can I get my tasks done faster" },
+                  ].map((q) => (
+                    <button
+                      key={q.msg}
+                      onClick={() => { setInput(q.msg); setTimeout(() => { const userMsg: Message = { role: "user", content: q.msg }; const newMessages = [...messages, userMsg]; setMessages(newMessages); setInput(""); sendToAI(newMessages); scrollToBottom(); }, 0); }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/50 hover:border-primary/30 text-sm text-foreground transition-all duration-200"
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {messages.map((msg, i) => renderMessage(msg, i))}
