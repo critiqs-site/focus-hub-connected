@@ -53,7 +53,7 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
   const glowOpacity = 0.15 + badge.glowIntensity * 0.55;
 
   return (
-    <div className="mb-5 flex flex-col items-center gap-3">
+    <div className="mb-5 lg:mb-8 flex flex-col items-center gap-3 lg:gap-4">
       {/* Big badge icon with glow */}
       <div className="relative flex items-center justify-center">
         {/* Glow layers */}
