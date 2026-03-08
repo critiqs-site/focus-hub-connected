@@ -68,16 +68,11 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
     }
   }, []);
 
-  // Debounce text input for AI suggestions
-  useEffect(() => {
-    if (!open) return;
-    const timer = setTimeout(() => {
-      if (text.trim().length >= 2) {
-        fetchAiIcons(text);
-      }
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [text, open, fetchAiIcons]);
+  const handleAiSuggest = () => {
+    if (text.trim().length >= 2) {
+      fetchAiIcons(text);
+    }
+  };
 
   const handleSubmit = () => {
     if (text.trim() && dividerId) {
