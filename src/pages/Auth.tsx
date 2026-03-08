@@ -102,8 +102,12 @@ const Auth = () => {
 
   if (step === "welcome") {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="ambient-orb top-[-15%] left-[10%] w-[500px] h-[500px] bg-primary/12" />
+          <div className="ambient-orb bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary/8" />
+        </div>
+        <div className="w-full max-w-md text-center relative z-10">
           <div className="relative mb-6 animate-scale-in">
             <img src={logoIcon} alt="CRITIQS logo" className="mx-auto w-40 h-40 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }} />
           </div>
