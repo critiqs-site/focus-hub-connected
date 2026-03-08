@@ -83,6 +83,8 @@ function parseActions(text: string): { cleanText: string; actions: ActionButton[
       actions.push({ type, todoId: match[2], targetDividerId: match[3], todoText: match[4], sectionName: match[5] });
     } else if (type === "ICON") {
       actions.push({ type, todoId: match[2], iconName: match[3], todoText: match[4] });
+    } else if (type === "DESCRIBE") {
+      actions.push({ type, todoId: match[2], description: match[3], todoText: match[4] });
     } else if (type === "ADD_ALL") {
       actions.push({ type: "ADD_ALL" });
     }

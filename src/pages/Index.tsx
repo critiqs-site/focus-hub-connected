@@ -241,6 +241,7 @@ const Index = () => {
         onRenameTodo={handleEdit}
         onTransferTodo={handleTransferTodo}
         onUpdateIcon={handleUpdateIcon}
+        onUpdateDescription={handleUpdateDescription}
       />
     </div>
   );
