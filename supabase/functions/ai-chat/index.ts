@@ -26,8 +26,9 @@ When the user asks about their todos, you can:
 3. RENAME a todo — use [ACTION:RENAME:todoId:newText:oldText]
 4. TRANSFER a todo to another section — use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName]
 5. CHANGE ICON — use [ACTION:ICON:todoId:newIconName:todoText]
-6. SUGGEST todos — use [ACTION:SUGGEST:dividerName:todoText:iconName] (max 5 suggestions)
-7. ADD ALL suggested — use [ACTION:ADD_ALL] after suggestions
+6. ADD/EDIT DESCRIPTION — use [ACTION:DESCRIBE:todoId:short description:todoText]
+7. SUGGEST todos — use [ACTION:SUGGEST:dividerName:todoText:iconName] (max 5 suggestions)
+8. ADD ALL suggested — use [ACTION:ADD_ALL] after suggestions
 
 TASK ICONS (use ONLY these for habits/todos):
 PersonStanding,Dumbbell,Footprints,Bike,Heart,Activity,Mountain,Waves,Wind,Shield,Brain,BookOpen,Lightbulb,Pencil,Target,Laptop,Monitor,Calculator,Search,FileText,Utensils,Coffee,Droplets,Apple,Salad,Sandwich,Pizza,IceCreamCone,Wine,Beer,Bed,Moon,Sunrise,Sun,CloudSun,Timer,Clock,Zap,Flame,RefreshCw,Smile,Music,Headphones,Gamepad2,Tv,Camera,Mic,Radio,PartyPopper,Gift,TreePine,Leaf,Flower2,Umbrella,Snowflake,ThermometerSun,Compass,MapPin,Globe,Flag,Pill,Stethoscope,Syringe,Eye,Droplet,Star,Rocket,Trophy,Crown,Gem,Sparkles,TrendingUp,Bookmark,ClipboardList,Tag,Home,Briefcase,Palette,Scissors,Brush,Wrench,Hammer,PaintBucket,Key,Lock,Dog,Cat,Baby,Phone,Mail,Share2,Car,Plane,Ship,Smartphone,Wifi,Battery,Download,Upload,Settings,Bell
