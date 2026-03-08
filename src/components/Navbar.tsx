@@ -10,9 +10,9 @@ const Navbar = () => {
 
   return (
     <nav className="w-full backdrop-blur-2xl relative" style={{ background: 'hsla(240, 8%, 8%, 0.4)', borderBottom: '1px solid hsla(24, 95%, 53%, 0.08)' }}>
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 h-14 lg:h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src={logoIcon} alt="CRITIQS logo" className="h-8 object-contain" style={{ mixBlendMode: 'screen' }} />
+          <img src={logoIcon} alt="CRITIQS logo" className="h-8 lg:h-10 object-contain" style={{ mixBlendMode: 'screen' }} />
         </div>
         <div className="flex items-center gap-4">
           {links.map((link) => (
