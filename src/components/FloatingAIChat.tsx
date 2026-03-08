@@ -67,7 +67,7 @@ interface FloatingAIChatProps {
 }
 
 function parseActions(text: string): { cleanText: string; actions: ActionButton[] } {
-  const actionRegex = /\[ACTION:(DELETE|SUGGEST|ADD_ALL|RENAME|TRANSFER|ICON)(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?\]/g;
+  const actionRegex = /\[ACTION:(DELETE|SUGGEST|ADD_ALL|RENAME|TRANSFER|ICON|DESCRIBE)(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?\]/g;
   const actions: ActionButton[] = [];
   let match;
 
