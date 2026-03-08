@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai-fast",
+        model: "deepseek-r1",
         messages: [systemMessage, ...processedMessages],
         stream: false,
       }),
