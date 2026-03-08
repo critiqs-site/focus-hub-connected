@@ -54,7 +54,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
   };
 
   return (
-    <div className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden" style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)'; (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsl lg:h-2a(0,0%,0%,0.4)' lg:h-2; }}>
+    <div className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden" style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)'; (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }}>
       {/* lg:h-2 Progress bar * lg:h-2/}
       <div c lg:h-2lassName="absol lg:h-2ute top-0 left- lg:h-20 right-0 h-1.5" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
         <div
