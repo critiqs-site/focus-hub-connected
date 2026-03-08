@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import type { Divider } from "@/types/todo";
 import { TODO_ICONS, getIconComponent } from "@/lib/icons";
 import IconPickerGrid from "@/components/IconPickerGrid";
-import { Sparkles } from "lucide-react";
+import { Sparkles, RefreshCw } from "lucide-react";
 
 const DESC_MAX = 60;
 
