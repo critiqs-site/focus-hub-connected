@@ -304,6 +304,15 @@ const FloatingAIChat = ({
         </button>
       );
     }
+    if (action.type === "DESCRIBE") {
+      return (
+        <button key={index} onClick={() => handleAction(action)} disabled={done}
+          className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
+          {done ? <Check className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
+          {done ? "Description added" : `Add desc to "${action.todoText}"`}
+        </button>
+      );
+    }
     if (action.type === "SUGGEST") {
       return (
         <button key={index} onClick={() => handleAction(action)} disabled={done}
