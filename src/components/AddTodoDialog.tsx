@@ -227,18 +227,43 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
                 if (e.key === "Enter") handleSubmit();
               }}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={handleAutoIcon}
-              disabled={!text.trim()}
-              className="border-primary/30 hover:bg-primary/20 hover:border-primary shrink-0"
-              title="Auto-pick best icons"
-            >
-              <Sparkles className="h-4 w-4 text-primary" />
-            </Button>
           </div>
+
+          {/* Short description */}
+          <div className="space-y-1">
+            <Input
+              placeholder="Short description (optional, desktop only)"
+              value={description}
+              onChange={(e) => {
+                if (e.target.value.length <= DESC_MAX) setDescription(e.target.value);
+              }}
+              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {description.length}/{DESC_MAX}
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAutoIcon}
+            disabled={!text.trim() || isAutoDetecting}
+            className="w-full border-primary/30 hover:bg-primary/20 hover:border-primary"
+          >
+            {isAutoDetecting ? (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" /> DETECTING...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> AUTO DETECT ICON
+              </span>
+            )}
+          </Button>
 
           {/* AI suggested icons */}
           {suggestedIcons.length > 0 && (
@@ -266,27 +291,9 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
             </div>
           )}
 
-          {/* Short description */}
-          <div className="space-y-1">
-            <Input
-              placeholder="Short description (optional, desktop only)"
-              value={description}
-              onChange={(e) => {
-                if (e.target.value.length <= DESC_MAX) setDescription(e.target.value);
-              }}
-              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {description.length}/{DESC_MAX}
-            </p>
-          </div>
-
           {/* Icon Picker */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Choose an icon</label>
+            <label className="text-sm font-medium text-muted-foreground">Or choose manually</label>
             <div className="max-h-48 overflow-y-auto pr-1">
               <IconPickerGrid
                 icons={TODO_ICONS}
