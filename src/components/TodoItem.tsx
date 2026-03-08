@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
-import { format, subDays, isSameDay, isAfter } from "date-fns";
+import { format, subDays, isSameDay } from "date-fns";
 
 interface TodoItemProps {
   todo: Todo;
@@ -35,9 +35,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
   const todayStr = format(today, "yyyy-MM-dd");
   const isTodayCompleted = completions.includes(todayStr);
 
-  // Rolling 7-day window: today + 6 previous days
   const days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(today, 6 - i); // oldest first, today last
+    const date = subDays(today, 6 - i);
     const dateStr = format(date, "yyyy-MM-dd");
     const isCompleted = completions.includes(dateStr);
     const isToday = isSameDay(date, today);
@@ -45,7 +44,6 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
     return { date, dateStr, isCompleted, isToday, dayLabel };
   });
 
-  // Percentage based on rolling 7 days
   const completedCount = days.filter(d => d.isCompleted).length;
   const percentage = Math.round((completedCount / 7) * 100);
 
@@ -54,9 +52,20 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
   };
 
   return (
-    <div className="group glass-card p-4 pt-6 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden" style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)'; (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }}>
+    <div
+      className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden"
+      style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
+      }}
+    >
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
+      <div className="absolute top-0 left-0 right-0 h-1.5 lg:h-2" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
         <div
           className="h-full transition-all duration-500"
           style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, hsl(24, 95%, 53%), hsla(24, 95%, 53%, 0.7))', boxShadow: '0 0 12px hsla(24, 95%, 53%, 0.4)' }}
@@ -69,7 +78,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
           {/* Clickable icon area to toggle today */}
           <button
             onClick={handleQuickToggle}
-            className={`relative p-2.5 md:p-3 rounded-xl shrink-0 transition-all duration-300 ${
+            className={`relative p-2.5 md:p-3 lg:p-4 rounded-xl shrink-0 transition-all duration-300 ${
               isTodayCompleted
                 ? "bg-primary/20 orange-glow ring-2 ring-primary"
                 : "bg-primary/10 hover:bg-primary/20"
@@ -79,14 +88,14 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
             {isTodayCompleted && (
               <Check className="absolute -top-1 -right-1 h-4 w-4 text-primary-foreground bg-primary rounded-full p-0.5" />
             )}
-            <IconComponent className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+            <IconComponent className="h-5 w-5 md:h-6 md:w-6 lg:h-8 lg:w-8 text-primary" />
           </button>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-xl md:text-2xl font-bold text-primary">{percentage}%</span>
+              <span className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{percentage}%</span>
               {!isEditing && (
-                <span className="text-sm font-medium text-foreground truncate">
+                <span className="text-sm lg:text-base font-medium text-foreground truncate">
                   {todo.text}
                 </span>
               )}
@@ -139,7 +148,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
           )}
         </div>
 
-        {/* 7 day circles - scrollable on mobile */}
+        {/* 7 day circles */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
           <div className="flex items-center gap-1 md:gap-1.5 flex-nowrap">
             {days.map((day) => {
@@ -154,7 +163,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
                     onToggleDay(todo.id, day.dateStr);
                   }}
                   className={`
-                    relative min-w-[2rem] w-8 h-8 rounded-full flex items-center justify-center
+                    relative min-w-[2rem] w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center
                     transition-all duration-300 flex-shrink-0
                     ${isCompletedToday
                       ? "bg-primary text-primary-foreground hover:scale-110"
@@ -169,7 +178,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
                   {day.isCompleted ? (
                     <Check className="h-4 w-4 animate-scale-in" />
                   ) : (
-                    <span className="text-xs font-medium">{day.dayLabel}</span>
+                    <span className="text-xs lg:text-sm font-medium">{day.dayLabel}</span>
                   )}
                 </button>
               );

@@ -53,7 +53,7 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
   const glowOpacity = 0.15 + badge.glowIntensity * 0.55;
 
   return (
-    <div className="mb-5 flex flex-col items-center gap-3">
+    <div className="mb-5 lg:mb-8 flex flex-col items-center gap-3 lg:gap-4">
       {/* Big badge icon with glow */}
       <div className="relative flex items-center justify-center">
         {/* Glow layers */}
@@ -76,12 +76,10 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
 
         {/* Badge container */}
         <div
-          className={`relative z-10 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 ${
+          className={`relative z-10 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 w-[120px] h-[120px] lg:w-[160px] lg:h-[160px] ${
             animating ? "scale-110" : "scale-100"
           }`}
           style={{
-            width: "120px",
-            height: "120px",
             background: `linear-gradient(145deg, hsla(0, 0%, 100%, 0.08), hsla(0, 0%, 100%, 0.02))`,
             backdropFilter: "blur(20px)",
             border: `1px solid rgba(${badge.glow}, ${0.15 + badge.glowIntensity * 0.3})`,
@@ -94,12 +92,12 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
           <img
             src={badge.image}
             alt={badge.label}
-            className={`w-14 h-14 object-contain drop-shadow-lg transition-all duration-500 ${
+            className={`w-14 h-14 lg:w-20 lg:h-20 object-contain drop-shadow-lg transition-all duration-500 ${
               animating ? "animate-[spin_0.5s_ease-out]" : ""
             }`}
           />
           <span
-            className="text-2xl font-black tracking-tight text-foreground"
+            className="text-2xl lg:text-4xl font-black tracking-tight text-foreground"
             style={{
               textShadow: `0 0 ${10 + badge.glowIntensity * 20}px rgba(${badge.glow}, ${glowOpacity * 0.6})`,
             }}
@@ -110,9 +108,9 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
       </div>
 
       {/* Label and progress */}
-      <div className="w-full max-w-sm text-center space-y-2">
+      <div className="w-full max-w-sm lg:max-w-md text-center space-y-2">
         <p
-          className="text-sm font-bold tracking-wide uppercase transition-all duration-500"
+          className="text-sm lg:text-base font-bold tracking-wide uppercase transition-all duration-500"
           style={{
             color: `rgba(${badge.glow}, ${0.6 + badge.glowIntensity * 0.4})`,
             textShadow: `0 0 12px rgba(${badge.glow}, ${glowOpacity * 0.3})`,

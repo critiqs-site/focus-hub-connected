@@ -133,7 +133,7 @@ const Index = () => {
 
       <Navbar />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6">
+      <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-10">
         <div className="flex items-center justify-between mb-4">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
           {isGuest && (
@@ -160,8 +160,8 @@ const Index = () => {
             {/* Remaining Section */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4 px-1">
-                <Circle className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-lg font-semibold text-foreground">Remaining</h2>
+                <Circle className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground" />
+                <h2 className="text-lg lg:text-xl font-semibold text-foreground">Remaining</h2>
                 <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
                   {remainingTodos.length}
                 </span>
@@ -179,8 +179,8 @@ const Index = () => {
             {doneTodos.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4 px-1">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold text-foreground">Done</h2>
+                  <CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
+                  <h2 className="text-lg lg:text-xl font-semibold text-foreground">Done</h2>
                   <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                     {doneTodos.length}
                   </span>
