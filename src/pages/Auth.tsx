@@ -143,9 +143,8 @@ const Auth = () => {
         </button>
 
         <div className="flex justify-center mb-4 animate-scale-in">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-card to-secondary border-4 border-primary/40 shadow-xl shadow-primary/20 flex items-center justify-center overflow-hidden">
-            <img src={mascotCharacter} alt="Cute mascot" className="w-24 h-24 object-contain" />
-          </div>
+          <img src={logoFavicon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-xl" />
+        </div>
         </div>
 
         <div className="text-center mb-6">
