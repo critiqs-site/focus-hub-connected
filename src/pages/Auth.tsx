@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ArrowRight, Loader2, UserRound, Mail, Github } from "lucide-react";
 import { z } from "zod";
 import mascotCharacter from "@/assets/mascot-character.png";
+import logoFavicon from "@/assets/logo-icon.png";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -105,9 +106,7 @@ const Auth = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <div className="relative mb-6 animate-scale-in">
-            <div className="relative mx-auto w-52 h-52 rounded-full bg-gradient-to-br from-card to-secondary border-4 border-primary/40 shadow-2xl shadow-primary/20 flex items-center justify-center overflow-hidden">
-              <img src={mascotCharacter} alt="Cute mascot" className="w-44 h-44 object-contain" />
-            </div>
+            <img src={logoFavicon} alt="CRITIQS logo" className="mx-auto w-40 h-40 object-contain drop-shadow-2xl" />
           </div>
           <div className="animate-slide-up mb-2" style={{ animationDelay: "0.2s" }}>
             <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-1">
@@ -144,9 +143,7 @@ const Auth = () => {
         </button>
 
         <div className="flex justify-center mb-4 animate-scale-in">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-card to-secondary border-4 border-primary/40 shadow-xl shadow-primary/20 flex items-center justify-center overflow-hidden">
-            <img src={mascotCharacter} alt="Cute mascot" className="w-24 h-24 object-contain" />
-          </div>
+          <img src={logoFavicon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-xl" />
         </div>
 
         <div className="text-center mb-6">
