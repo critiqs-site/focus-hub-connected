@@ -123,22 +123,26 @@ const FloatingAIChat = ({
         return { role: m.role, content: m.content };
       });
 
-      const response = await fetch("https://text.pollinations.ai/openai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "openai-fast",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT + ctx },
-            ...processedMessages,
-          ],
-        }),
+      const { data, error } = await supabase.functions.invoke("ai-chat", {
+        body: {
+          messages: processedMessages,
+          context: {
+            todos: todos.map(t => ({
+              id: t.id,
+              text: t.text,
+              dividerName: dividers.find(d => d.id === t.dividerId)?.name || "?",
+              icon: t.icon,
+            })),
+            dividers: dividers.map(d => ({ id: d.id, name: d.name, icon: d.icon })),
+            interests,
+            notes: notes.slice(0, 5),
+          },
+        },
       });
 
-      if (!response.ok) throw new Error("AI service error");
+      if (error) throw new Error("AI service error");
 
-      const data = await response.json();
-      const reply = data.choices?.[0]?.message?.content || "Sorry, something went wrong.";
+      const reply = data?.reply || "Sorry, something went wrong.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (e) {
       console.error("Chat error:", e);
