@@ -160,8 +160,8 @@ const Index = () => {
             {/* Remaining Section */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4 px-1">
-                <Circle className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-lg font-semibold text-foreground">Remaining</h2>
+                <Circle className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground" />
+                <h2 className="text-lg lg:text-xl font-semibold text-foreground">Remaining</h2>
                 <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
                   {remainingTodos.length}
                 </span>
