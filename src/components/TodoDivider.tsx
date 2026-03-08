@@ -18,7 +18,7 @@ const TodoDivider = ({ divider, onDelete, onAddTodo }: TodoDividerProps) => {
         <IconComponent className="h-6 w-6 text-primary" />
       </div>
       <h3 className="text-lg font-semibold text-foreground">{divider.name}</h3>
-      <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
+      <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, hsla(24, 95%, 53%, 0.3), hsla(240, 6%, 18%, 0.3), transparent)' }} />
       <Button
         size="icon"
         variant="ghost"
