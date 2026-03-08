@@ -121,7 +121,7 @@ const FloatingAIChat = ({
       if (dividers.length || todos.length) {
         const todoLines = todos.map(t => {
           const sec = dividers.find(d => d.id === t.dividerId)?.name || "?";
-          return `${t.id}|${t.text}|${sec}|${t.icon}`;
+          return `${t.id}|${t.text}|${sec}|${t.icon}${t.description ? `|${t.description}` : ""}`;
         });
         const divLines = dividers.map(d => `${d.id}|${d.name}|${d.icon}`);
         ctx += `\n[DATA]\nSections: ${divLines.join("; ")}\nTodos: ${todoLines.join("; ")}`;
