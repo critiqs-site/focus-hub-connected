@@ -53,7 +53,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
 
   return (
     <div
-      className="group glass-card p-3 lg:p-4 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden flex flex-col"
+      className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden"
       style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
@@ -65,110 +65,158 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
       }}
     >
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
+      <div className="absolute top-0 left-0 right-0 h-1.5 lg:h-2" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
         <div
           className="h-full transition-all duration-500"
           style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, hsl(24, 95%, 53%), hsla(24, 95%, 53%, 0.7))', boxShadow: '0 0 12px hsla(24, 95%, 53%, 0.4)' }}
         />
       </div>
 
-      {/* Top: Icon + percentage + actions */}
-      <div className="flex items-center gap-2 mt-1">
-        <button
-          onClick={handleQuickToggle}
-          className={`relative p-2 rounded-lg shrink-0 transition-all duration-300 ${
-            isTodayCompleted
-              ? "bg-primary/20 orange-glow ring-2 ring-primary"
-              : "bg-primary/10 hover:bg-primary/20"
-          }`}
-          title={isTodayCompleted ? "Mark as not done today" : "Mark as done today"}
-        >
-          {isTodayCompleted && (
-            <Check className="absolute -top-1 -right-1 h-3.5 w-3.5 text-primary-foreground bg-primary rounded-full p-0.5" />
-          )}
-          <IconComponent className="h-5 w-5 text-primary" />
-        </button>
-        <span className="text-lg font-bold text-primary">{percentage}%</span>
-        
-        {/* Actions */}
-        {!isEditing && (
-          <div className="ml-auto flex gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-            <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)} className="h-7 w-7 p-0 glass-button">
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => onDelete(todo.id)} className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/20">
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Title + description */}
-      <div className="mt-2 min-w-0">
-        {isEditing ? (
-          <div className="flex items-center gap-1">
-            <Input
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              className="bg-secondary/50 border-primary/30 focus:border-primary h-7 text-xs"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-                if (e.key === "Escape") handleCancel();
-              }}
-            />
-            <Button size="sm" variant="ghost" onClick={handleSave} className="h-7 w-7 p-0 text-primary hover:text-primary hover:bg-primary/20">
-              <Check className="h-3 w-3" />
-            </Button>
-            <Button size="sm" variant="ghost" onClick={handleCancel} className="h-7 w-7 p-0 text-muted-foreground">
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        ) : (
-          <>
-            <p className="text-sm font-medium text-foreground truncate">{todo.text}</p>
-            {todo.description && (
-              <p className="hidden md:block text-xs text-muted-foreground mt-0.5 truncate">
-                {todo.description}
-              </p>
+      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+        {/* Top row on mobile / Left side on desktop */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Clickable icon area to toggle today */}
+          <button
+            onClick={handleQuickToggle}
+            className={`relative p-2.5 md:p-3 lg:p-4 rounded-xl shrink-0 transition-all duration-300 ${
+              isTodayCompleted
+                ? "bg-primary/20 orange-glow ring-2 ring-primary"
+                : "bg-primary/10 hover:bg-primary/20"
+            }`}
+            title={isTodayCompleted ? "Mark as not done today" : "Mark as done today"}
+          >
+            {isTodayCompleted && (
+              <Check className="absolute -top-1 -right-1 h-4 w-4 text-primary-foreground bg-primary rounded-full p-0.5" />
             )}
-          </>
-        )}
-      </div>
+            <IconComponent className="h-5 w-5 md:h-6 md:w-6 lg:h-8 lg:w-8 text-primary" />
+          </button>
 
-      {/* 7 day circles */}
-      <div className="flex items-center gap-1 mt-auto pt-2">
-        {days.map((day) => {
-          const isCompletedToday = day.isToday && day.isCompleted;
-          const isCompletedPast = !day.isToday && day.isCompleted;
-          return (
-            <button
-              key={day.dateStr}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleDay(todo.id, day.dateStr);
-              }}
-              className={`
-                flex-1 aspect-square rounded-full flex items-center justify-center
-                transition-all duration-300 min-w-0
-                ${isCompletedToday
-                  ? "bg-primary text-primary-foreground hover:scale-110"
-                  : isCompletedPast
-                    ? "bg-muted-foreground/40 text-background hover:scale-110"
-                    : "border border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110"
-                }
-                ${day.isToday ? "ring-1 ring-primary ring-offset-1 ring-offset-background" : ""}
-              `}
-              title={format(day.date, "MMM d")}
-            >
-              {day.isCompleted ? (
-                <Check className="h-3 w-3" />
-              ) : (
-                <span className="text-[10px] font-medium">{day.dayLabel}</span>
+          <div className="min-w-0 flex-1">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{percentage}%</span>
+                {!isEditing && (
+                  <span className="text-sm lg:text-base font-medium text-foreground truncate">
+                    {todo.text}
+                  </span>
+                )}
+              </div>
+              {!isEditing && todo.description && (
+                <p className="hidden md:block text-xs text-muted-foreground mt-0.5 truncate max-w-[300px] lg:max-w-[400px]">
+                  {todo.description}
+                </p>
               )}
-            </button>
-          );
-        })}
+            </div>
+            {isEditing && (
+              <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+                <Input
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="bg-secondary/50 border-primary/30 focus:border-primary h-8 text-sm"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSave();
+                    if (e.key === "Escape") handleCancel();
+                  }}
+                />
+                <Button size="sm" variant="ghost" onClick={handleSave} className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/20">
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Hover actions - desktop only */}
+          {!isEditing && (
+            <div
+              className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditing(true)}
+                className="h-8 w-8 p-0 glass-button"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onDelete(todo.id)}
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* 7 day circles */}
+        <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
+          <div className="flex items-center gap-1 md:gap-1.5 flex-nowrap">
+            {days.map((day) => {
+              const isCompletedToday = day.isToday && day.isCompleted;
+              const isCompletedPast = !day.isToday && day.isCompleted;
+
+              return (
+                <button
+                  key={day.dateStr}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleDay(todo.id, day.dateStr);
+                  }}
+                  className={`
+                    relative min-w-[2rem] w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center
+                    transition-all duration-300 flex-shrink-0
+                    ${isCompletedToday
+                      ? "bg-primary text-primary-foreground hover:scale-110"
+                      : isCompletedPast
+                        ? "bg-muted-foreground/40 text-background hover:scale-110"
+                        : "border-2 border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110"
+                    }
+                    ${day.isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
+                  `}
+                  title={format(day.date, "MMM d")}
+                >
+                  {day.isCompleted ? (
+                    <Check className="h-4 w-4 animate-scale-in" />
+                  ) : (
+                    <span className="text-xs lg:text-sm font-medium">{day.dayLabel}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile-only action buttons */}
+          {!isEditing && (
+            <div
+              className="flex md:hidden gap-1 ml-2 flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditing(true)}
+                className="h-8 w-8 p-0 glass-button"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onDelete(todo.id)}
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

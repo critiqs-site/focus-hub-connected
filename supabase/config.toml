@@ -11,6 +11,3 @@ verify_jwt = false
 
 [functions.food-scanner]
 verify_jwt = false
-
-[functions.suggest-icon]
-verify_jwt = false
