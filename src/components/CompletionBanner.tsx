@@ -97,7 +97,7 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
             }`}
           />
           <span
-            className="text-2xl font-black tracking-tight text-foreground"
+            className="text-2xl lg:text-4xl font-black tracking-tight text-foreground"
             style={{
               textShadow: `0 0 ${10 + badge.glowIntensity * 20}px rgba(${badge.glow}, ${glowOpacity * 0.6})`,
             }}
