@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ArrowRight, Loader2, UserRound, Mail, Github } from "lucide-react";
 import { z } from "zod";
-import mascotCharacter from "@/assets/mascot-character.png";
-import logoFavicon from "@/assets/logo-icon.png";
+import logoIcon from "@/assets/logo-icon.png";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),
