@@ -63,6 +63,7 @@ interface FloatingAIChatProps {
   onRenameTodo?: (id: string, text: string) => void;
   onTransferTodo?: (id: string, dividerId: string) => void;
   onUpdateIcon?: (id: string, icon: string) => void;
+  onUpdateDescription?: (id: string, description: string | null) => void;
 }
 
 function parseActions(text: string): { cleanText: string; actions: ActionButton[] } {
