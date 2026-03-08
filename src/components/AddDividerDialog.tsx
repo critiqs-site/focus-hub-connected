@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DIVIDER_ICONS } from "@/lib/icons";
+import IconPickerGrid from "@/components/IconPickerGrid";
 
 interface AddDividerDialogProps {
   open: boolean;
@@ -48,24 +49,13 @@ const AddDividerDialog = ({ open, onOpenChange, onAdd }: AddDividerDialogProps) 
           />
           <div>
             <p className="text-sm text-muted-foreground mb-3">Choose an icon:</p>
-            <div className="grid grid-cols-5 gap-2">
-              {DIVIDER_ICONS.map(({ name: iconName, icon: Icon, label }) => (
-                <button
-                  key={iconName}
-                  onClick={() => setSelectedIcon(iconName)}
-                  className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 ${
-                    selectedIcon === iconName
-                      ? "bg-primary/30 border-2 border-primary"
-                      : "bg-secondary/50 border border-border hover:border-primary/50"
-                  }`}
-                  title={label}
-                >
-                  <Icon className={`h-5 w-5 ${selectedIcon === iconName ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className="text-[10px] text-muted-foreground truncate w-full text-center">
-                    {label}
-                  </span>
-                </button>
-              ))}
+            <div className="max-h-48 overflow-y-auto pr-1">
+              <IconPickerGrid
+                icons={DIVIDER_ICONS}
+                selectedIcon={selectedIcon}
+                onSelect={setSelectedIcon}
+                batchSize={15}
+              />
             </div>
           </div>
         </div>

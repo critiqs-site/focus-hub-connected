@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import type { Todo, Divider } from "@/types/todo";
 import { supabase } from "@/integrations/supabase/client";
 
+import { TODO_ICON_NAMES, DIVIDER_ICON_NAMES } from "@/lib/icons";
+
 const SYSTEM_PROMPT = `You are CritiQs AI — a chill, smart fitness & wellness buddy.
 
 RULES:
@@ -14,7 +16,22 @@ RULES:
 
 TODO ACTIONS (use only when relevant):
 [ACTION:DELETE:todoId:todoText] [ACTION:RENAME:todoId:newText:oldText] [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName] [ACTION:ICON:todoId:newIconName:todoText] [ACTION:SUGGEST:dividerName:todoText:iconName] [ACTION:ADD_ALL]
-Icons: Dumbbell,Heart,Brain,BookOpen,Droplets,Sun,Moon,Star,Target,Flame,Apple,Coffee,Music,Pencil,Clock,Zap,Trophy,Smile,Shield,Leaf,Utensils,Bed,Eye,Footprints,Wind
+
+TASK ICONS (use these for todos/habits): ${TODO_ICON_NAMES.join(",")}
+SECTION ICONS (use these for dividers/sections): ${DIVIDER_ICON_NAMES.join(",")}
+
+- For [ACTION:ICON], ONLY use icons from TASK ICONS list above.
+- For section-related operations, reference SECTION ICONS.
+- When user says "replace X with a better icon" or "change icon for X", use [ACTION:ICON:todoId:newIconName:todoText].
+- When user says "move X to Y section", use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName].
+
+TASK INSPIRATION (real human habits for suggestions):
+- Go Outside at Mid-day, Watch Self Improvement Videos, Do One Skill (Content/Editing/Coding)
+- Use Less Screen Time, Drink 2L Water, Read 10 Pages, Walk 10K Steps
+- No Sugar Today, Journal for 5 Min, Cold Shower, Stretch 10 Min
+- Practice Gratitude, Cook a Healthy Meal, Sleep Before 11 PM, No Social Media
+- Learn Something New, Call a Friend, Clean Room, Meditate 10 Min
+
 - Use EXACT IDs from context. Match names loosely. Text first, actions on new lines at end.`;
 
 type Message = { role: "user" | "assistant"; content: string; image?: string };

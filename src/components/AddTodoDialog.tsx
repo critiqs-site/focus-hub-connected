@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import type { Divider } from "@/types/todo";
 import { TODO_ICONS, getIconComponent } from "@/lib/icons";
-import { cn } from "@/lib/utils";
+import IconPickerGrid from "@/components/IconPickerGrid";
 
 interface AddTodoDialogProps {
   open: boolean;
@@ -70,29 +70,13 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
           {/* Icon Picker */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Choose an icon</label>
-            <div className="grid grid-cols-5 gap-2">
-              {TODO_ICONS.map((iconItem) => {
-                const IconComp = getIconComponent(iconItem.name);
-                return (
-                  <button
-                    key={iconItem.name}
-                    type="button"
-                    onClick={() => setSelectedIcon(iconItem.name)}
-                    className={cn(
-                      "p-3 rounded-xl transition-all duration-200 flex items-center justify-center",
-                      selectedIcon === iconItem.name
-                        ? "bg-primary/20 border-2 border-primary orange-glow"
-                        : "bg-secondary/50 border-2 border-transparent hover:border-primary/30"
-                    )}
-                    title={iconItem.label}
-                  >
-                    <IconComp className={cn(
-                      "h-5 w-5 transition-colors",
-                      selectedIcon === iconItem.name ? "text-primary" : "text-muted-foreground"
-                    )} />
-                  </button>
-                );
-              })}
+            <div className="max-h-48 overflow-y-auto pr-1">
+              <IconPickerGrid
+                icons={TODO_ICONS}
+                selectedIcon={selectedIcon}
+                onSelect={setSelectedIcon}
+                batchSize={15}
+              />
             </div>
           </div>
 
