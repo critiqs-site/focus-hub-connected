@@ -76,12 +76,10 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
 
         {/* Badge container */}
         <div
-          className={`relative z-10 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 ${
+          className={`relative z-10 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 w-[120px] h-[120px] lg:w-[160px] lg:h-[160px] ${
             animating ? "scale-110" : "scale-100"
           }`}
           style={{
-            width: "120px",
-            height: "120px",
             background: `linear-gradient(145deg, hsla(0, 0%, 100%, 0.08), hsla(0, 0%, 100%, 0.02))`,
             backdropFilter: "blur(20px)",
             border: `1px solid rgba(${badge.glow}, ${0.15 + badge.glowIntensity * 0.3})`,
