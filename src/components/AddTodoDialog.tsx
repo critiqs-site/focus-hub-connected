@@ -180,11 +180,15 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
   const selectedDivider = dividers.find((d) => d.id === dividerId);
 
   const handleAutoIcon = useCallback(() => {
-    const top = getTopIcons(text, 3);
-    setSuggestedIcons(top);
-    if (top.length > 0) {
-      setSelectedIcon(top[0]);
-    }
+    setIsAutoDetecting(true);
+    setTimeout(() => {
+      const top = getTopIcons(text, 3);
+      setSuggestedIcons(top);
+      if (top.length > 0) {
+        setSelectedIcon(top[0]);
+      }
+      setIsAutoDetecting(false);
+    }, 500);
   }, [text]);
 
   const handleSubmit = () => {
