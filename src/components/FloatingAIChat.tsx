@@ -152,6 +152,7 @@ const FloatingAIChat = ({
             todos: todos.map(t => ({
               id: t.id,
               text: t.text,
+              description: t.description || null,
               dividerName: dividers.find(d => d.id === t.dividerId)?.name || "?",
               icon: t.icon,
             })),
