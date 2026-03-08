@@ -44,6 +44,7 @@ interface ActionButton {
   dividerName?: string;
   iconName?: string;
   newText?: string;
+  description?: string;
   targetDividerId?: string;
   sectionName?: string;
 }
