@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     // Auth is optional — guest users can still use the chat
     // The API key is safely stored server-side either way
 
-    const { messages, context } = await req.json();
+    const { messages, context, type, todoText, availableIcons } = await req.json();
 
     const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
     if (!apiKey) {
