@@ -97,7 +97,7 @@ function parseActions(text: string): { cleanText: string; actions: ActionButton[
 const FloatingAIChat = ({
   open, onOpenChange, initialMessage, onInitialMessageConsumed,
   todos = [], dividers = [], notes = [], interests = [],
-  onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon,
+  onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon, onUpdateDescription,
 }: FloatingAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
