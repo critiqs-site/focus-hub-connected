@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,141 @@ import { Input } from "@/components/ui/input";
 import type { Divider } from "@/types/todo";
 import { TODO_ICONS, getIconComponent } from "@/lib/icons";
 import IconPickerGrid from "@/components/IconPickerGrid";
+import { Sparkles } from "lucide-react";
 
 const DESC_MAX = 60;
+
+// Keyword map for smarter matching
+const KEYWORD_MAP: Record<string, string[]> = {
+  PersonStanding: ["meditate", "meditation", "stand", "yoga", "stretch", "posture"],
+  Dumbbell: ["exercise", "gym", "workout", "lift", "weights", "train", "muscle", "bulk"],
+  Footprints: ["walk", "steps", "walking", "hike", "stroll", "10k"],
+  Bike: ["cycle", "cycling", "bike", "biking", "ride"],
+  Heart: ["cardio", "love", "health", "heart", "pulse"],
+  Activity: ["workout", "active", "exercise", "fitness", "sport"],
+  Mountain: ["hike", "hiking", "climb", "outdoor", "mountain", "trail"],
+  Waves: ["swim", "swimming", "pool", "water sport", "ocean"],
+  Wind: ["breathe", "breathing", "breath", "air", "pranayama"],
+  Shield: ["strength", "protect", "defense", "strong", "immune"],
+  Brain: ["learn", "study", "think", "mental", "brain", "mind", "focus"],
+  BookOpen: ["read", "reading", "book", "study", "learn", "pages", "literature"],
+  Lightbulb: ["idea", "creative", "think", "brainstorm", "innovate"],
+  Pencil: ["write", "writing", "journal", "diary", "note", "essay"],
+  Target: ["goal", "target", "aim", "focus", "objective"],
+  Laptop: ["code", "coding", "program", "develop", "computer", "work"],
+  Monitor: ["screen", "monitor", "desktop", "display"],
+  Calculator: ["math", "calculate", "numbers", "budget", "finance"],
+  Search: ["research", "search", "find", "explore", "investigate"],
+  FileText: ["notes", "document", "file", "report", "text"],
+  Utensils: ["eat", "meal", "food", "dinner", "lunch", "breakfast", "cook", "cooking"],
+  Coffee: ["coffee", "tea", "caffeine", "morning", "drink", "brew"],
+  Droplets: ["water", "hydrate", "drink", "hydration", "2l", "liquid"],
+  Apple: ["fruit", "apple", "healthy", "snack", "vitamin"],
+  Salad: ["salad", "vegetable", "vegan", "greens", "healthy"],
+  Sandwich: ["meal", "sandwich", "lunch", "prep"],
+  Pizza: ["cheat", "pizza", "junk", "fast food", "treat"],
+  IceCreamCone: ["treat", "ice cream", "dessert", "sweet", "sugar"],
+  Wine: ["alcohol", "wine", "no alcohol", "sober", "dry"],
+  Beer: ["beer", "drink", "alcohol", "bar"],
+  Bed: ["sleep", "bed", "rest", "nap", "recover"],
+  Moon: ["night", "evening", "moon", "bedtime", "pm"],
+  Sunrise: ["wake", "morning", "sunrise", "early", "am"],
+  Sun: ["morning", "sun", "day", "sunshine", "outdoor"],
+  CloudSun: ["afternoon", "midday", "cloudy", "weather"],
+  Timer: ["focus", "timer", "pomodoro", "time", "session"],
+  Clock: ["time", "clock", "schedule", "routine", "alarm"],
+  Zap: ["energy", "power", "boost", "quick", "fast"],
+  Flame: ["streak", "fire", "intense", "burn", "calories", "hot"],
+  RefreshCw: ["repeat", "refresh", "again", "cycle", "habit"],
+  Smile: ["happy", "smile", "mood", "positive", "grateful", "gratitude"],
+  Music: ["music", "listen", "song", "play", "instrument", "guitar", "piano"],
+  Headphones: ["podcast", "audio", "listen", "headphones", "audiobook"],
+  Gamepad2: ["game", "gaming", "play", "video game"],
+  Tv: ["watch", "tv", "show", "movie", "series", "netflix"],
+  Camera: ["photo", "camera", "picture", "selfie", "photography"],
+  Mic: ["speak", "record", "mic", "voice", "podcast", "talk"],
+  TreePine: ["outdoor", "nature", "tree", "forest", "park", "outside"],
+  Leaf: ["nature", "leaf", "plant", "green", "organic", "eco"],
+  Flower2: ["garden", "flower", "plant", "grow", "water plant"],
+  Pill: ["medicine", "pill", "vitamin", "supplement", "medication", "drug"],
+  Stethoscope: ["doctor", "health", "checkup", "medical", "appointment"],
+  Eye: ["eye", "vision", "eye care", "screen break", "look"],
+  Star: ["priority", "star", "important", "favorite", "best"],
+  Rocket: ["launch", "start", "rocket", "hustle", "grind", "ambitious"],
+  Trophy: ["win", "trophy", "achieve", "competition", "reward"],
+  Crown: ["best", "crown", "king", "queen", "top", "premium"],
+  Gem: ["valuable", "gem", "precious", "quality", "diamond"],
+  Sparkles: ["magic", "sparkle", "special", "amazing", "glow"],
+  TrendingUp: ["growth", "improve", "progress", "trending", "better"],
+  Home: ["home", "house", "clean", "chore", "domestic"],
+  Briefcase: ["work", "office", "job", "career", "business", "meeting"],
+  Palette: ["art", "paint", "draw", "creative", "design", "color"],
+  Scissors: ["groom", "grooming", "haircut", "shave", "trim", "skincare"],
+  Brush: ["clean", "brush", "teeth", "scrub", "tidy"],
+  Wrench: ["fix", "repair", "tool", "maintain", "build"],
+  Dog: ["dog", "pet", "walk dog", "puppy", "animal"],
+  Cat: ["cat", "pet", "kitten", "animal"],
+  Baby: ["family", "baby", "kid", "child", "parent"],
+  Phone: ["call", "phone", "friend", "contact"],
+  Mail: ["email", "mail", "message", "inbox", "letter"],
+  Car: ["drive", "car", "commute", "road", "travel"],
+  Plane: ["fly", "travel", "plane", "trip", "vacation", "airport"],
+  Smartphone: ["phone", "screen time", "digital", "app", "social media"],
+  Bell: ["reminder", "bell", "alarm", "notification", "alert"],
+  Compass: ["explore", "adventure", "compass", "discover", "navigate"],
+  Globe: ["travel", "world", "global", "language", "culture"],
+  Flag: ["milestone", "flag", "goal", "checkpoint", "achievement"],
+  Bookmark: ["save", "bookmark", "read later", "favorite"],
+  Tag: ["label", "tag", "organize", "category"],
+  Settings: ["settings", "routine", "configure", "setup"],
+  Lock: ["privacy", "secure", "lock", "password", "protect"],
+  Key: ["security", "key", "access", "unlock"],
+  Battery: ["recharge", "battery", "energy", "rest", "recover"],
+};
+
+function getTopIcons(query: string, count = 3): string[] {
+  if (!query.trim()) return [];
+  const q = query.toLowerCase();
+  const words = q.split(/\s+/);
+
+  const scores: { name: string; score: number }[] = TODO_ICONS.map((icon) => {
+    let score = 0;
+    const label = icon.label.toLowerCase();
+    const name = icon.name.toLowerCase();
+    const keywords = KEYWORD_MAP[icon.name] || [];
+
+    // Exact label match
+    if (q === label) score += 10;
+    // Label contains query
+    if (label.includes(q)) score += 5;
+    // Query contains label
+    if (q.includes(label)) score += 4;
+    // Name match
+    if (name.includes(q)) score += 3;
+
+    // Keyword matching
+    for (const kw of keywords) {
+      if (q.includes(kw)) score += 6;
+      for (const w of words) {
+        if (kw.includes(w) && w.length > 2) score += 3;
+        if (w.includes(kw) && kw.length > 2) score += 2;
+      }
+    }
+
+    // Word-level label matching
+    for (const w of words) {
+      if (w.length > 2 && label.includes(w)) score += 2;
+    }
+
+    return { name: icon.name, score };
+  });
+
+  return scores
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, count)
+    .map((s) => s.name);
+}
 
 interface AddTodoDialogProps {
   open: boolean;
@@ -27,6 +160,7 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
   const [description, setDescription] = useState("");
   const [dividerId, setDividerId] = useState(preselectedDividerId || dividers[0]?.id || "");
   const [selectedIcon, setSelectedIcon] = useState("PersonStanding");
+  const [suggestedIcons, setSuggestedIcons] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && preselectedDividerId) {
@@ -36,7 +170,21 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
     }
   }, [open, preselectedDividerId, dividers]);
 
+  useEffect(() => {
+    if (!open) {
+      setSuggestedIcons([]);
+    }
+  }, [open]);
+
   const selectedDivider = dividers.find((d) => d.id === dividerId);
+
+  const handleAutoIcon = useCallback(() => {
+    const top = getTopIcons(text, 3);
+    setSuggestedIcons(top);
+    if (top.length > 0) {
+      setSelectedIcon(top[0]);
+    }
+  }, [text]);
 
   const handleSubmit = () => {
     if (text.trim() && dividerId) {
@@ -44,6 +192,7 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
       setText("");
       setDescription("");
       setSelectedIcon("PersonStanding");
+      setSuggestedIcons([]);
       onOpenChange(false);
     }
   };
@@ -62,16 +211,55 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <Input
-            placeholder="What habit do you want to track?"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="bg-secondary/50 border-primary/30 focus:border-primary"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-            }}
-          />
+          <div className="flex gap-2">
+            <Input
+              placeholder="What habit do you want to track?"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="bg-secondary/50 border-primary/30 focus:border-primary flex-1"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleAutoIcon}
+              disabled={!text.trim()}
+              className="border-primary/30 hover:bg-primary/20 hover:border-primary shrink-0"
+              title="Auto-pick best icons"
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </Button>
+          </div>
+
+          {/* AI suggested icons */}
+          {suggestedIcons.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Top picks:</span>
+              {suggestedIcons.map((iconName) => {
+                const IconComp = getIconComponent(iconName);
+                return (
+                  <button
+                    key={iconName}
+                    type="button"
+                    onClick={() => setSelectedIcon(iconName)}
+                    className={`p-2 rounded-xl transition-all duration-200 ${
+                      selectedIcon === iconName
+                        ? "bg-primary/20 border-2 border-primary orange-glow"
+                        : "bg-secondary/50 border-2 border-primary/40 hover:border-primary"
+                    }`}
+                  >
+                    <IconComp className={`h-5 w-5 ${
+                      selectedIcon === iconName ? "text-primary" : "text-muted-foreground"
+                    }`} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Short description */}
           <div className="space-y-1">
