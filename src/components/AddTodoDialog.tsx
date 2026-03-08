@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Divider } from "@/types/todo";
-import { TODO_ICONS } from "@/lib/icons";
+import { TODO_ICONS, getIconComponent } from "@/lib/icons";
 import IconPickerGrid from "@/components/IconPickerGrid";
 
 interface AddTodoDialogProps {
