@@ -7,15 +7,27 @@ type ScannerStatus = "idle" | "analyzing" | "success" | "error" | "not_food";
 
 interface FoodItem {
   name: string;
+  estimatedWeightG?: number;
   calories: number;
   protein: number;
   carbs: number;
   fats: number;
 }
 
+interface CalorieRange {
+  low: number;
+  high: number;
+}
+
 interface ScanResult {
   foods: FoodItem[];
-  totals: { calories: number; protein: number; carbs: number; fats: number };
+  totals: {
+    calories: number;
+    calorieRange?: CalorieRange;
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
   healthRating: number;
   tips: string[];
 }
@@ -125,6 +137,26 @@ const FoodScanner = ({ onAskAI }: FoodScannerProps) => {
     }
   };
 
+  const formatCalorieDisplay = (totals: ScanResult["totals"]) => {
+    if (totals.calorieRange) {
+      return (
+        <div className="flex flex-col items-center">
+          <p className="text-lg font-bold text-foreground">~{totals.calories}</p>
+          <p className="text-xs text-muted-foreground">
+            ({totals.calorieRange.low}–{totals.calorieRange.high})
+          </p>
+          <p className="text-xs text-muted-foreground">kcal</p>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center">
+        <p className="text-lg font-bold text-foreground">{totals.calories}</p>
+        <p className="text-xs text-muted-foreground">kcal</p>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {status === "idle" ? (
@@ -165,8 +197,7 @@ const FoodScanner = ({ onAskAI }: FoodScannerProps) => {
           <div className="grid grid-cols-4 gap-2">
             <div className="glass-card p-3 text-center">
               <p className="text-xs text-muted-foreground">Calories</p>
-              <p className="text-lg font-bold text-foreground">{result.totals.calories}</p>
-              <p className="text-xs text-muted-foreground">kcal</p>
+              {formatCalorieDisplay(result.totals)}
             </div>
             <div className="glass-card p-3 text-center">
               <p className="text-xs text-muted-foreground">Protein</p>
@@ -189,7 +220,12 @@ const FoodScanner = ({ onAskAI }: FoodScannerProps) => {
               <div className="space-y-2">
                 {result.foods.map((food, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                    <span className="text-sm text-foreground font-medium">{food.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-sm text-foreground font-medium">{food.name}</span>
+                      {food.estimatedWeightG && (
+                        <span className="text-xs text-muted-foreground">~{food.estimatedWeightG}g</span>
+                      )}
+                    </div>
                     <div className="flex gap-3 text-xs text-muted-foreground">
                       <span>{food.calories} cal</span>
                       <span className="text-blue-400">{food.protein}g P</span>
@@ -201,6 +237,11 @@ const FoodScanner = ({ onAskAI }: FoodScannerProps) => {
               </div>
             </div>
           )}
+
+          {/* Accuracy note */}
+          <p className="text-xs text-muted-foreground text-center italic">
+            Estimates based on visual portion analysis. Actual values may vary ±15-20%.
+          </p>
 
           {/* Tips */}
           <div className="glass-card p-4">
