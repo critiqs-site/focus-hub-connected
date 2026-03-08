@@ -2,6 +2,7 @@ import { useState } from "react";
 import { getIconComponent } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface IconItem {
   name: string;
