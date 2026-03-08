@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.physique-rater]
 verify_jwt = false
+
+[functions.outfit-rater]
+verify_jwt = false
+
+[functions.food-scanner]
+verify_jwt = false
