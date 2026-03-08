@@ -239,6 +239,9 @@ const FloatingAIChat = ({
     } else if (action.type === "ICON" && action.todoId && action.iconName && onUpdateIcon) {
       onUpdateIcon(action.todoId, action.iconName);
       markDone(key);
+    } else if (action.type === "DESCRIBE" && action.todoId && action.description && onUpdateDescription) {
+      onUpdateDescription(action.todoId, action.description);
+      markDone(key);
     } else if (action.type === "SUGGEST" && action.todoText && onAddTodo) {
       const divider = dividers.find(d => d.name.toLowerCase().includes((action.dividerName || "").toLowerCase()));
       if (divider) {
