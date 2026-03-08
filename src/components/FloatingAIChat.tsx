@@ -24,6 +24,7 @@ SECTION ICONS (use these for dividers/sections): ${DIVIDER_ICON_NAMES.join(",")}
 - For section-related operations, reference SECTION ICONS.
 - When user says "replace X with a better icon" or "change icon for X", use [ACTION:ICON:todoId:newIconName:todoText].
 - When user says "move X to Y section", use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName].
+- When user says "add description to X" or "describe X", use [ACTION:DESCRIBE:todoId:short description:todoText]. Descriptions should be brief (5-15 words), practical, like "30 min at mid-day" or "Before breakfast, 10 reps".
 
 TASK INSPIRATION (real human habits for suggestions):
 - Go Outside at Mid-day, Watch Self Improvement Videos, Do One Skill (Content/Editing/Coding)
