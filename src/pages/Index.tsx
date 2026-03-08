@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Plus, CheckCircle2, Circle } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -14,6 +14,7 @@ import UserProfileMenu from "@/components/UserProfileMenu";
 import AnalyticsView from "@/components/AnalyticsView";
 import ToolsView from "@/components/ToolsView";
 import FloatingAIChat from "@/components/FloatingAIChat";
+import CompletionBanner from "@/components/CompletionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
@@ -48,6 +49,27 @@ const Index = () => {
   useEffect(() => {
     if (!authLoading && !user && !isGuest) navigate("/auth");
   }, [user, authLoading, navigate, isGuest]);
+
+  // Auto-save daily completion percentage to notes
+  const autoSaveRef = useRef(false);
+  useEffect(() => {
+    if (todosLoading || notesLoading || todos.length === 0) return;
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const done = todos.filter((t) => t.completions.includes(todayStr)).length;
+    const pct = Math.round((done / todos.length) * 100);
+    const existingNote = notes.find((n) => n.date === todayStr);
+    const noteText = `Daily progress: ${pct}% (${done}/${todos.length} habits completed)`;
+
+    // Only auto-save when percentage changes
+    if (existingNote && existingNote.note === noteText) return;
+    if (!autoSaveRef.current && !existingNote) {
+      autoSaveRef.current = true;
+      handleAddNote(todayStr, pct === 100 ? "super_happy" : pct >= 70 ? "happy" : pct >= 40 ? "neutral" : pct >= 10 ? "sad" : "depressed", noteText);
+    } else if (existingNote) {
+      const mood = pct === 100 ? "super_happy" : pct >= 70 ? "happy" : pct >= 40 ? "neutral" : pct >= 10 ? "sad" : "depressed";
+      handleEditNote(existingNote.id, mood, noteText);
+    }
+  }, [todos, todosLoading, notesLoading]);
 
   const handleSignOut = async () => {
     localStorage.removeItem("guestMode");
@@ -128,6 +150,7 @@ const Index = () => {
           </div>
         ) : activeTab === "todos" ? (
           <>
+            <CompletionBanner todos={todos} />
             {isGuest && (
               <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/20 text-sm text-muted-foreground text-center">
                 Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
