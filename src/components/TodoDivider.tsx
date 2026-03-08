@@ -14,10 +14,10 @@ const TodoDivider = ({ divider, onDelete, onAddTodo }: TodoDividerProps) => {
 
   return (
     <div className="group flex items-center gap-3 my-8 animate-scroll-fade-in">
-      <div className="p-2 rounded-xl bg-primary/10">
-        <IconComponent className="h-6 w-6 text-primary" />
+      <div className="p-2 lg:p-3 rounded-xl bg-primary/10">
+        <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-primary" />
       </div>
-      <h3 className="text-lg font-semibold text-foreground">{divider.name}</h3>
+      <h3 className="text-lg lg:text-xl font-semibold text-foreground">{divider.name}</h3>
       <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, hsla(24, 95%, 53%, 0.3), hsla(240, 6%, 18%, 0.3), transparent)' }} />
       <Button
         size="icon"

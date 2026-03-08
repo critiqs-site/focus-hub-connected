@@ -21,7 +21,7 @@ const Navbar = () => {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+              className="text-sm lg:text-base font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
             >
               {link.label}
               <ExternalLink className="w-3 h-3" />
