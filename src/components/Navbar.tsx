@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import faviconLogo from "/favicon.png";
+import logoIcon from "@/assets/logo-icon.png";
 
 const Navbar = () => {
   const links = [
