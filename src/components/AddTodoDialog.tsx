@@ -12,6 +12,8 @@ import type { Divider } from "@/types/todo";
 import { TODO_ICONS, getIconComponent } from "@/lib/icons";
 import IconPickerGrid from "@/components/IconPickerGrid";
 import { Sparkles, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const DESC_MAX = 60;
 
@@ -179,16 +181,34 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
 
   const selectedDivider = dividers.find((d) => d.id === dividerId);
 
-  const handleAutoIcon = useCallback(() => {
+  const handleAutoIcon = useCallback(async () => {
     setIsAutoDetecting(true);
-    setTimeout(() => {
-      const top = getTopIcons(text, 3);
-      setSuggestedIcons(top);
-      if (top.length > 0) {
-        setSelectedIcon(top[0]);
+    try {
+      const availableIcons = TODO_ICONS.map(icon => icon.name);
+      
+      const { data, error } = await supabase.functions.invoke("ai-chat", {
+        body: {
+          type: "icon-suggest",
+          todoText: text,
+          availableIcons,
+        },
+      });
+
+      if (error) throw error;
+
+      const suggestions = data?.suggestions || [];
+      if (suggestions.length > 0) {
+        setSuggestedIcons(suggestions);
+        setSelectedIcon(suggestions[0]);
+      } else {
+        toast.error("No icon suggestions found");
       }
+    } catch (error) {
+      console.error("Icon detection error:", error);
+      toast.error("Failed to detect icons. Please try again.");
+    } finally {
       setIsAutoDetecting(false);
-    }, 500);
+    }
   }, [text]);
 
   const handleSubmit = () => {

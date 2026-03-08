@@ -74,13 +74,70 @@ Deno.serve(async (req) => {
     // Auth is optional — guest users can still use the chat
     // The API key is safely stored server-side either way
 
-    const { messages, context } = await req.json();
+    const { messages, context, type, todoText, availableIcons } = await req.json();
 
     const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
     if (!apiKey) {
       console.error("POLLINATIONS_API_KEY not set");
       return new Response(JSON.stringify({ error: "API key not configured" }), {
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Handle icon suggestion requests
+    if (type === "icon-suggest" && todoText && availableIcons) {
+      const iconPrompt = `You are an icon matching expert. Given a todo/habit name, suggest the top 3 most relevant icons.
+
+Available icons: ${availableIcons.join(", ")}
+
+Todo/Habit: "${todoText}"
+
+Return ONLY a JSON array of exactly 3 icon names from the available list, ordered by relevance. Example: ["Dumbbell", "Activity", "Flame"]
+
+Rules:
+- Use EXACT icon names from the available list
+- Pick icons that visually match the task meaning
+- Consider keywords, action words, and context
+- Return ONLY the JSON array, no other text`;
+
+      const iconResponse = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "mistral",
+          messages: [{ role: "user", content: iconPrompt }],
+          stream: false,
+        }),
+      });
+
+      if (!iconResponse.ok) {
+        const errText = await iconResponse.text();
+        console.error("Icon suggestion error:", iconResponse.status, errText);
+        return new Response(JSON.stringify({ error: "Icon suggestion failed" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const iconData = await iconResponse.json();
+      const reply = iconData.choices?.[0]?.message?.content || "[]";
+      
+      // Extract JSON array from response
+      let suggestions = [];
+      try {
+        const jsonMatch = reply.match(/\[.*\]/s);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        }
+      } catch (e) {
+        console.error("Failed to parse icon suggestions:", e);
+      }
+
+      return new Response(JSON.stringify({ suggestions }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
