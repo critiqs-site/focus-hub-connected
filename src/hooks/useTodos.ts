@@ -99,6 +99,14 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to update icon"); fetchData(); } else toast.success("Icon updated");
   };
 
+  const handleUpdateDescription = async (id: string, description: string | null) => {
+    const newTodos = todos.map((t) => t.id === id ? { ...t, description } : t);
+    setTodos(newTodos);
+    if (isGuest) { persistGuest(newTodos); toast.success("Description updated"); return; }
+    const { error } = await supabase.from("todos").update({ description } as any).eq("id", id);
+    if (error) { toast.error("Failed to update description"); fetchData(); } else toast.success("Description updated");
+  };
+
   const handleTransferTodo = async (id: string, newDividerId: string) => {
     const newTodos = todos.map((t) => t.id === id ? { ...t, dividerId: newDividerId } : t);
     setTodos(newTodos);
