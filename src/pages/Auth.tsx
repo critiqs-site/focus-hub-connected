@@ -105,7 +105,7 @@ const Auth = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <div className="relative mb-6 animate-scale-in">
-            <img src={logoIcon} alt="CRITIQS" className="mx-auto w-40 h-40 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }} />
+            <img src={logoIcon} alt="CRITIQS" className="mx-auto w-40 h-40 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }}screen' }} />
           </div>
           <div className="animate-slide-up mb-2" style={{ animationDelay: "0.2s" }}>
             <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-1">
@@ -142,7 +142,7 @@ const Auth = () => {
         </button>
 
         <div className="flex justify-center mb-4 animate-scale-in">
-          <img src={lIconavI} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-xl mix-blend-screen" />
+          <ogoIcon} alt="CRITIQS" className="w-24 h-24 object-contain drop-shadow-xl" style={{ mixBlendMode: 'screen' }}nd-screen" />
         </div>
 
         <div className="text-center mb-6">
