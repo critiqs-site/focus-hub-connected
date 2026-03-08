@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 
 const Navbar = () => {
   const links = [
@@ -10,10 +11,9 @@ const Navbar = () => {
   return (
     <nav className="w-full border-b border-border/50 bg-card/30 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">
-          <span className="text-foreground">CRITI</span>
-          <span className="text-primary">QS</span>
-        </h1>
+        <div className="flex items-center gap-2">
+          <img src={logoIcon} alt="CRITIQS logo" className="w-8 h-8 object-contain" />
+        </div>
         <div className="flex items-center gap-4">
           {links.map((link) => (
             <a
