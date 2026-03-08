@@ -14,6 +14,7 @@ import UserProfileMenu from "@/components/UserProfileMenu";
 import AnalyticsView from "@/components/AnalyticsView";
 import ToolsView from "@/components/ToolsView";
 import FloatingAIChat from "@/components/FloatingAIChat";
+import CompletionBanner from "@/components/CompletionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
