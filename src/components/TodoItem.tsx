@@ -54,8 +54,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
   };
 
   return (
-    <div className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden" style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)'; (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }}>
-      {/* Progress bar * lg:h-2/}
+    <div className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden" style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)'; (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)'; }}>
+      {/* lg:h-2 Progress bar * lg:h-2/}
       <div c lg:h-2lassName="absol lg:h-2ute top-0 left- lg:h-20 right-0 h-1.5" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
         <div
           className="h-full transition-all duration-500"
@@ -67,7 +67,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
         {/* Top row on mobile / Left side on desktop */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Clickable icon area to toggle today */}
-          <button
+          <buttolg:p-4 n
             onClick=lg:p-4 {handleQuickToggle}
   lg:p-4           className={`lg:p-4 relative p-2.5 md:p-3 rounded-xl shrink-0 transition-all duration-300 ${
               isTodayCompleted
@@ -77,15 +77,15 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
             title={isTodayCompleted ? "Mark as not done today" : "Mark as done today"}
           >
             {isTodayCompleted && (
-              <Check className="absolute -top-1 -right-1 h-4 w-4 text-primary-foreground bg-primary rounded-full p-0.5" />
+              <Check className="absolute -top-1 -right-1 h-4 w-4 text-primary-foreground bg-primary rounded-fullg:h-8 lg:w-8 l p-0.5" />
             )}
   lg:h-8 lg:w-8           <IconComponent claslg:h-8 lg:w-8 sName="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div cllg:text-3xl assName="flex items-center gap-2">
         lg:text-3xl       <span className="text-xl md:text-2xl font-bold text-primary">{percentage}%</span>
-              {!isEditing && (
+              {!ilg:text-base sEditing && (
                 <span className="text-sm font-medium text-foreground truncate">
                   {todo.text}
                 </span>
