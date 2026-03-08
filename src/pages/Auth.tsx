@@ -106,9 +106,7 @@ const Auth = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <div className="relative mb-6 animate-scale-in">
-            <div className="relative mx-auto w-52 h-52 rounded-full bg-gradient-to-br from-card to-secondary border-4 border-primary/40 shadow-2xl shadow-primary/20 flex items-center justify-center overflow-hidden">
-              <img src={mascotCharacter} alt="Cute mascot" className="w-44 h-44 object-contain" />
-            </div>
+            <img src={logoFavicon} alt="CRITIQS logo" className="mx-auto w-40 h-40 object-contain drop-shadow-2xl" />
           </div>
           <div className="animate-slide-up mb-2" style={{ animationDelay: "0.2s" }}>
             <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-1">
