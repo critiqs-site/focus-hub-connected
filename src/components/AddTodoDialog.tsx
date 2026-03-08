@@ -8,27 +8,23 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Divider } from "@/types/todo";
 import { TODO_ICONS, getIconComponent } from "@/lib/icons";
 import IconPickerGrid from "@/components/IconPickerGrid";
 
+const DESC_MAX = 60;
+
 interface AddTodoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (text: string, dividerId: string, icon: string) => void;
+  onAdd: (text: string, dividerId: string, icon: string, description?: string) => void;
   dividers: Divider[];
   preselectedDividerId?: string | null;
 }
 
 const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDividerId }: AddTodoDialogProps) => {
   const [text, setText] = useState("");
+  const [description, setDescription] = useState("");
   const [dividerId, setDividerId] = useState(preselectedDividerId || dividers[0]?.id || "");
   const [selectedIcon, setSelectedIcon] = useState("PersonStanding");
 
@@ -40,10 +36,13 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
     }
   }, [open, preselectedDividerId, dividers]);
 
+  const selectedDivider = dividers.find((d) => d.id === dividerId);
+
   const handleSubmit = () => {
     if (text.trim() && dividerId) {
-      onAdd(text.trim(), dividerId, selectedIcon);
+      onAdd(text.trim(), dividerId, selectedIcon, description.trim() || undefined);
       setText("");
+      setDescription("");
       setSelectedIcon("PersonStanding");
       onOpenChange(false);
     }
@@ -53,7 +52,14 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass-card border-primary/20 bg-card/95 backdrop-blur-xl max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add New Habit</DialogTitle>
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            Add New Habit
+            {selectedDivider && (
+              <span className="text-sm font-normal text-muted-foreground">
+                → {selectedDivider.name}
+              </span>
+            )}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <Input
@@ -67,6 +73,24 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
             }}
           />
 
+          {/* Short description */}
+          <div className="space-y-1">
+            <Input
+              placeholder="Short description (optional, desktop only)"
+              value={description}
+              onChange={(e) => {
+                if (e.target.value.length <= DESC_MAX) setDescription(e.target.value);
+              }}
+              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {description.length}/{DESC_MAX}
+            </p>
+          </div>
+
           {/* Icon Picker */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Choose an icon</label>
@@ -79,25 +103,6 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
               />
             </div>
           </div>
-
-          <Select value={dividerId} onValueChange={setDividerId}>
-            <SelectTrigger className="bg-secondary/50 border-primary/30">
-              <SelectValue placeholder="Select a section" />
-            </SelectTrigger>
-            <SelectContent className="glass-card border-primary/20 bg-card/95 backdrop-blur-xl">
-              {dividers.map((divider) => {
-                const DividerIcon = getIconComponent(divider.icon);
-                return (
-                  <SelectItem key={divider.id} value={divider.id} className="hover:bg-primary/20 focus:bg-primary/20">
-                    <div className="flex items-center gap-2">
-                      <DividerIcon className="h-4 w-4" />
-                      {divider.name}
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="glass-button">
