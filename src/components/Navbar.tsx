@@ -12,7 +12,7 @@ const Navbar = () => {
     <nav className="w-full border-b border-border/50 bg-card/30 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src={faviconLogo} alt="CRITIQS logo" className="h-8 object-contain" />
+          <img src={faviconLogo} alt="CRITIQS logo" className="h-8 object-contain mix-blend-lighten" />
         </div>
         <div className="flex items-center gap-4">
           {links.map((link) => (
