@@ -105,6 +105,7 @@ export type Database = {
         Row: {
           completions: string[]
           created_at: string
+          description: string | null
           divider_id: string
           icon: string
           id: string
@@ -115,6 +116,7 @@ export type Database = {
         Insert: {
           completions?: string[]
           created_at?: string
+          description?: string | null
           divider_id: string
           icon?: string
           id?: string
@@ -125,6 +127,7 @@ export type Database = {
         Update: {
           completions?: string[]
           created_at?: string
+          description?: string | null
           divider_id?: string
           icon?: string
           id?: string

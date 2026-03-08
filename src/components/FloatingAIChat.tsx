@@ -15,7 +15,7 @@ RULES:
 - If user asks "who are you" or similar, introduce yourself as CritiQs AI, their habit & wellness buddy.
 
 TODO ACTIONS (use only when relevant):
-[ACTION:DELETE:todoId:todoText] [ACTION:RENAME:todoId:newText:oldText] [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName] [ACTION:ICON:todoId:newIconName:todoText] [ACTION:SUGGEST:dividerName:todoText:iconName] [ACTION:ADD_ALL]
+[ACTION:DELETE:todoId:todoText] [ACTION:RENAME:todoId:newText:oldText] [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName] [ACTION:ICON:todoId:newIconName:todoText] [ACTION:DESCRIBE:todoId:description:todoText] [ACTION:SUGGEST:dividerName:todoText:iconName] [ACTION:ADD_ALL]
 
 TASK ICONS (use these for todos/habits): ${TODO_ICON_NAMES.join(",")}
 SECTION ICONS (use these for dividers/sections): ${DIVIDER_ICON_NAMES.join(",")}
@@ -24,6 +24,7 @@ SECTION ICONS (use these for dividers/sections): ${DIVIDER_ICON_NAMES.join(",")}
 - For section-related operations, reference SECTION ICONS.
 - When user says "replace X with a better icon" or "change icon for X", use [ACTION:ICON:todoId:newIconName:todoText].
 - When user says "move X to Y section", use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName].
+- When user says "add description to X" or "describe X", use [ACTION:DESCRIBE:todoId:short description:todoText]. Descriptions should be brief (5-15 words), practical, like "30 min at mid-day" or "Before breakfast, 10 reps".
 
 TASK INSPIRATION (real human habits for suggestions):
 - Go Outside at Mid-day, Watch Self Improvement Videos, Do One Skill (Content/Editing/Coding)
@@ -37,12 +38,13 @@ TASK INSPIRATION (real human habits for suggestions):
 type Message = { role: "user" | "assistant"; content: string; image?: string };
 
 interface ActionButton {
-  type: "DELETE" | "SUGGEST" | "ADD_ALL" | "RENAME" | "TRANSFER" | "ICON";
+  type: "DELETE" | "SUGGEST" | "ADD_ALL" | "RENAME" | "TRANSFER" | "ICON" | "DESCRIBE";
   todoId?: string;
   todoText?: string;
   dividerName?: string;
   iconName?: string;
   newText?: string;
+  description?: string;
   targetDividerId?: string;
   sectionName?: string;
 }
@@ -61,10 +63,11 @@ interface FloatingAIChatProps {
   onRenameTodo?: (id: string, text: string) => void;
   onTransferTodo?: (id: string, dividerId: string) => void;
   onUpdateIcon?: (id: string, icon: string) => void;
+  onUpdateDescription?: (id: string, description: string | null) => void;
 }
 
 function parseActions(text: string): { cleanText: string; actions: ActionButton[] } {
-  const actionRegex = /\[ACTION:(DELETE|SUGGEST|ADD_ALL|RENAME|TRANSFER|ICON)(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?\]/g;
+  const actionRegex = /\[ACTION:(DELETE|SUGGEST|ADD_ALL|RENAME|TRANSFER|ICON|DESCRIBE)(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?(?::([^:\]]*?))?\]/g;
   const actions: ActionButton[] = [];
   let match;
 
@@ -80,6 +83,8 @@ function parseActions(text: string): { cleanText: string; actions: ActionButton[
       actions.push({ type, todoId: match[2], targetDividerId: match[3], todoText: match[4], sectionName: match[5] });
     } else if (type === "ICON") {
       actions.push({ type, todoId: match[2], iconName: match[3], todoText: match[4] });
+    } else if (type === "DESCRIBE") {
+      actions.push({ type, todoId: match[2], description: match[3], todoText: match[4] });
     } else if (type === "ADD_ALL") {
       actions.push({ type: "ADD_ALL" });
     }
@@ -92,7 +97,7 @@ function parseActions(text: string): { cleanText: string; actions: ActionButton[
 const FloatingAIChat = ({
   open, onOpenChange, initialMessage, onInitialMessageConsumed,
   todos = [], dividers = [], notes = [], interests = [],
-  onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon,
+  onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon, onUpdateDescription,
 }: FloatingAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -116,7 +121,7 @@ const FloatingAIChat = ({
       if (dividers.length || todos.length) {
         const todoLines = todos.map(t => {
           const sec = dividers.find(d => d.id === t.dividerId)?.name || "?";
-          return `${t.id}|${t.text}|${sec}|${t.icon}`;
+          return `${t.id}|${t.text}|${sec}|${t.icon}${t.description ? `|${t.description}` : ""}`;
         });
         const divLines = dividers.map(d => `${d.id}|${d.name}|${d.icon}`);
         ctx += `\n[DATA]\nSections: ${divLines.join("; ")}\nTodos: ${todoLines.join("; ")}`;
@@ -147,6 +152,7 @@ const FloatingAIChat = ({
             todos: todos.map(t => ({
               id: t.id,
               text: t.text,
+              description: t.description || null,
               dividerName: dividers.find(d => d.id === t.dividerId)?.name || "?",
               icon: t.icon,
             })),
@@ -234,6 +240,9 @@ const FloatingAIChat = ({
     } else if (action.type === "ICON" && action.todoId && action.iconName && onUpdateIcon) {
       onUpdateIcon(action.todoId, action.iconName);
       markDone(key);
+    } else if (action.type === "DESCRIBE" && action.todoId && action.description && onUpdateDescription) {
+      onUpdateDescription(action.todoId, action.description);
+      markDone(key);
     } else if (action.type === "SUGGEST" && action.todoText && onAddTodo) {
       const divider = dividers.find(d => d.name.toLowerCase().includes((action.dividerName || "").toLowerCase()));
       if (divider) {
@@ -293,6 +302,15 @@ const FloatingAIChat = ({
           className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
           {done ? <Check className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
           {done ? "Icon changed" : `Change icon to ${action.iconName}`}
+        </button>
+      );
+    }
+    if (action.type === "DESCRIBE") {
+      return (
+        <button key={index} onClick={() => handleAction(action)} disabled={done}
+          className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
+          {done ? <Check className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
+          {done ? "Description added" : `Add desc to "${action.todoText}"`}
         </button>
       );
     }
