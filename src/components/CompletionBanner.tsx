@@ -92,7 +92,7 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
           <img
             src={badge.image}
             alt={badge.label}
-            className={`w-14 h-14 object-contain drop-shadow-lg transition-all duration-500 ${
+            className={`w-14 h-14 lg:w-20 lg:h-20 object-contain drop-shadow-lg transition-all duration-500 ${
               animating ? "animate-[spin_0.5s_ease-out]" : ""
             }`}
           />
