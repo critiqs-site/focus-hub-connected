@@ -50,6 +50,27 @@ const Index = () => {
     if (!authLoading && !user && !isGuest) navigate("/auth");
   }, [user, authLoading, navigate, isGuest]);
 
+  // Auto-save daily completion percentage to notes
+  const autoSaveRef = useRef(false);
+  useEffect(() => {
+    if (todosLoading || notesLoading || todos.length === 0) return;
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const done = todos.filter((t) => t.completions.includes(todayStr)).length;
+    const pct = Math.round((done / todos.length) * 100);
+    const existingNote = notes.find((n) => n.date === todayStr);
+    const noteText = `Daily progress: ${pct}% (${done}/${todos.length} habits completed)`;
+
+    // Only auto-save when percentage changes
+    if (existingNote && existingNote.note === noteText) return;
+    if (!autoSaveRef.current && !existingNote) {
+      autoSaveRef.current = true;
+      handleAddNote(todayStr, pct === 100 ? "super_happy" : pct >= 70 ? "happy" : pct >= 40 ? "neutral" : pct >= 10 ? "sad" : "depressed", noteText);
+    } else if (existingNote) {
+      const mood = pct === 100 ? "super_happy" : pct >= 70 ? "happy" : pct >= 40 ? "neutral" : pct >= 10 ? "sad" : "depressed";
+      handleEditNote(existingNote.id, mood, noteText);
+    }
+  }, [todos, todosLoading, notesLoading]);
+
   const handleSignOut = async () => {
     localStorage.removeItem("guestMode");
     await signOut();
