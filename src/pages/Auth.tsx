@@ -142,7 +142,7 @@ const Auth = () => {
         </button>
 
         <div className="flex justify-center mb-4 animate-scale-in">
-          <ogoIcon} alt="CRITIQS" className="w-24 h-24 object-contain drop-shadow-xl" style={{ mixBlendMode: 'screen' }}nd-screen" />
+          <img src={logoIcon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-xl" style={{ mixBlendMode: 'screen' }} />
         </div>
 
         <div className="text-center mb-6">
