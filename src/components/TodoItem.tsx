@@ -55,7 +55,9 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
 
   return (
     <div
-      className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden"
+      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden ${
+        todo.pinned ? "ring-2 ring-primary/50" : ""
+      }`}
       style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
