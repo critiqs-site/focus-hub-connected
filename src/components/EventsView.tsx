@@ -77,9 +77,9 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 animate-fade-in">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr_1.2fr] gap-4 lg:gap-6 animate-fade-in min-h-[70vh]">
       {/* LEFT — Right Now */}
-      <div className="rounded-2xl p-5 lg:p-6 flex flex-col" style={glassStyle}>
+      <div className="rounded-2xl p-6 lg:p-8 flex flex-col" style={glassStyle}>
         <div className="flex items-center gap-2 mb-5">
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Right Now</h3>
