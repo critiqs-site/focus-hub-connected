@@ -56,7 +56,7 @@ interface FloatingAIChatProps {
   onInitialMessageConsumed?: () => void;
   todos?: Todo[];
   dividers?: Divider[];
-  notes?: any[];
+  notes?: never[];
   interests?: string[];
   onAddTodo?: (text: string, dividerId: string, icon: string) => void;
   onDeleteTodo?: (id: string) => void;
@@ -96,7 +96,7 @@ function parseActions(text: string): { cleanText: string; actions: ActionButton[
 
 const FloatingAIChat = ({
   open, onOpenChange, initialMessage, onInitialMessageConsumed,
-  todos = [], dividers = [], notes = [], interests = [],
+  todos = [], dividers = [], interests = [],
   onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon, onUpdateDescription,
 }: FloatingAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -127,9 +127,6 @@ const FloatingAIChat = ({
         ctx += `\n[DATA]\nSections: ${divLines.join("; ")}\nTodos: ${todoLines.join("; ")}`;
       }
       if (interests.length) ctx += `\nInterests: ${interests.join(",")}`;
-      if (notes.length) {
-        ctx += `\nMoods: ${notes.slice(0, 3).map((n: any) => `${n.mood}`).join(",")}`;
-      }
       if (ctx) ctx += "\n[/DATA]";
 
       const processedMessages = allMessages.map(m => {
@@ -158,7 +155,6 @@ const FloatingAIChat = ({
             })),
             dividers: dividers.map(d => ({ id: d.id, name: d.name, icon: d.icon })),
             interests,
-            notes: notes.slice(0, 5),
           },
         },
       });
@@ -174,7 +170,7 @@ const FloatingAIChat = ({
       setIsLoading(false);
       scrollToBottom();
     }
-  }, [todos, dividers, notes, interests]);
+  }, [todos, dividers, interests]);
 
   useEffect(() => {
     if (open && initialMessage && !initialSent.current) {
