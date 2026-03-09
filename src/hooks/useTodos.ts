@@ -170,7 +170,7 @@ export const useTodos = (userId: string | undefined) => {
     if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
     const { name: cleanName, icon: cleanIcon } = validated.data;
     if (isGuest) {
-      const newDiv: Divider = { id: crypto.randomUUID(), name, icon };
+      const newDiv: Divider = { id: crypto.randomUUID(), name: cleanName, icon: cleanIcon };
       const newDividers = [...dividers, newDiv];
       setDividers(newDividers);
       persistGuest(undefined, newDividers);
