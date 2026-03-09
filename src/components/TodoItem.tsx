@@ -47,8 +47,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
   const todayStr = format(today, "yyyy-MM-dd");
   const isTodayCompleted = completions.includes(todayStr);
 
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(today, 6 - i);
+  const fixedDays = getFixedWeekDays(today);
+  const days = fixedDays.map((date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const isCompleted = completions.includes(dateStr);
     const isToday = isSameDay(date, today);
