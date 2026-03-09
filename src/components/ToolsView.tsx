@@ -1,4 +1,7 @@
-import { Dumbbell, Shirt, UtensilsCrossed, Wind } from "lucide-react";
+import physiqueIcon from "@/assets/tools/physique.png";
+import foodIcon from "@/assets/tools/food.png";
+import outfitIcon from "@/assets/tools/outfit.png";
+import breathingIcon from "@/assets/tools/breathing.png";
 import PhysiqueRater from "./PhysiqueRater";
 import OutfitRater from "./OutfitRater";
 import FoodScanner from "./FoodScanner";
@@ -13,8 +16,8 @@ const ToolsView = ({ onAskAI }: ToolsViewProps) => {
     <div className="space-y-6 animate-fade-in">
       <div className="glass-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Dumbbell className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg">
+            <img src={physiqueIcon} alt="Physique Rater" className="h-10 w-10 object-contain" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Physique Rater</h2>
@@ -26,8 +29,8 @@ const ToolsView = ({ onAskAI }: ToolsViewProps) => {
 
       <div className="glass-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Shirt className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg">
+            <img src={outfitIcon} alt="Outfit Rater" className="h-10 w-10 object-contain" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Outfit Rater</h2>
@@ -39,8 +42,8 @@ const ToolsView = ({ onAskAI }: ToolsViewProps) => {
 
       <div className="glass-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <UtensilsCrossed className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg">
+            <img src={foodIcon} alt="Food Scanner" className="h-10 w-10 object-contain" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Food Scanner</h2>
@@ -52,8 +55,8 @@ const ToolsView = ({ onAskAI }: ToolsViewProps) => {
 
       <div className="glass-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Wind className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg">
+            <img src={breathingIcon} alt="Breathing Exercises" className="h-10 w-10 object-contain" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Breathing Exercises</h2>
