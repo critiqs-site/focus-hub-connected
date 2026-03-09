@@ -262,7 +262,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
             </div>
 
             <div className="flex-1">
-              <label className="text-xs text-muted-foreground font-medium mb-2 block">Instructions & Details</label>
+              <label className="text-sm text-muted-foreground font-medium mb-3 block">Instructions & Details</label>
               <Textarea
                 value={selectedEvent.description}
                 onChange={e => onEditEvent(selectedEvent.id, { description: e.target.value })}
