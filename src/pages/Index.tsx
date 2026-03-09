@@ -247,7 +247,12 @@ const Index = () => {
                   </div>
                 );
               })}
-              <button onClick={() => setShowAddDivider(true)} className="w-full glass-card border-dashed border-2 border-primary/30 hover:border-primary/60 p-4 flex items-center justify-center gap-2 transition-all duration-300 hover:bg-primary/5 cursor-pointer group mt-6">
+              <button onClick={() => setShowAddDivider(true)} className="w-full border-dashed border-2 border-primary/30 hover:border-primary/60 p-4 flex items-center justify-center gap-2 transition-all duration-300 hover:bg-primary/5 cursor-pointer group mt-6 rounded-2xl" style={{
+                background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.04) 0%, hsla(0, 0%, 100%, 0.01) 100%)',
+                backdropFilter: 'blur(40px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+              }}>
+
                 <Plus className="h-5 w-5 text-primary" />
                 <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Add Section</span>
               </button>

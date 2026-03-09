@@ -72,21 +72,21 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
       } ${isDragging ? "opacity-60 scale-105 rotate-1 shadow-2xl z-50" : "opacity-100"}`}
       style={{
         ...style,
-        background: 'linear-gradient(135deg, hsla(240, 10%, 15%, 0.3), hsla(240, 8%, 8%, 0.5))',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
         border: '1px solid hsla(0, 0%, 100%, 0.12)',
-        boxShadow: 'inset 0 1px 2px hsla(0, 0%, 100%, 0.1), 0 8px 32px -8px hsla(0, 0%, 0%, 0.4)'
+        boxShadow: 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)'
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, hsla(240, 10%, 18%, 0.4), hsla(240, 8%, 10%, 0.6))';
+        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.12) 0%, hsla(0, 0%, 100%, 0.04) 100%)';
         (e.currentTarget as HTMLElement).style.border = '1px solid hsla(24, 95%, 53%, 0.25)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 2px hsla(0, 0%, 100%, 0.15), 0 0 30px -5px hsla(24, 95%, 53%, 0.2), 0 8px 32px -8px hsla(0, 0%, 0%, 0.5)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 1px hsla(0, 0%, 100%, 0.15), 0 0 30px -5px hsla(24, 95%, 53%, 0.2), 0 8px 32px hsla(0, 0%, 0%, 0.5)';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, hsla(240, 10%, 15%, 0.3), hsla(240, 8%, 8%, 0.5))';
+        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)';
         (e.currentTarget as HTMLElement).style.border = '1px solid hsla(0, 0%, 100%, 0.12)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 2px hsla(0, 0%, 100%, 0.1), 0 8px 32px -8px hsla(0, 0%, 0%, 0.4)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)';
       }}
     >
       {/* Pinned indicator */}
