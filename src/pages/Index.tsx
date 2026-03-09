@@ -37,7 +37,7 @@ const Index = () => {
     todos, dividers, loading: todosLoading,
     handleToggleDay, handleEdit, handleDelete,
     handleUpdateIcon, handleUpdateDescription, handleTransferTodo,
-    handleAddTodo, handleAddDivider, handleDeleteDivider,
+    handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin,
     refetch: refetchTodos,
   } = useTodos(user?.id);
 
@@ -95,20 +95,29 @@ const Index = () => {
   const isLoading = todosLoading || notesLoading;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
-  // Split todos into Remaining and Done for today
-  const remainingTodos = todos.filter(t => !t.completions.includes(todayStr));
-  const doneTodos = todos.filter(t => t.completions.includes(todayStr));
+  // Split todos into Remaining and Done for today, then sort by pinned status
+  const remainingTodos = todos.filter(t => !t.completions.includes(todayStr)).sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
+  const doneTodos = todos.filter(t => t.completions.includes(todayStr)).sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
 
   const renderTodoSection = (sectionTodos: typeof todos, sectionDividers: typeof dividers) => {
     return sectionDividers.map((divider, index) => {
       const dividerTodos = sectionTodos.filter((t) => t.dividerId === divider.id);
       if (dividerTodos.length === 0) return null;
+      const pinnedCount = dividerTodos.filter((t) => t.pinned).length;
       return (
         <div key={divider.id} style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
           <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
           <div className="space-y-3">
             {dividerTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} />
+              <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
             ))}
           </div>
         </div>

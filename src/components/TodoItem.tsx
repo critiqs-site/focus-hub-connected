@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, Pin } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
 import { format, subDays, isSameDay } from "date-fns";
@@ -11,9 +11,11 @@ interface TodoItemProps {
   onToggleDay: (id: string, dateStr: string) => void;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
+  onTogglePin: (id: string) => void;
+  pinnedCount: number;
 }
 
-const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
+const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCount }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
 
@@ -53,7 +55,9 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
 
   return (
     <div
-      className="group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden"
+      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden ${
+        todo.pinned ? "ring-2 ring-primary/50" : ""
+      }`}
       style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
@@ -64,6 +68,13 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
         (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
       }}
     >
+      {/* Pinned indicator */}
+      {todo.pinned && (
+        <div className="absolute top-3 right-3 z-10">
+          <Pin className="h-4 w-4 text-primary fill-primary" />
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1.5 lg:h-2" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
         <div
@@ -138,6 +149,24 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
               <Button
                 size="sm"
                 variant="ghost"
+                onClick={() => {
+                  if (!todo.pinned && pinnedCount >= 3) {
+                    return; // Will be handled by toast in parent
+                  }
+                  onTogglePin(todo.id);
+                }}
+                className={`h-8 w-8 p-0 ${
+                  todo.pinned
+                    ? "text-primary bg-primary/20 hover:bg-primary/30"
+                    : "glass-button"
+                }`}
+                title={todo.pinned ? "Unpin" : pinnedCount >= 3 ? "Max 3 pins per section" : "Pin (max 3 per section)"}
+              >
+                <Pin className={`h-3.5 w-3.5 ${todo.pinned ? "fill-primary" : ""}`} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => setIsEditing(true)}
                 className="h-8 w-8 p-0 glass-button"
               >
@@ -198,6 +227,23 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
               className="flex md:hidden gap-1 ml-2 flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  if (!todo.pinned && pinnedCount >= 3) {
+                    return; // Will be handled by toast in parent
+                  }
+                  onTogglePin(todo.id);
+                }}
+                className={`h-8 w-8 p-0 ${
+                  todo.pinned
+                    ? "text-primary bg-primary/20"
+                    : "glass-button"
+                }`}
+              >
+                <Pin className={`h-3.5 w-3.5 ${todo.pinned ? "fill-primary" : ""}`} />
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"

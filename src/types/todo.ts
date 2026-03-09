@@ -6,6 +6,7 @@ export interface Todo {
   icon: string;
   createdAt: string;
   completions: string[];
+  pinned?: boolean;
 }
 
 export interface Divider {
