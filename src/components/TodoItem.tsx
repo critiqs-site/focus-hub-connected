@@ -65,19 +65,26 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
-      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden cursor-grab active:cursor-grabbing ${
-        todo.pinned ? "ring-2 ring-primary/50" : ""
+      className={`group p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-500 animate-scroll-fade-in relative overflow-hidden cursor-grab active:cursor-grabbing rounded-2xl backdrop-blur-3xl ${
+        todo.pinned ? "ring-1 ring-primary/30" : ""
       } ${isDragging ? "opacity-60 scale-105 rotate-1 shadow-2xl z-50" : "opacity-100"}`}
+      style={{
+        ...style,
+        background: 'linear-gradient(145deg, hsla(240, 8%, 15%, 0.4), hsla(240, 10%, 8%, 0.6))',
+        border: '1px solid hsla(0, 0%, 100%, 0.1)',
+        boxShadow: 'inset 0 1px 0 hsla(0, 0%, 100%, 0.08), 0 8px 32px -8px hsla(0, 0%, 0%, 0.3), 0 0 0 1px hsla(240, 8%, 15%, 0.3)'
+      }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
+        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(145deg, hsla(240, 8%, 18%, 0.5), hsla(240, 10%, 10%, 0.7))';
+        (e.currentTarget as HTMLElement).style.border = '1px solid hsla(24, 95%, 53%, 0.2)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0, 0%, 100%, 0.12), 0 0 40px -8px hsla(24, 95%, 53%, 0.15), 0 8px 32px -8px hsla(0, 0%, 0%, 0.4), 0 0 0 1px hsla(24, 95%, 53%, 0.1)';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'hsla(0,0%,100%,0.08)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
+        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(145deg, hsla(240, 8%, 15%, 0.4), hsla(240, 10%, 8%, 0.6))';
+        (e.currentTarget as HTMLElement).style.border = '1px solid hsla(0, 0%, 100%, 0.1)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0, 0%, 100%, 0.08), 0 8px 32px -8px hsla(0, 0%, 0%, 0.3), 0 0 0 1px hsla(240, 8%, 15%, 0.3)';
       }}
     >
       {/* Pinned indicator */}
