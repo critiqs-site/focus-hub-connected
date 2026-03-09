@@ -57,7 +57,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
   });
 
   const completedCount = days.filter(d => d.isCompleted).length;
-  const percentage = Math.round((completedCount / 7) * 100);
+  const percentage = Math.round((completedCount / fixedDays.length) * 100);
 
   const handleQuickToggle = () => {
     onToggleDay(todo.id, todayStr);
