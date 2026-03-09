@@ -155,7 +155,6 @@ const FloatingAIChat = ({
             })),
             dividers: dividers.map(d => ({ id: d.id, name: d.name, icon: d.icon })),
             interests,
-            notes: notes.slice(0, 5),
           },
         },
       });
