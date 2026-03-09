@@ -86,10 +86,10 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <p className="text-4xl lg:text-5xl font-bold text-foreground mb-1 tabular-nums">
+          <p className="text-5xl lg:text-7xl font-bold text-foreground mb-2 tabular-nums">
             {format(currentTime, "h:mm")}
           </p>
-          <p className="text-sm text-muted-foreground mb-6">{format(currentTime, "a · EEEE")}</p>
+          <p className="text-base lg:text-lg text-muted-foreground mb-8">{format(currentTime, "a · EEEE")}</p>
 
           {currentEvent ? (
             <div className="w-full rounded-xl p-4" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.1)' }}>
