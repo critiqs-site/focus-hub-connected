@@ -1,5 +1,3 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -83,52 +81,29 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ status: "error", message: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data, error } = await supabase.auth.getClaims(token);
-    if (error || !data?.claims) {
-      return new Response(
-        JSON.stringify({ status: "error", message: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const { imageBase64 } = await req.json();
 
     if (!imageBase64) {
-      return new Response(
-        JSON.stringify({ status: "error", message: "No image data provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ status: "error", message: "No image data provided" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const apiKey = Deno.env.get("AI_SERVICE_KEY");
     if (!apiKey) {
       console.error("AI_SERVICE_KEY not set");
-      return new Response(
-        JSON.stringify({ status: "error", message: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ status: "error", message: "Server configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("Analyzing image with primary model...");
 
     let parsed = null;
     try {
-      parsed = await callAI(apiKey, "mistral", imageBase64);
+      parsed = await callAI(apiKey, "gemini-fast", imageBase64);
     } catch (e) {
       console.error("Primary model error:", e);
     }
@@ -136,7 +111,7 @@ Deno.serve(async (req) => {
     if (!parsed) {
       console.log("Retrying with model...");
       try {
-        parsed = await callAI(apiKey, "mistral", imageBase64);
+        parsed = await callAI(apiKey, "gemini-fast", imageBase64);
       } catch (e) {
         console.error("Fallback model error:", e);
       }
@@ -156,9 +131,9 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Edge function error:", err);
-    return new Response(
-      JSON.stringify({ status: "error", message: "Server error. Please try again later." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ status: "error", message: "Server error. Please try again later." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
