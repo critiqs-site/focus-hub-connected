@@ -77,37 +77,37 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 animate-fade-in">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr_1.2fr] gap-4 lg:gap-6 animate-fade-in min-h-[70vh]">
       {/* LEFT — Right Now */}
-      <div className="rounded-2xl p-5 lg:p-6 flex flex-col" style={glassStyle}>
+      <div className="rounded-2xl p-6 lg:p-8 flex flex-col" style={glassStyle}>
         <div className="flex items-center gap-2 mb-5">
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Right Now</h3>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <p className="text-4xl lg:text-5xl font-bold text-foreground mb-1 tabular-nums">
+          <p className="text-5xl lg:text-7xl font-bold text-foreground mb-2 tabular-nums">
             {format(currentTime, "h:mm")}
           </p>
-          <p className="text-sm text-muted-foreground mb-6">{format(currentTime, "a · EEEE")}</p>
+          <p className="text-base lg:text-lg text-muted-foreground mb-8">{format(currentTime, "a · EEEE")}</p>
 
           {currentEvent ? (
-            <div className="w-full rounded-xl p-4" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.1)' }}>
-              <p className="text-xs text-primary font-medium mb-1">ACTIVE NOW</p>
-              <p className="text-lg font-semibold text-foreground">{currentEvent.title}</p>
-              <p className="text-xs text-muted-foreground mt-1">Started at {currentEvent.time}</p>
+            <div className="w-full rounded-2xl p-5 lg:p-6" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.1)' }}>
+              <p className="text-xs text-primary font-semibold tracking-wider mb-2">ACTIVE NOW</p>
+              <p className="text-xl lg:text-2xl font-bold text-foreground">{currentEvent.title}</p>
+              <p className="text-sm text-muted-foreground mt-2">Started at {currentEvent.time}</p>
             </div>
           ) : nextEvent ? (
-            <div className="w-full rounded-xl p-4" style={glassStyle}>
-              <p className="text-xs text-muted-foreground font-medium mb-1">COMING UP</p>
-              <p className="text-lg font-semibold text-foreground">{nextEvent.title}</p>
-              <p className="text-sm text-primary font-medium mt-1">in {getCountdown(nextEvent.time)}</p>
+            <div className="w-full rounded-2xl p-5 lg:p-6" style={glassStyle}>
+              <p className="text-xs text-muted-foreground font-semibold tracking-wider mb-2">COMING UP</p>
+              <p className="text-xl lg:text-2xl font-bold text-foreground">{nextEvent.title}</p>
+              <p className="text-base text-primary font-semibold mt-2">in {getCountdown(nextEvent.time)}</p>
             </div>
           ) : (
-            <div className="w-full rounded-xl p-4" style={glassStyle}>
-              <p className="text-2xl mb-1">✨</p>
-              <p className="text-foreground font-medium">You're free!</p>
-              <p className="text-xs text-muted-foreground mt-1">No more events today</p>
+            <div className="w-full rounded-2xl p-5 lg:p-6" style={glassStyle}>
+              <p className="text-3xl mb-2">✨</p>
+              <p className="text-lg text-foreground font-semibold">You're free!</p>
+              <p className="text-sm text-muted-foreground mt-1">No more events today</p>
             </div>
           )}
         </div>
@@ -129,7 +129,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
       </div>
 
       {/* MIDDLE — Today's Schedule */}
-      <div className="rounded-2xl p-5 lg:p-6 flex flex-col max-h-[70vh] lg:max-h-none" style={glassStyle}>
+      <div className="rounded-2xl p-6 lg:p-8 flex flex-col lg:min-h-[65vh]" style={glassStyle}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
@@ -172,7 +172,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin pr-1">
+        <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin pr-1">
           {todayEvents.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
               <Clock className="h-8 w-8 text-muted-foreground/40 mb-3" />
@@ -206,11 +206,11 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${event.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                    <p className={`text-base font-medium truncate ${event.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                       {event.title}
                     </p>
                   </div>
-                  <span className={`text-xs font-medium tabular-nums flex-shrink-0 ${
+                  <span className={`text-sm font-medium tabular-nums flex-shrink-0 ${
                     isActive ? 'text-primary' : 'text-muted-foreground'
                   }`}>
                     {event.time}
@@ -223,7 +223,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
       </div>
 
       {/* RIGHT — Details */}
-      <div className="rounded-2xl p-5 lg:p-6 flex flex-col" style={glassStyle}>
+      <div className="rounded-2xl p-6 lg:p-8 flex flex-col" style={glassStyle}>
         <div className="flex items-center gap-2 mb-4">
           <Clock className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Details</h3>
@@ -236,7 +236,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                 type="text"
                 value={selectedEvent.title}
                 onChange={e => onEditEvent(selectedEvent.id, { title: e.target.value })}
-                className="w-full bg-transparent text-xl font-semibold text-foreground outline-none px-1 py-1 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
+                className="w-full bg-transparent text-2xl lg:text-3xl font-bold text-foreground outline-none px-1 py-2 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
               />
             </div>
 
@@ -245,12 +245,12 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                 type="time"
                 value={selectedEvent.time}
                 onChange={e => onEditEvent(selectedEvent.id, { time: e.target.value })}
-                className="bg-transparent text-sm text-foreground outline-none px-3 py-2 rounded-xl [color-scheme:dark]"
+                className="bg-transparent text-base text-foreground outline-none px-4 py-3 rounded-xl [color-scheme:dark]"
                 style={{ ...glassStyle }}
               />
               <button
                 onClick={() => onToggleComplete(selectedEvent.id)}
-                className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   selectedEvent.completed
                     ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'
@@ -262,12 +262,12 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
             </div>
 
             <div className="flex-1">
-              <label className="text-xs text-muted-foreground font-medium mb-2 block">Instructions & Details</label>
+              <label className="text-sm text-muted-foreground font-medium mb-3 block">Instructions & Details</label>
               <Textarea
                 value={selectedEvent.description}
                 onChange={e => onEditEvent(selectedEvent.id, { description: e.target.value })}
                 placeholder="Add detailed instructions, steps, or notes for this event..."
-                className="flex-1 min-h-[150px] bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/50 rounded-xl focus:ring-1 focus:ring-primary/30"
+                className="flex-1 min-h-[200px] lg:min-h-[250px] bg-transparent resize-none text-base text-foreground placeholder:text-muted-foreground/50 rounded-xl focus:ring-1 focus:ring-primary/30"
                 style={{ background: 'hsla(0, 0%, 100%, 0.03)', border: '1px solid hsla(0, 0%, 100%, 0.06)' }}
               />
             </div>
