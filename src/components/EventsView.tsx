@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
-import { Clock, Plus, Trash2, CheckCircle2, Circle, Sparkles, X, Wand2, Loader2 } from "lucide-react";
+import { Clock, Plus, Trash2, CheckCircle2, Circle, X, Wand2, Loader2, CalendarClock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,7 @@ import type { ScheduledEvent } from "@/types/todo";
 interface EventsViewProps {
   events: ScheduledEvent[];
   onAddEvent: (title: string, time: string, date: string, timeEnd?: string) => void;
-  onAddMultipleEvents: (events: Array<{ title: string; time: string; timeEnd: string; date: string }>) => void;
+  onAddMultipleEvents: (events: Array<{ title: string; time: string; timeEnd: string; date: string; description?: string }>) => void;
   onEditEvent: (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed">>) => void;
   onDeleteEvent: (id: string) => void;
   onToggleComplete: (id: string) => void;
@@ -57,22 +57,6 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
   const selectedEvent = events.find(e => e.id === selectedId);
   const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
-  const activeEvent = useMemo(() => {
-    for (let i = todayEvents.length - 1; i >= 0; i--) {
-      const e = todayEvents[i];
-      const [h, m] = e.time.split(":").map(Number);
-      const startMin = h * 60 + m;
-      if (e.timeEnd) {
-        const [eh, em] = e.timeEnd.split(":").map(Number);
-        const endMin = eh * 60 + em;
-        if (startMin <= nowMinutes && nowMinutes < endMin && !e.completed) return e;
-      } else {
-        if (startMin <= nowMinutes && !e.completed) return e;
-      }
-    }
-    return null;
-  }, [todayEvents, nowMinutes]);
-
   const nextEvent = useMemo(() => {
     return todayEvents.find(e => {
       const [h, m] = e.time.split(":").map(Number);
@@ -88,6 +72,22 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
     const mins = diff % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
+
+  const getEventStatus = (event: ScheduledEvent) => {
+    if (event.completed) return "completed";
+    const [h, m] = event.time.split(":").map(Number);
+    const startMin = h * 60 + m;
+    if (event.timeEnd) {
+      const [eh, em] = event.timeEnd.split(":").map(Number);
+      const endMin = eh * 60 + em;
+      if (startMin <= nowMinutes && nowMinutes < endMin) return "active";
+    }
+    if (startMin > nowMinutes) return "upcoming";
+    return "past";
+  };
+
+  const doneCount = todayEvents.filter(e => e.completed).length;
+  const donePercent = todayEvents.length > 0 ? Math.round((doneCount / todayEvents.length) * 100) : 0;
 
   const handleAdd = () => {
     if (!newTitle.trim()) return;
@@ -116,6 +116,7 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
         time: e.time,
         timeEnd: e.timeEnd || "",
         date: todayStr,
+        description: e.description || "",
       }));
       onAddMultipleEvents(mapped);
       setAiPrompt("");
@@ -128,69 +129,65 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
     }
   };
 
-  // Determine event status for styling
-  const getEventStatus = (event: ScheduledEvent) => {
-    if (event.completed) return "completed";
-    const [h, m] = event.time.split(":").map(Number);
-    const startMin = h * 60 + m;
-    if (event.timeEnd) {
-      const [eh, em] = event.timeEnd.split(":").map(Number);
-      const endMin = eh * 60 + em;
-      if (startMin <= nowMinutes && nowMinutes < endMin) return "active";
-    }
-    if (activeEvent?.id === event.id) return "active";
-    if (startMin > nowMinutes) return "upcoming";
-    return "past";
-  };
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr_1.2fr] gap-4 lg:gap-6 animate-fade-in min-h-[70vh]">
-      {/* LEFT — Right Now */}
+      {/* LEFT — Coming Up */}
       <div className="rounded-2xl p-6 lg:p-8 flex flex-col" style={glassStyle}>
         <div className="flex items-center gap-2 mb-5">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Right Now</h3>
+          <CalendarClock className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Coming Up</h3>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <p className="text-5xl lg:text-7xl font-bold text-foreground mb-2 tabular-nums">
-            {format(currentTime, "h:mm")}
-          </p>
-          <p className="text-base lg:text-lg text-muted-foreground mb-8">{format(currentTime, "a · EEEE")}</p>
+          {nextEvent ? (
+            <div className="w-full space-y-6">
+              <div className="w-full rounded-2xl p-6 lg:p-8" style={{ ...glassStyle, background: 'linear-gradient(135deg, hsla(24, 95%, 53%, 0.1) 0%, hsla(24, 95%, 53%, 0.03) 100%)' }}>
+                <p className="text-xs text-primary/70 font-semibold tracking-wider mb-3 uppercase">Next</p>
+                <p className="text-2xl lg:text-3xl font-bold text-foreground mb-2">{nextEvent.title}</p>
+                <p className="text-lg lg:text-xl text-primary font-bold">in {getCountdown(nextEvent.time)}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {formatTime12(nextEvent.time)}{nextEvent.timeEnd ? ` — ${formatTime12(nextEvent.timeEnd)}` : ""}
+                </p>
+              </div>
 
-          {activeEvent ? (
-            <div className="w-full rounded-2xl p-5 lg:p-6" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.1)' }}>
-              <p className="text-xs text-primary font-semibold tracking-wider mb-2">● ACTIVE</p>
-              <p className="text-xl lg:text-2xl font-bold text-foreground">{activeEvent.title}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {formatTime12(activeEvent.time)}{activeEvent.timeEnd ? ` — ${formatTime12(activeEvent.timeEnd)}` : ""}
-              </p>
-            </div>
-          ) : nextEvent ? (
-            <div className="w-full rounded-2xl p-5 lg:p-6" style={glassStyle}>
-              <p className="text-xs text-muted-foreground font-semibold tracking-wider mb-2">COMING UP</p>
-              <p className="text-xl lg:text-2xl font-bold text-foreground">{nextEvent.title}</p>
-              <p className="text-base text-primary font-semibold mt-2">in {getCountdown(nextEvent.time)}</p>
+              {/* Show what's after */}
+              {(() => {
+                const nextIdx = todayEvents.findIndex(e => e.id === nextEvent.id);
+                const after = todayEvents.slice(nextIdx + 1).filter(e => !e.completed).slice(0, 2);
+                if (after.length === 0) return null;
+                return (
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest font-semibold">Then</p>
+                    {after.map(e => (
+                      <div key={e.id} className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ ...glassStyle, background: 'hsla(0, 0%, 100%, 0.03)' }}>
+                        <ChevronRight className="h-3 w-3 text-muted-foreground/30" />
+                        <span className="text-sm text-muted-foreground truncate flex-1">{e.title}</span>
+                        <span className="text-[10px] text-muted-foreground/50 tabular-nums">{formatTime12(e.time)}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           ) : (
-            <div className="w-full rounded-2xl p-5 lg:p-6" style={glassStyle}>
-              <p className="text-3xl mb-2">✨</p>
+            <div className="w-full rounded-2xl p-6 lg:p-8" style={glassStyle}>
+              <p className="text-3xl mb-3">✨</p>
               <p className="text-lg text-foreground font-semibold">You're free!</p>
-              <p className="text-sm text-muted-foreground mt-1">No more tasks today</p>
+              <p className="text-sm text-muted-foreground mt-1">No upcoming tasks</p>
             </div>
           )}
         </div>
 
         {todayEvents.length > 0 && (
-          <div className="mt-4 pt-4" style={{ borderTop: '1px solid hsla(0, 0%, 100%, 0.06)' }}>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{todayEvents.filter(e => e.completed).length}/{todayEvents.length} done</span>
-              <span>{Math.round((todayEvents.filter(e => e.completed).length / todayEvents.length) * 100)}%</span>
+          <div className="mt-6 pt-4" style={{ borderTop: '1px solid hsla(0, 0%, 100%, 0.06)' }}>
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="text-muted-foreground font-medium">Progress</span>
+              <span className="text-primary font-bold">{donePercent}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-full mt-2 overflow-hidden" style={{ background: 'hsla(0, 0%, 100%, 0.06)' }}>
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'hsla(0, 0%, 100%, 0.06)' }}>
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500"
-                style={{ width: `${(todayEvents.filter(e => e.completed).length / todayEvents.length) * 100}%` }}
+                style={{ width: `${donePercent}%` }}
               />
             </div>
           </div>
@@ -210,10 +207,9 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
               variant="ghost"
               onClick={() => { setShowAIForm(!showAIForm); setShowAddForm(false); }}
               className="h-7 gap-1.5 px-2.5 hover:bg-primary/20 text-primary text-xs"
-              title="Write from AI"
             >
               <Wand2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">AI</span>
+              <span className="hidden sm:inline">Create from AI</span>
             </Button>
             <Button
               size="sm"
@@ -231,18 +227,21 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
           <div className="rounded-xl p-4 mb-4 space-y-3" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.06)' }}>
             <div className="flex items-center gap-2 mb-1">
               <Wand2 className="h-4 w-4 text-primary" />
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider">Write from AI</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider">Create from AI</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Describe your schedule naturally — AI will parse it into events
+              Describe your schedule naturally. For multiple events, separate with commas or spaces.
             </p>
             <Textarea
               value={aiPrompt}
               onChange={e => setAiPrompt(e.target.value)}
-              placeholder='e.g. "eating breakfast 9 to 9:30, gym 10 to 11:30, lunch at 1pm, work 2 to 6, dinner at 7:30"'
+              placeholder='e.g. "breakfast 9 to 9:30, gym 10 to 11:30, lunch at 1pm, work 2 to 6"'
               className="min-h-[80px] bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/50 rounded-xl focus:ring-1 focus:ring-primary/30"
               style={{ background: 'hsla(0, 0%, 100%, 0.04)', border: '1px solid hsla(0, 0%, 100%, 0.06)' }}
             />
+            <p className="text-[10px] text-muted-foreground/50 italic">
+              💡 One prompt = one event. Use commas or spaces to create multiple events at once.
+            </p>
             <div className="flex items-center gap-2 justify-end">
               <Button
                 size="sm"
@@ -259,7 +258,7 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 gap-1.5"
               >
                 {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
-                Generate Schedule
+                Generate
               </Button>
             </div>
           </div>
@@ -309,12 +308,11 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
               <Clock className="h-8 w-8 text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground">No schedule for today</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Tap + to add manually or ✨ AI to auto-generate</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Tap + to add or use Create from AI</p>
             </div>
           ) : (
             <div className="space-y-0">
               {(() => {
-                // Sort: active first, then upcoming by time, then completed
                 const sorted = [...todayEvents].sort((a, b) => {
                   const sa = getEventStatus(a);
                   const sb = getEventStatus(b);
@@ -328,25 +326,17 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                   const isSelected = selectedId === event.id;
                   const isFirst = index === 0;
                   const isLast = index === sorted.length - 1;
-
-                  // Fading: active = full, then progressively fade
                   const fadeOpacity = status === "completed" ? 0.35 : status === "active" ? 1 : Math.max(0.45, 1 - (index * 0.12));
 
                   return (
                     <div
                       key={event.id}
                       className="relative"
-                      style={{
-                        // Stack overlap effect like iOS notifications
-                        marginTop: index === 0 ? 0 : -2,
-                        zIndex: sorted.length - index,
-                      }}
+                      style={{ marginTop: index === 0 ? 0 : -2, zIndex: sorted.length - index }}
                     >
                       <button
                         onClick={() => setSelectedId(event.id === selectedId ? null : event.id)}
-                        className={`w-full text-left transition-all duration-300 group relative overflow-hidden ${
-                          isSelected ? 'ring-1 ring-primary/50' : ''
-                        }`}
+                        className={`w-full text-left transition-all duration-300 group relative overflow-hidden ${isSelected ? 'ring-1 ring-primary/50' : ''}`}
                         style={{
                           opacity: fadeOpacity,
                           background: status === "active"
@@ -365,7 +355,6 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          {/* Completion circle */}
                           <button
                             onClick={e => { e.stopPropagation(); onToggleComplete(event.id); }}
                             className="flex-shrink-0"
@@ -377,12 +366,9 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                             )}
                           </button>
 
-                          {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className={`text-sm font-semibold truncate ${
-                                event.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                              }`}>
+                              <p className={`text-sm font-semibold truncate ${event.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                                 {event.title}
                               </p>
                               {status === "active" && (
@@ -400,11 +386,8 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                             )}
                           </div>
 
-                          {/* Time */}
                           <div className="flex flex-col items-end flex-shrink-0">
-                            <span className={`text-xs font-medium tabular-nums ${
-                              status === "active" ? 'text-primary' : 'text-muted-foreground'
-                            }`}>
+                            <span className={`text-xs font-medium tabular-nums ${status === "active" ? 'text-primary' : 'text-muted-foreground'}`}>
                               {formatTime12(event.time)}
                             </span>
                             {event.timeEnd && (
@@ -433,15 +416,14 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
 
         {selectedEvent ? (
           <div className="flex-1 flex flex-col space-y-4">
-            <div>
-              <input
-                type="text"
-                value={selectedEvent.title}
-                onChange={e => onEditEvent(selectedEvent.id, { title: e.target.value })}
-                className="w-full bg-transparent text-2xl lg:text-3xl font-bold text-foreground outline-none px-1 py-2 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
-              />
-            </div>
+            <input
+              type="text"
+              value={selectedEvent.title}
+              onChange={e => onEditEvent(selectedEvent.id, { title: e.target.value })}
+              className="w-full bg-transparent text-2xl lg:text-3xl font-bold text-foreground outline-none px-1 py-2 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
+            />
 
+            {/* Time + Mark Done + Delete in one row */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={glassStyle}>
                 <input
@@ -460,14 +442,18 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
               </div>
               <button
                 onClick={() => onToggleComplete(selectedEvent.id)}
-                className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  selectedEvent.completed
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${selectedEvent.completed ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                 style={glassStyle}
               >
                 {selectedEvent.completed ? "✓ Done" : "Mark Done"}
+              </button>
+              <button
+                onClick={() => { onDeleteEvent(selectedEvent.id); setSelectedId(null); }}
+                className="px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:text-destructive transition-all flex items-center gap-1.5"
+                style={glassStyle}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
               </button>
             </div>
 
@@ -481,15 +467,6 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                 style={{ background: 'hsla(0, 0%, 100%, 0.03)', border: '1px solid hsla(0, 0%, 100%, 0.06)' }}
               />
             </div>
-
-            <Button
-              variant="ghost"
-              onClick={() => { onDeleteEvent(selectedEvent.id); setSelectedId(null); }}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10 self-start gap-2 text-xs"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete
-            </Button>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
