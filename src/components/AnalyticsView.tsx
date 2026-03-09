@@ -112,18 +112,22 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
 
   const hasData = chartData.some(d => d.percentage > 0);
 
+  // Premium glass morphism style
+  const glassStyle = {
+    background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
+    backdropFilter: 'blur(40px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+    border: '1px solid hsla(0, 0%, 100%, 0.12)',
+    boxShadow: 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)',
+  };
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.[0]) return null;
     return (
       <div
-        className="glass-card px-3 py-2"
-        style={{
-          background: 'linear-gradient(135deg, hsla(240, 10%, 12%, 0.95), hsla(240, 8%, 8%, 0.95))',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid hsla(0, 0%, 100%, 0.18)',
-        }}
+        className="px-3 py-2 rounded-xl"
+        style={glassStyle}
       >
         <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
         <p className="text-sm font-bold text-primary">{payload[0].value}%</p>
