@@ -11,6 +11,8 @@ interface TodoItemProps {
   onToggleDay: (id: string, dateStr: string) => void;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
+  onTogglePin: (id: string) => void;
+  pinnedCount: number;
 }
 
 const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
