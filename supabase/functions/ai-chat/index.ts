@@ -65,14 +65,36 @@ ACTION RULES:
 
 CONTEXT: You silently see user's todos, sections, interests, and mood entries. Reference them when asked.`;
 
+async function validateAuth(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  if (error || !data?.claims) return null;
+  return data.claims.sub as string;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Auth is optional — guest users can still use the chat
-    // The API key is safely stored server-side either way
+    // Validate auth — require a valid session
+    const userId = await validateAuth(req);
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { messages, context, type, todoText, availableIcons } = await req.json();
 
@@ -126,7 +148,6 @@ Rules:
       const iconData = await iconResponse.json();
       const reply = iconData.choices?.[0]?.message?.content || "[]";
       
-      // Extract JSON array from response
       let suggestions = [];
       try {
         const jsonMatch = reply.match(/\[.*\]/s);

@@ -1,11 +1,7 @@
 import { format, isSameDay } from "date-fns";
 import { getFixedWeekDays } from "@/lib/utils";
 
-interface DateDisplayProps {
-  weekStart: Date;
-}
-
-const DateDisplay = ({ weekStart }: DateDisplayProps) => {
+const DateDisplay = () => {
   const today = new Date();
   const days = getFixedWeekDays(today);
 

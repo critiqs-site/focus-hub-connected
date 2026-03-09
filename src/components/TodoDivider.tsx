@@ -1,5 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Divider } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
 
@@ -11,32 +22,55 @@ interface TodoDividerProps {
 
 const TodoDivider = ({ divider, onDelete, onAddTodo }: TodoDividerProps) => {
   const IconComponent = getIconComponent(divider.icon);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   return (
-    <div className="group flex items-center gap-3 my-8 animate-scroll-fade-in">
-      <div className="p-2 lg:p-3 rounded-xl bg-primary/10">
-        <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-primary" />
+    <>
+      <div className="group flex items-center gap-3 my-8 animate-scroll-fade-in">
+        <div className="p-2 lg:p-3 rounded-xl bg-primary/10">
+          <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-primary" />
+        </div>
+        <h3 className="text-lg lg:text-xl font-semibold text-foreground">{divider.name}</h3>
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, hsla(24, 95%, 53%, 0.3), hsla(240, 6%, 18%, 0.3), transparent)' }} />
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => onAddTodo(divider.id)}
+          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/20 md:opacity-60 md:group-hover:opacity-100 transition-opacity"
+          title="Add habit"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/20 md:opacity-60 md:group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
-      <h3 className="text-lg lg:text-xl font-semibold text-foreground">{divider.name}</h3>
-      <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, hsla(24, 95%, 53%, 0.3), hsla(240, 6%, 18%, 0.3), transparent)' }} />
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={() => onAddTodo(divider.id)}
-        className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/20 md:opacity-60 md:group-hover:opacity-100 transition-opacity"
-        title="Add habit"
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={() => onDelete(divider.id)}
-        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/20 md:opacity-60 md:group-hover:opacity-100 transition-opacity"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{divider.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this section and all habits inside it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(divider.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.food-scanner]
 verify_jwt = false
+
+[functions.schedule-ai]
+verify_jwt = false
