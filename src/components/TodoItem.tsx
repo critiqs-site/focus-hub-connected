@@ -149,6 +149,24 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
               <Button
                 size="sm"
                 variant="ghost"
+                onClick={() => {
+                  if (!todo.pinned && pinnedCount >= 3) {
+                    return; // Will be handled by toast in parent
+                  }
+                  onTogglePin(todo.id);
+                }}
+                className={`h-8 w-8 p-0 ${
+                  todo.pinned
+                    ? "text-primary bg-primary/20 hover:bg-primary/30"
+                    : "glass-button"
+                }`}
+                title={todo.pinned ? "Unpin" : pinnedCount >= 3 ? "Max 3 pins per section" : "Pin (max 3 per section)"}
+              >
+                <Pin className={`h-3.5 w-3.5 ${todo.pinned ? "fill-primary" : ""}`} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => setIsEditing(true)}
                 className="h-8 w-8 p-0 glass-button"
               >
