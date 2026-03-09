@@ -138,7 +138,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Period Selector */}
-      <div className="glass-card p-4">
+      <div className="p-4 rounded-2xl" style={glassStyle}>
         <div className="flex gap-2">
           {(["weekly", "monthly", "yearly"] as Period[]).map((period) => (
             <button
