@@ -210,7 +210,7 @@ const Index = () => {
         ) : activeTab === "analytics" ? (
           <AnalyticsView todos={todos} />
         ) : activeTab === "events" ? (
-          <EventsView events={events} onAddEvent={addEvent} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
+          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
         ) : activeTab === "tools" ? (
           <ToolsView onAskAI={handleAskAI} />
         ) : (
