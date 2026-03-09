@@ -321,7 +321,12 @@ const Auth = () => {
         {/* Guest Mode */}
         <button
           onClick={handleGuestMode}
-          className="w-full mt-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2 border border-border/50 rounded-xl hover:border-primary/30 hover:bg-card/50"
+          className="w-full mt-6 py-4 text-sm text-muted-foreground hover:text-foreground transition-all flex items-center justify-center gap-2 rounded-2xl"
+          style={{
+            background: 'hsla(240, 10%, 10%, 0.3)',
+            border: '1px solid hsla(0, 0%, 100%, 0.1)',
+            backdropFilter: 'blur(20px)'
+          }}
         >
           <UserRound className="w-4 h-4" />
           Continue as Guest
