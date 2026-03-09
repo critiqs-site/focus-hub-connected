@@ -211,6 +211,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                     e.stopPropagation();
                     onToggleDay(todo.id, day.dateStr);
                   }}
+                  onPointerDown={(e) => e.stopPropagation()}
                   className={`
                     relative min-w-[2rem] w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center
                     transition-all duration-300 flex-shrink-0
