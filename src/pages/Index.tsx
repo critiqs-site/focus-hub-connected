@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Plus, CheckCircle2, Circle } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,7 @@ import TodoDivider from "@/components/TodoDivider";
 import ComingSoon from "@/components/ComingSoon";
 import AddTodoDialog from "@/components/AddTodoDialog";
 import AddDividerDialog from "@/components/AddDividerDialog";
-import NotesSection from "@/components/NotesSection";
+import EventsView from "@/components/EventsView";
 import OnboardingDialog from "@/components/OnboardingDialog";
 import UserProfileMenu from "@/components/UserProfileMenu";
 import AnalyticsView from "@/components/AnalyticsView";
@@ -18,7 +18,7 @@ import CompletionBanner from "@/components/CompletionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
-import { useNotes } from "@/hooks/useNotes";
+import { useEvents } from "@/hooks/useEvents";
 import { format } from "date-fns";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -44,43 +44,15 @@ const Index = () => {
     refetch: refetchTodos,
   } = useTodos(user?.id);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  const { events, loading: eventsLoading, addEvent, editEvent, deleteEvent, toggleComplete } = useEvents(user?.id);
 
-  const {
-    notes, loading: notesLoading,
-    handleAddNote, handleEditNote, handleDeleteNote,
-  } = useNotes(user?.id);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   useEffect(() => {
     if (!authLoading && !user && !isGuest) navigate("/auth");
   }, [user, authLoading, navigate, isGuest]);
-
-  // Auto-save daily completion percentage to notes
-  const autoSaveRef = useRef(false);
-  useEffect(() => {
-    if (todosLoading || notesLoading || todos.length === 0) return;
-    const todayStr = format(new Date(), "yyyy-MM-dd");
-    const done = todos.filter((t) => t.completions.includes(todayStr)).length;
-    const pct = Math.round((done / todos.length) * 100);
-    const existingNote = notes.find((n) => n.date === todayStr);
-    const noteText = `Daily progress: ${pct}% (${done}/${todos.length} habits completed)`;
-
-    // Only auto-save when percentage changes
-    if (existingNote && existingNote.note === noteText) return;
-    if (!autoSaveRef.current && !existingNote) {
-      autoSaveRef.current = true;
-      handleAddNote(todayStr, pct === 100 ? "super_happy" : pct >= 70 ? "happy" : pct >= 40 ? "neutral" : pct >= 10 ? "sad" : "depressed", noteText);
-    } else if (existingNote) {
-      const mood = pct === 100 ? "super_happy" : pct >= 70 ? "happy" : pct >= 40 ? "neutral" : pct >= 10 ? "sad" : "depressed";
-      handleEditNote(existingNote.id, mood, noteText);
-    }
-  }, [todos, todosLoading, notesLoading]);
 
   const handleSignOut = async () => {
     localStorage.removeItem("guestMode");
@@ -103,10 +75,9 @@ const Index = () => {
 
   if (!user && !isGuest) return null;
 
-  const isLoading = todosLoading || notesLoading;
+  const isLoading = todosLoading || eventsLoading;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
-  // Split todos into Remaining and Done for today, then sort by pinned status
   const remainingTodos = todos.filter(t => !t.completions.includes(todayStr)).sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
@@ -121,14 +92,11 @@ const Index = () => {
   const handleDragEnd = (event: DragEndEvent, sectionTodos: typeof todos) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     const oldIndex = sectionTodos.findIndex((t) => t.id === active.id);
     const newIndex = sectionTodos.findIndex((t) => t.id === over.id);
-
     const reordered = [...sectionTodos];
     const [movedItem] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, movedItem);
-
     handleReorderTodos(reordered.map(t => t.id));
   };
 
@@ -139,10 +107,8 @@ const Index = () => {
         if (!a.pinned && b.pinned) return 1;
         return a.order - b.order;
       });
-      
       if (dividerTodos.length === 0) return null;
       const pinnedCount = dividerTodos.filter((t) => t.pinned).length;
-      
       return (
         <div key={divider.id} style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
           <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
@@ -163,11 +129,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {!isGuest && (
-        <OnboardingDialog
-          open={needsOnboarding}
-          userId={user!.id}
-          onComplete={() => { completeOnboarding(); refetchTodos(); }}
-        />
+        <OnboardingDialog open={needsOnboarding} userId={user!.id} onComplete={() => { completeOnboarding(); refetchTodos(); }} />
       )}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="ambient-orb top-[-10%] left-[-5%] w-[600px] h-[600px] bg-primary/10" />
@@ -200,46 +162,32 @@ const Index = () => {
                 Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
               </div>
             )}
-
-            {/* Remaining Section */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4 px-1">
                 <Circle className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground" />
                 <h2 className="text-lg lg:text-xl font-semibold text-foreground">Remaining</h2>
-                <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
-                  {remainingTodos.length}
-                </span>
+                <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">{remainingTodos.length}</span>
               </div>
               <div className="space-y-4">
-                {remainingTodos.length > 0 ? (
-                  renderTodoSection(remainingTodos, dividers)
-                ) : todos.length > 0 ? (
+                {remainingTodos.length > 0 ? renderTodoSection(remainingTodos, dividers) : todos.length > 0 ? (
                   <p className="text-muted-foreground text-sm italic pl-8 mb-4">All done for today! 🎉</p>
                 ) : null}
               </div>
             </div>
-
-            {/* Done Section */}
             {doneTodos.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4 px-1">
                   <CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
                   <h2 className="text-lg lg:text-xl font-semibold text-foreground">Done</h2>
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    {doneTodos.length}
-                  </span>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{doneTodos.length}</span>
                 </div>
-                <div className="space-y-4 opacity-80">
-                  {renderTodoSection(doneTodos, dividers)}
-                </div>
+                <div className="space-y-4 opacity-80">{renderTodoSection(doneTodos, dividers)}</div>
               </div>
             )}
-
-            {/* Divider management (always visible) */}
             <div className="space-y-4">
               {dividers.map((divider) => {
                 const dividerTodos = todos.filter((t) => t.dividerId === divider.id);
-                if (dividerTodos.length > 0) return null; // Already rendered above
+                if (dividerTodos.length > 0) return null;
                 return (
                   <div key={divider.id}>
                     <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
@@ -252,7 +200,6 @@ const Index = () => {
                 backdropFilter: 'blur(40px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(40px) saturate(180%)',
               }}>
-
                 <Plus className="h-5 w-5 text-primary" />
                 <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Add Section</span>
               </button>
@@ -262,8 +209,8 @@ const Index = () => {
           </>
         ) : activeTab === "analytics" ? (
           <AnalyticsView todos={todos} />
-        ) : activeTab === "notes" ? (
-          <NotesSection notes={notes} onAddNote={handleAddNote} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
+        ) : activeTab === "events" ? (
+          <EventsView events={events} onAddEvent={addEvent} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
         ) : activeTab === "tools" ? (
           <ToolsView onAskAI={handleAskAI} />
         ) : (
@@ -271,7 +218,6 @@ const Index = () => {
         )}
       </div>
 
-      {/* Profile menu - fixed bottom-left */}
       {!isGuest && (
         <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} />
       )}
@@ -283,7 +229,6 @@ const Index = () => {
         onInitialMessageConsumed={() => setChatInitialMessage(null)}
         todos={todos}
         dividers={dividers}
-        notes={notes}
         interests={profile?.interests || []}
         onAddTodo={handleAddTodo}
         onDeleteTodo={handleDelete}

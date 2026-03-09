@@ -16,17 +16,12 @@ export interface Divider {
   icon: string;
 }
 
-export type MoodType =
-  | "super_happy"
-  | "happy"
-  | "neutral"
-  | "sad"
-  | "depressed";
-
-export interface MoodNote {
+export interface ScheduledEvent {
   id: string;
-  date: string;
-  mood: MoodType;
-  note: string;
+  title: string;
+  description: string;
+  time: string; // HH:mm
+  date: string; // yyyy-MM-dd
+  completed: boolean;
   createdAt: string;
 }

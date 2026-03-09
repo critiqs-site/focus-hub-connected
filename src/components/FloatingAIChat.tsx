@@ -56,7 +56,7 @@ interface FloatingAIChatProps {
   onInitialMessageConsumed?: () => void;
   todos?: Todo[];
   dividers?: Divider[];
-  notes?: any[];
+  notes?: never[];
   interests?: string[];
   onAddTodo?: (text: string, dividerId: string, icon: string) => void;
   onDeleteTodo?: (id: string) => void;
