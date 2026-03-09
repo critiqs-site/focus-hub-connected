@@ -87,6 +87,10 @@ export const useEvents = (userId: string | undefined) => {
   };
 
   const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string; description?: string }>) => {
+    for (const e of newEvents) {
+      const validated = eventSchema.safeParse({ title: e.title, time: e.time, date: e.date, timeEnd: e.timeEnd, description: e.description || "" });
+      if (!validated.success) { toast.error(`Invalid event "${e.title}": ${validated.error.errors[0]?.message}`); return; }
+    }
     if (isGuest) {
       const created = newEvents.map(e => ({
         id: crypto.randomUUID(), title: e.title, description: e.description || "", time: e.time, timeEnd: e.timeEnd,
