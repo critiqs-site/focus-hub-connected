@@ -117,7 +117,7 @@ export const useTodos = (userId: string | undefined) => {
 
   const handleAddTodo = async (text: string, dividerId: string, icon: string, description?: string) => {
     if (isGuest) {
-      const newTodo: Todo = { id: crypto.randomUUID(), text, description: description || null, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [] };
+      const newTodo: Todo = { id: crypto.randomUUID(), text, description: description || null, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false };
       const newTodos = [...todos, newTodo];
       setTodos(newTodos);
       persistGuest(newTodos);
@@ -127,7 +127,27 @@ export const useTodos = (userId: string | undefined) => {
     if (!userId) return;
     const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text, icon, description: description || null, completions: [] }).select().single();
     if (error) toast.error("Failed to add habit");
-    else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [] }]); toast.success("Habit added"); }
+    else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [], pinned: (data as any).pinned || false }]); toast.success("Habit added"); }
+  };
+
+  const handleTogglePin = async (id: string) => {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    const newPinned = !todo.pinned;
+    const sameDividerTodos = todos.filter((t) => t.dividerId === todo.dividerId);
+    const pinnedCount = sameDividerTodos.filter((t) => t.pinned && t.id !== id).length;
+
+    if (newPinned && pinnedCount >= 3) {
+      toast.error("Maximum 3 pinned habits per section");
+      return;
+    }
+
+    const newTodos = todos.map((t) => t.id === id ? { ...t, pinned: newPinned } : t);
+    setTodos(newTodos);
+    if (isGuest) { persistGuest(newTodos); toast.success(newPinned ? "Habit pinned" : "Habit unpinned"); return; }
+    const { error } = await supabase.from("todos").update({ pinned: newPinned } as any).eq("id", id);
+    if (error) { toast.error("Failed to update"); fetchData(); } else toast.success(newPinned ? "Habit pinned" : "Habit unpinned");
   };
 
   const handleAddDivider = async (name: string, icon: string) => {
