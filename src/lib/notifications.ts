@@ -14,7 +14,6 @@ export function scheduleEventNotification(event: {
 }) {
   if (!("serviceWorker" in navigator) || Notification.permission !== "granted") return;
 
-  const [h, m] = event.time.split(":").map(Number);
   const eventDate = new Date(`${event.date}T${event.time}:00`);
 
   // Notify 5 minutes before

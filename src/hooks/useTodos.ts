@@ -112,7 +112,7 @@ export const useTodos = (userId: string | undefined) => {
     const newTodos = todos.map((t) => t.id === id ? { ...t, description } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Description updated"); return; }
-    const { error } = await supabase.from("todos").update({ description }).eq("id", id);
+    const { error } = await supabase.from("todos").update({ description }d", id);
     if (error) { toast.error("Failed to update description"); fetchData(); } else toast.success("Description updated");
   };
 
@@ -161,7 +161,7 @@ export const useTodos = (userId: string | undefined) => {
     const newTodos = todos.map((t) => t.id === id ? { ...t, pinned: newPinned } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success(newPinned ? "Habit pinned" : "Habit unpinned"); return; }
-    const { error } = await supabase.from("todos").update({ pinned: newPinned } as any).eq("id", id);
+    const { error } = await supabase.from("todos").update({ pinned: newPinned } as anyd", id);
     if (error) { toast.error("Failed to update"); fetchData(); } else toast.success(newPinned ? "Habit pinned" : "Habit unpinned");
   };
 
