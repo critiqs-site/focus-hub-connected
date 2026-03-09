@@ -236,7 +236,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                 type="text"
                 value={selectedEvent.title}
                 onChange={e => onEditEvent(selectedEvent.id, { title: e.target.value })}
-                className="w-full bg-transparent text-xl font-semibold text-foreground outline-none px-1 py-1 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
+                className="w-full bg-transparent text-2xl lg:text-3xl font-bold text-foreground outline-none px-1 py-2 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
               />
             </div>
 
