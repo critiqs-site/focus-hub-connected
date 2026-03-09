@@ -109,6 +109,7 @@ export type Database = {
           divider_id: string
           icon: string
           id: string
+          order: number
           pinned: boolean
           text: string
           updated_at: string
@@ -121,6 +122,7 @@ export type Database = {
           divider_id: string
           icon?: string
           id?: string
+          order?: number
           pinned?: boolean
           text: string
           updated_at?: string
@@ -133,6 +135,7 @@ export type Database = {
           divider_id?: string
           icon?: string
           id?: string
+          order?: number
           pinned?: boolean
           text?: string
           updated_at?: string

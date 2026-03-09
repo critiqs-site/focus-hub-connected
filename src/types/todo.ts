@@ -7,6 +7,7 @@ export interface Todo {
   createdAt: string;
   completions: string[];
   pinned?: boolean;
+  order: number;
 }
 
 export interface Divider {

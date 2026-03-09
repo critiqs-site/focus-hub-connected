@@ -179,5 +179,23 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to delete section"); fetchData(); } else toast.success("Section deleted");
   };
 
-  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleUpdateDescription, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin, refetch: fetchData };
+  const handleReorderTodos = async (todoIds: string[]) => {
+    const updatedTodos = todos.map(todo => {
+      const newIndex = todoIds.indexOf(todo.id);
+      return newIndex !== -1 ? { ...todo, order: newIndex } : todo;
+    });
+    setTodos(updatedTodos);
+
+    if (isGuest) {
+      persistGuest(updatedTodos);
+      return;
+    }
+
+    const updates = todoIds.map((id, index) => 
+      supabase.from("todos").update({ order: index }).eq("id", id)
+    );
+    await Promise.all(updates);
+  };
+
+  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleUpdateDescription, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin, handleReorderTodos, refetch: fetchData };
 };

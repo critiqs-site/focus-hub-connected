@@ -118,19 +118,43 @@ const Index = () => {
     return 0;
   });
 
+  const handleDragEnd = (event: DragEndEvent, sectionTodos: typeof todos) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sectionTodos.findIndex((t) => t.id === active.id);
+    const newIndex = sectionTodos.findIndex((t) => t.id === over.id);
+
+    const reordered = [...sectionTodos];
+    const [movedItem] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, movedItem);
+
+    handleReorderTodos(reordered.map(t => t.id));
+  };
+
   const renderTodoSection = (sectionTodos: typeof todos, sectionDividers: typeof dividers) => {
     return sectionDividers.map((divider, index) => {
-      const dividerTodos = sectionTodos.filter((t) => t.dividerId === divider.id);
+      const dividerTodos = sectionTodos.filter((t) => t.dividerId === divider.id).sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return a.order - b.order;
+      });
+      
       if (dividerTodos.length === 0) return null;
       const pinnedCount = dividerTodos.filter((t) => t.pinned).length;
+      
       return (
         <div key={divider.id} style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
           <TodoDivider divider={divider} onDelete={handleDeleteDivider} onAddTodo={(dividerId) => { setSelectedDividerId(dividerId); setShowAddTodo(true); }} />
-          <div className="space-y-3">
-            {dividerTodos.map((todo) => (
-              <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
-            ))}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, dividerTodos)}>
+            <SortableContext items={dividerTodos.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-3">
+                {dividerTodos.map((todo) => (
+                  <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       );
     }).filter(Boolean);
