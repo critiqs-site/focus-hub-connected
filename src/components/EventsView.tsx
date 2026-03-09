@@ -172,7 +172,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin pr-1">
+        <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin pr-1">
           {todayEvents.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
               <Clock className="h-8 w-8 text-muted-foreground/40 mb-3" />
