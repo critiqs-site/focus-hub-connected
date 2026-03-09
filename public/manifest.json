@@ -1,17 +1,33 @@
 {
-  "name": "CRITIQS - Daily Focus Hub",
+  "name": "CRITIQS - Best Habit Tracker",
   "short_name": "CRITIQS",
-  "description": "Track your daily habits and mood with CRITIQS",
+  "description": "Critiqs: Best Habit Tracker Web App.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "lifestyle", "health"],
   "icons": [
     {
       "src": "/favicon.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
-  ]
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }
