@@ -239,17 +239,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           {!isEditing && (
             <div
               className="flex md:hidden gap-1 ml-2 flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              <Button
-                {...attributes}
-                {...listeners}
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 glass-button cursor-grab active:cursor-grabbing"
-              >
-                <GripVertical className="h-3.5 w-3.5" />
-              </Button>
               <Button
                 size="sm"
                 variant="ghost"
