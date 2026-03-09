@@ -157,7 +157,7 @@ Rules:
 - Consider keywords, action words, and context
 - Return ONLY the JSON array, no other text`;
 
-      const iconResponse = await fetch(getEndpoint()(), {
+      const iconResponse = await fetch(getEndpoint(), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
