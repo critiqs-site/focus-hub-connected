@@ -44,7 +44,7 @@ const Index = () => {
     refetch: refetchTodos,
   } = useTodos(user?.id);
 
-  const { events, loading: eventsLoading, addEvent, editEvent, deleteEvent, toggleComplete } = useEvents(user?.id);
+  const { events, loading: eventsLoading, addEvent, addMultipleEvents, editEvent, deleteEvent, toggleComplete } = useEvents(user?.id);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -210,7 +210,7 @@ const Index = () => {
         ) : activeTab === "analytics" ? (
           <AnalyticsView todos={todos} />
         ) : activeTab === "events" ? (
-          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
+          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
         ) : activeTab === "tools" ? (
           <ToolsView onAskAI={handleAskAI} />
         ) : (
