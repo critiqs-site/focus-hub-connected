@@ -206,11 +206,11 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${event.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                    <p className={`text-base font-medium truncate ${event.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                       {event.title}
                     </p>
                   </div>
-                  <span className={`text-xs font-medium tabular-nums flex-shrink-0 ${
+                  <span className={`text-sm font-medium tabular-nums flex-shrink-0 ${
                     isActive ? 'text-primary' : 'text-muted-foreground'
                   }`}>
                     {event.time}
