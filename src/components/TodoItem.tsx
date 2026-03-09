@@ -157,18 +157,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           {!isEditing && (
             <div
               className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0"
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              <Button
-                {...attributes}
-                {...listeners}
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 glass-button cursor-grab active:cursor-grabbing"
-                title="Drag to reorder"
-              >
-                <GripVertical className="h-3.5 w-3.5" />
-              </Button>
               <Button
                 size="sm"
                 variant="ghost"
