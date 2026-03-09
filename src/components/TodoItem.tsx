@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Trash2, Check, X, Pin } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
-import { format, subDays, isSameDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
+import { getFixedWeekDays } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
