@@ -166,6 +166,9 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleAddDivider = async (name: string, icon: string) => {
+    const validated = dividerSchema.safeParse({ name, icon });
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    const { name: cleanName, icon: cleanIcon } = validated.data;
     if (isGuest) {
       const newDiv: Divider = { id: crypto.randomUUID(), name, icon };
       const newDividers = [...dividers, newDiv];
