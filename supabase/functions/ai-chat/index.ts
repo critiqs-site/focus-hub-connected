@@ -157,7 +157,7 @@ Rules:
 - Consider keywords, action words, and context
 - Return ONLY the JSON array, no other text`;
 
-      const iconResponse = await fetch(getEndpoint()(), {
+      const iconResponse = await fetch(getEndpoint(), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -236,7 +236,7 @@ Rules:
 
     console.log("Processing chat request with", messages.length, "messages");
 
-    const response = await fetcgetEndpoint()NT, {
+    const response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
