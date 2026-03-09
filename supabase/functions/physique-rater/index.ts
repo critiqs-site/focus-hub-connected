@@ -37,10 +37,10 @@ IMPORTANT:
 
 ONLY output raw JSON. No extra text.`;
 
-const POLLINATIONS_URL = "https://gen.pollinations.ai/v1/chat/completions";
+const AI_ENDPOINT = "https://gen.pollinations.ai/v1/chat/completions";
 
 async function callAI(apiKey: string, model: string, imageUrl: string) {
-  const response = await fetch(POLLINATIONS_URL, {
+  const response = await fetch(AI_ENDPOINT, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -62,14 +62,14 @@ async function callAI(apiKey: string, model: string, imageUrl: string) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`Pollinations error (${model}):`, response.status, errorText);
+    console.error(`AI service error (${model}):`, response.status, errorText);
     return null;
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content;
   if (!content) {
-    console.error(`No content in response (${model}):`, JSON.stringify(data));
+    console.error(`No content in AI response (${model}):`, JSON.stringify(data));
     return null;
   }
 
@@ -83,7 +83,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -116,16 +115,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
+    const apiKey = Deno.env.get("AI_SERVICE_KEY");
     if (!apiKey) {
-      console.error("POLLINATIONS_API_KEY not set");
+      console.error("AI_SERVICE_KEY not set");
       return new Response(
         JSON.stringify({ status: "error", message: "Server configuration error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Analyzing image with gemini-fast...");
+    console.log("Analyzing image with primary model...");
 
     let parsed = null;
     try {
@@ -135,7 +134,7 @@ Deno.serve(async (req) => {
     }
 
     if (!parsed) {
-      console.log("Falling back to openai-fast...");
+      console.log("Falling back to secondary model...");
       try {
         parsed = await callAI(apiKey, "openai-fast", imageBase64);
       } catch (e) {

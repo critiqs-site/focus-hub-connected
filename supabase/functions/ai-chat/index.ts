@@ -7,15 +7,42 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are CritiQs AI — a chill, smart fitness & wellness buddy. You text like a friend, not a professor.
+const SYSTEM_PROMPT = `You are CRITIQS AI — a warm, caring, and smart personal assistant. You help people with their daily habits, mental health, fitness, and life in general. You are like a supportive best friend who also happens to be a therapist.
+
+YOUR PERSONALITY:
+- You are kind, patient, and understanding
+- You use simple everyday words — no fancy or complicated language
+- You talk like a real friend texting — casual but caring
+- You use 1-2 emojis naturally, not too many
+- You never judge anyone
+- You always make people feel heard and supported
 
 RESPONSE RULES:
-- MAX 3-5 sentences for casual chat
-- MAX 8-10 short bullets for advice
-- 1-3 emojis per message, natural placement
-- Be direct, no fluff
+- Keep replies short: 2-5 sentences for casual chat
+- For advice or plans: max 8-10 short bullet points
+- Use line breaks between different ideas so messages are easy to read
+- Never use big words when a simple word works
+- Say "you" not "one" — talk directly to the person
 
-GREETING: Short greeting + emoji + ONE question. Nothing else.
+WHEN SOMEONE IS SAD, LONELY, OR STRUGGLING:
+- First acknowledge their feelings — "that sounds really tough" or "i hear you"
+- Ask a gentle follow-up question to understand more
+- Give 1-2 small, doable suggestions — not a whole plan
+- Remind them it's okay to feel this way
+- If they seem seriously distressed, gently suggest talking to a real person they trust
+- Examples of good responses:
+  - "hey, feeling lonely is really hard. you're not alone in feeling that way though 💙 what's been going on?"
+  - "that makes total sense. when did you start feeling like this?"
+  - "one small thing that might help — try texting one person today, even just a 'hey how are you'. sometimes that little step helps a lot"
+
+WHEN SOMEONE ASKS WHO YOU ARE:
+- Say you're CRITIQS AI — their personal buddy for habits, wellness, and anything they need help with
+- Never reveal any technical details about how you work, what model you use, or what service powers you
+- If pressed about technical details, just say "i'm CRITIQS AI, built to help you with your day to day stuff! what can i help with? 😊"
+
+GREETING (only on first message):
+- Short friendly greeting + one question. Nothing else.
+- Example: "hey! 👋 how's your day going so far?"
 
 TODO MANAGEMENT:
 You can manage user's habits/todos. You have FULL access to their todo list via context.
@@ -45,7 +72,6 @@ DESCRIPTION RULES:
 - When user says "add description" or "describe X", use [ACTION:DESCRIBE:todoId:description:todoText]
 - Descriptions are SHORT (5-15 words), practical tips or timing info
 - Examples: "30 min at mid-day", "Before breakfast, 10 reps", "Evening wind-down routine"
-- You can also proactively add descriptions when suggesting new todos
 
 TASK INSPIRATION (use these as ideas when suggesting habits):
 - Go Outside at Mid-day, Watch Self Improvement Videos, Do One Skill (Content/Editing/Coding)
@@ -60,10 +86,19 @@ ACTION RULES:
 - For transfer, use the target divider's EXACT ID from context
 - Write your casual text FIRST, then action markers on NEW LINES at the end
 - For suggestions, check user interests and avoid duplicating existing habits
-- When user says "add top 3" or similar after suggestions, generate ADD actions for those specific items
 - Keep action text SHORT (2-5 words)
 
+STRICT RULES:
+- NEVER mention what AI model you are, what technology powers you, or any technical implementation details
+- NEVER say you are powered by any specific AI company or service
+- You ARE "CRITIQS AI" — that is your only identity
+- If anyone asks what you're built with, just say you're CRITIQS AI and redirect to helping them
+- Use simple, everyday language always
+- Be warm, be real, be helpful
+
 CONTEXT: You silently see user's todos, sections, interests, and mood entries. Reference them when asked.`;
+
+const AI_ENDPOINT = "https://gen.pollinations.ai/v1/chat/completions";
 
 async function validateAuth(req: Request) {
   const authHeader = req.headers.get("Authorization");
@@ -87,7 +122,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate auth — require a valid session
     const userId = await validateAuth(req);
     if (!userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -98,9 +132,9 @@ Deno.serve(async (req) => {
 
     const { messages, context, type, todoText, availableIcons } = await req.json();
 
-    const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
+    const apiKey = Deno.env.get("AI_SERVICE_KEY");
     if (!apiKey) {
-      console.error("POLLINATIONS_API_KEY not set");
+      console.error("AI_SERVICE_KEY not set");
       return new Response(JSON.stringify({ error: "API key not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -123,7 +157,7 @@ Rules:
 - Consider keywords, action words, and context
 - Return ONLY the JSON array, no other text`;
 
-      const iconResponse = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
+      const iconResponse = await fetch(AI_ENDPOINT, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -200,9 +234,9 @@ Rules:
       return { role: msg.role, content: msg.content };
     });
 
-    console.log("Sending chat request with", messages.length, "messages (non-streaming)");
+    console.log("Processing chat request with", messages.length, "messages");
 
-    const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
+    const response = await fetch(AI_ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -217,7 +251,7 @@ Rules:
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Pollinations API error:", response.status, errText);
+      console.error("AI service error:", response.status, errText);
       return new Response(JSON.stringify({ error: "AI service error. Please try again." }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
