@@ -117,6 +117,14 @@ export const useEvents = (userId: string | undefined) => {
   };
 
   const editEvent = async (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed">>) => {
+    if (updates.title !== undefined) {
+      const v = eventSchema.shape.title.safeParse(updates.title);
+      if (!v.success) { toast.error(v.error.errors[0]?.message || "Invalid title"); return; }
+    }
+    if (updates.description !== undefined) {
+      const v = eventSchema.shape.description.safeParse(updates.description);
+      if (!v.success) { toast.error(v.error.errors[0]?.message || "Invalid description"); return; }
+    }
     if (isGuest) {
       const updated = events.map(e => e.id === id ? { ...e, ...updates } : e);
       setEvents(updated);
