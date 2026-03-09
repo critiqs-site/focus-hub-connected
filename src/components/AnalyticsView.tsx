@@ -187,20 +187,25 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
             {/* Improvement */}
             <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
-                {improvement > 0 ? (
+                {!improvement.hasPreviousData ? (
+                  <Minus className="h-5 w-5 text-muted-foreground" />
+                ) : improvement.value > 0 ? (
                   <TrendingUp className="h-5 w-5 text-green-500" />
-                ) : improvement < 0 ? (
+                ) : improvement.value < 0 ? (
                   <TrendingDown className="h-5 w-5 text-red-500" />
                 ) : (
                   <Minus className="h-5 w-5 text-muted-foreground" />
                 )}
               </div>
               <div className={`text-4xl font-bold mb-1 ${
-                improvement > 0 ? "text-green-500" : improvement < 0 ? "text-red-500" : "text-muted-foreground"
+                !improvement.hasPreviousData ? "text-muted-foreground" :
+                improvement.value > 0 ? "text-green-500" : improvement.value < 0 ? "text-red-500" : "text-muted-foreground"
               }`}>
-                {improvement > 0 ? "+" : ""}{improvement}%
+                {!improvement.hasPreviousData ? "—" : `${improvement.value > 0 ? "+" : ""}${improvement.value}%`}
               </div>
-              <div className="text-sm text-muted-foreground">{improvement > 0 ? "Improvement" : improvement < 0 ? "Decline" : "No Change"}</div>
+              <div className="text-sm text-muted-foreground">
+                {!improvement.hasPreviousData ? "No Previous Data" : improvement.value > 0 ? "Improvement" : improvement.value < 0 ? "Decline" : "No Change"}
+              </div>
             </div>
           </div>
 
