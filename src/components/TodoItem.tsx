@@ -15,7 +15,7 @@ interface TodoItemProps {
   pinnedCount: number;
 }
 
-const TodoItem = ({ todo, onToggleDay, onEdit, onDelete }: TodoItemProps) => {
+const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCount }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
 
