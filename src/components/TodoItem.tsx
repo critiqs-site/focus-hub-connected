@@ -66,9 +66,11 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
     <div
       ref={setNodeRef}
       style={style}
-      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden ${
+      {...attributes}
+      {...listeners}
+      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden cursor-grab active:cursor-grabbing ${
         todo.pinned ? "ring-2 ring-primary/50" : ""
-      }`}
+      } ${isDragging ? "opacity-60 scale-105 rotate-1 shadow-2xl z-50" : "opacity-100"}`}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
         (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
