@@ -37,11 +37,12 @@ export const useEvents = (userId: string | undefined) => {
       console.error("Events error:", error);
     } else {
       setEvents(
-        data.map((e) => ({
+        data.map((e: any) => ({
           id: e.id,
           title: e.title,
           description: e.description,
           time: e.time,
+          timeEnd: e.time_end || "",
           date: e.date,
           completed: e.completed,
           createdAt: e.created_at,
@@ -53,10 +54,10 @@ export const useEvents = (userId: string | undefined) => {
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  const addEvent = async (title: string, time: string, date: string) => {
+  const addEvent = async (title: string, time: string, date: string, timeEnd?: string) => {
     if (isGuest) {
       const newEvent: ScheduledEvent = {
-        id: crypto.randomUUID(), title, description: "", time, date,
+        id: crypto.randomUUID(), title, description: "", time, timeEnd: timeEnd || "", date,
         completed: false, createdAt: new Date().toISOString(),
       };
       const updated = [...events, newEvent];
@@ -68,27 +69,59 @@ export const useEvents = (userId: string | undefined) => {
     if (!userId) return;
     const { data, error } = await supabase
       .from("scheduled_events")
-      .insert({ user_id: userId, title, time, date })
+      .insert({ user_id: userId, title, time, time_end: timeEnd || "", date })
       .select()
       .single();
     if (error) { toast.error("Failed to add event"); }
     else {
       setEvents(prev => [...prev, {
         id: data.id, title: data.title, description: data.description,
-        time: data.time, date: data.date, completed: data.completed, createdAt: data.created_at,
+        time: data.time, timeEnd: (data as any).time_end || "", date: data.date,
+        completed: data.completed, createdAt: data.created_at,
       }]);
       toast.success("Event added");
     }
   };
 
-  const editEvent = async (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "completed">>) => {
+  const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string }>) => {
+    if (isGuest) {
+      const created = newEvents.map(e => ({
+        id: crypto.randomUUID(), title: e.title, description: "", time: e.time, timeEnd: e.timeEnd,
+        date: e.date, completed: false, createdAt: new Date().toISOString(),
+      }));
+      const updated = [...events, ...created];
+      setEvents(updated);
+      saveGuestEvents(updated);
+      toast.success(`${created.length} events added`);
+      return;
+    }
+    if (!userId) return;
+    const rows = newEvents.map(e => ({ user_id: userId, title: e.title, time: e.time, time_end: e.timeEnd, date: e.date }));
+    const { data, error } = await supabase.from("scheduled_events").insert(rows).select();
+    if (error) { toast.error("Failed to add events"); }
+    else {
+      const mapped = data.map((d: any) => ({
+        id: d.id, title: d.title, description: d.description, time: d.time,
+        timeEnd: d.time_end || "", date: d.date, completed: d.completed, createdAt: d.created_at,
+      }));
+      setEvents(prev => [...prev, ...mapped]);
+      toast.success(`${mapped.length} events added`);
+    }
+  };
+
+  const editEvent = async (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed">>) => {
     if (isGuest) {
       const updated = events.map(e => e.id === id ? { ...e, ...updates } : e);
       setEvents(updated);
       saveGuestEvents(updated);
       return;
     }
-    const { error } = await supabase.from("scheduled_events").update(updates).eq("id", id);
+    const dbUpdates: any = { ...updates };
+    if ('timeEnd' in dbUpdates) {
+      dbUpdates.time_end = dbUpdates.timeEnd;
+      delete dbUpdates.timeEnd;
+    }
+    const { error } = await supabase.from("scheduled_events").update(dbUpdates).eq("id", id);
     if (error) { toast.error("Failed to update event"); }
     else { setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e)); }
   };
@@ -113,5 +146,5 @@ export const useEvents = (userId: string | undefined) => {
     await editEvent(id, { completed: !event.completed });
   };
 
-  return { events, loading, addEvent, editEvent, deleteEvent, toggleComplete };
+  return { events, loading, addEvent, addMultipleEvents, editEvent, deleteEvent, toggleComplete };
 };
