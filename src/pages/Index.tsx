@@ -40,8 +40,17 @@ const Index = () => {
     handleToggleDay, handleEdit, handleDelete,
     handleUpdateIcon, handleUpdateDescription, handleTransferTodo,
     handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin,
+    handleReorderTodos,
     refetch: refetchTodos,
   } = useTodos(user?.id);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const {
     notes, loading: notesLoading,
