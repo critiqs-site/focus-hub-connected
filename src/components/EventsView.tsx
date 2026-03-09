@@ -92,22 +92,22 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
           <p className="text-base lg:text-lg text-muted-foreground mb-8">{format(currentTime, "a · EEEE")}</p>
 
           {currentEvent ? (
-            <div className="w-full rounded-xl p-4" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.1)' }}>
-              <p className="text-xs text-primary font-medium mb-1">ACTIVE NOW</p>
-              <p className="text-lg font-semibold text-foreground">{currentEvent.title}</p>
-              <p className="text-xs text-muted-foreground mt-1">Started at {currentEvent.time}</p>
+            <div className="w-full rounded-2xl p-5 lg:p-6" style={{ ...glassStyle, background: 'hsla(24, 95%, 53%, 0.1)' }}>
+              <p className="text-xs text-primary font-semibold tracking-wider mb-2">ACTIVE NOW</p>
+              <p className="text-xl lg:text-2xl font-bold text-foreground">{currentEvent.title}</p>
+              <p className="text-sm text-muted-foreground mt-2">Started at {currentEvent.time}</p>
             </div>
           ) : nextEvent ? (
-            <div className="w-full rounded-xl p-4" style={glassStyle}>
-              <p className="text-xs text-muted-foreground font-medium mb-1">COMING UP</p>
-              <p className="text-lg font-semibold text-foreground">{nextEvent.title}</p>
-              <p className="text-sm text-primary font-medium mt-1">in {getCountdown(nextEvent.time)}</p>
+            <div className="w-full rounded-2xl p-5 lg:p-6" style={glassStyle}>
+              <p className="text-xs text-muted-foreground font-semibold tracking-wider mb-2">COMING UP</p>
+              <p className="text-xl lg:text-2xl font-bold text-foreground">{nextEvent.title}</p>
+              <p className="text-base text-primary font-semibold mt-2">in {getCountdown(nextEvent.time)}</p>
             </div>
           ) : (
-            <div className="w-full rounded-xl p-4" style={glassStyle}>
-              <p className="text-2xl mb-1">✨</p>
-              <p className="text-foreground font-medium">You're free!</p>
-              <p className="text-xs text-muted-foreground mt-1">No more events today</p>
+            <div className="w-full rounded-2xl p-5 lg:p-6" style={glassStyle}>
+              <p className="text-3xl mb-2">✨</p>
+              <p className="text-lg text-foreground font-semibold">You're free!</p>
+              <p className="text-sm text-muted-foreground mt-1">No more events today</p>
             </div>
           )}
         </div>
