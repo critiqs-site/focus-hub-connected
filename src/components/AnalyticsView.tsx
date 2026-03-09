@@ -103,11 +103,12 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
       return calculateDailyPercentage(day, todos);
     });
 
+    const hasPreviousData = previousPercentages.some(p => p > 0);
     const previousAvg = previousPercentages.length > 0
       ? Math.round(previousPercentages.reduce((sum, p) => sum + p, 0) / previousPercentages.length)
       : 0;
 
-    return currentPeriodStats.average - previousAvg;
+    return { value: currentPeriodStats.average - previousAvg, hasPreviousData };
   }, [selectedPeriod, todos, currentPeriodStats.average]);
 
   const hasData = chartData.some(d => d.percentage > 0);
