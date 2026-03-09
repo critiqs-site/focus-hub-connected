@@ -256,7 +256,7 @@ const Index = () => {
             <AddDividerDialog open={showAddDivider} onOpenChange={setShowAddDivider} onAdd={handleAddDivider} />
           </>
         ) : activeTab === "analytics" ? (
-          <AnalyticsView todos={todos} dividers={dividers} />
+          <AnalyticsView todos={todos} />
         ) : activeTab === "notes" ? (
           <NotesSection notes={notes} onAddNote={handleAddNote} onEditNote={handleEditNote} onDeleteNote={handleDeleteNote} />
         ) : activeTab === "tools" ? (
