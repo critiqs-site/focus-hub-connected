@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X, Pin, GripVertical } from "lucide-react";
+import { Pencil, Trash2, Check, X, Pin } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
 import { format, subDays, isSameDay } from "date-fns";
