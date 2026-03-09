@@ -258,7 +258,12 @@ const Auth = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 bg-secondary/60 border-2 border-primary/20 focus:border-primary transition-all pr-12 rounded-xl text-sm"
+                  className="h-14 pr-12 rounded-2xl text-base transition-all"
+                  style={{
+                    background: 'hsla(240, 10%, 10%, 0.5)',
+                    border: '1px solid hsla(0, 0%, 100%, 0.15)',
+                    backdropFilter: 'blur(10px)'
+                  }}
                   disabled={isLoading}
                   required
                 />
