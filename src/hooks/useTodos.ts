@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import type { Todo, Divider } from "@/types/todo";
+import { todoSchema, dividerSchema } from "@/lib/validation";
 
 const GUEST_TODOS_KEY = "guest_todos";
 const GUEST_DIVIDERS_KEY = "guest_dividers";
@@ -77,10 +78,13 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleEdit = async (id: string, text: string) => {
-    const newTodos = todos.map((t) => t.id === id ? { ...t, text } : t);
+    const validated = todoSchema.shape.text.safeParse(text);
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    const cleanText = validated.data;
+    const newTodos = todos.map((t) => t.id === id ? { ...t, text: cleanText } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Habit updated"); return; }
-    const { error } = await supabase.from("todos").update({ text }).eq("id", id);
+    const { error } = await supabase.from("todos").update({ text: cleanText }).eq("id", id);
     if (error) { toast.error("Failed to update"); fetchData(); } else toast.success("Habit updated");
   };
 
@@ -101,6 +105,10 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleUpdateDescription = async (id: string, description: string | null) => {
+    if (description !== null) {
+      const validated = todoSchema.shape.description.safeParse(description);
+      if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Description too long"); return; }
+    }
     const newTodos = todos.map((t) => t.id === id ? { ...t, description } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Description updated"); return; }
@@ -117,11 +125,14 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleAddTodo = async (text: string, dividerId: string, icon: string, description?: string) => {
+    const validated = todoSchema.safeParse({ text, description: description || null, icon });
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    const { text: cleanText, description: cleanDesc, icon: cleanIcon } = validated.data;
     const maxOrder = Math.max(0, ...todos.filter(t => t.dividerId === dividerId).map(t => t.order));
     const newOrder = maxOrder + 1;
 
     if (isGuest) {
-      const newTodo: Todo = { id: crypto.randomUUID(), text, description: description || null, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder };
+      const newTodo: Todo = { id: crypto.randomUUID(), text: cleanText, description: cleanDesc || null, dividerId, icon: cleanIcon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder };
       const newTodos = [...todos, newTodo];
       setTodos(newTodos);
       persistGuest(newTodos);
@@ -129,7 +140,7 @@ export const useTodos = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text, icon, description: description || null, completions: [], order: newOrder }).select().single();
+    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text: cleanText, icon: cleanIcon, description: cleanDesc || null, completions: [], order: newOrder }).select().single();
     if (error) toast.error("Failed to add habit");
     else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [], pinned: (data as any).pinned || false, order: data.order || 0 }]); toast.success("Habit added"); }
   };
@@ -155,8 +166,11 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleAddDivider = async (name: string, icon: string) => {
+    const validated = dividerSchema.safeParse({ name, icon });
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    const { name: cleanName, icon: cleanIcon } = validated.data;
     if (isGuest) {
-      const newDiv: Divider = { id: crypto.randomUUID(), name, icon };
+      const newDiv: Divider = { id: crypto.randomUUID(), name: cleanName, icon: cleanIcon };
       const newDividers = [...dividers, newDiv];
       setDividers(newDividers);
       persistGuest(undefined, newDividers);
@@ -164,7 +178,7 @@ export const useTodos = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const { data, error } = await supabase.from("dividers").insert({ user_id: userId, name, icon }).select().single();
+    const { data, error } = await supabase.from("dividers").insert({ user_id: userId, name: cleanName, icon: cleanIcon }).select().single();
     if (error) toast.error("Failed to add section");
     else { setDividers((prev) => [...prev, { id: data.id, name: data.name, icon: data.icon }]); toast.success("Section added"); }
   };

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ScheduledEvent } from "@/types/todo";
+import { eventSchema } from "@/lib/validation";
 
 const GUEST_EVENTS_KEY = "guest_events";
 
@@ -55,6 +56,8 @@ export const useEvents = (userId: string | undefined) => {
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const addEvent = async (title: string, time: string, date: string, timeEnd?: string) => {
+    const validated = eventSchema.safeParse({ title, time, date, timeEnd: timeEnd || "", description: "" });
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
     if (isGuest) {
       const newEvent: ScheduledEvent = {
         id: crypto.randomUUID(), title, description: "", time, timeEnd: timeEnd || "", date,
@@ -84,6 +87,10 @@ export const useEvents = (userId: string | undefined) => {
   };
 
   const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string; description?: string }>) => {
+    for (const e of newEvents) {
+      const validated = eventSchema.safeParse({ title: e.title, time: e.time, date: e.date, timeEnd: e.timeEnd, description: e.description || "" });
+      if (!validated.success) { toast.error(`Invalid event "${e.title}": ${validated.error.errors[0]?.message}`); return; }
+    }
     if (isGuest) {
       const created = newEvents.map(e => ({
         id: crypto.randomUUID(), title: e.title, description: e.description || "", time: e.time, timeEnd: e.timeEnd,
@@ -110,6 +117,14 @@ export const useEvents = (userId: string | undefined) => {
   };
 
   const editEvent = async (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed">>) => {
+    if (updates.title !== undefined) {
+      const v = eventSchema.shape.title.safeParse(updates.title);
+      if (!v.success) { toast.error(v.error.errors[0]?.message || "Invalid title"); return; }
+    }
+    if (updates.description !== undefined) {
+      const v = eventSchema.shape.description.safeParse(updates.description);
+      if (!v.success) { toast.error(v.error.errors[0]?.message || "Invalid description"); return; }
+    }
     if (isGuest) {
       const updated = events.map(e => e.id === id ? { ...e, ...updates } : e);
       setEvents(updated);
