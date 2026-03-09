@@ -1,260 +1,244 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, TrendingUp, Flame, Target, ChevronDown, BarChart3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, addMonths, subMonths } from "date-fns";
-import type { Todo, Divider } from "@/types/todo";
-import { getIconComponent } from "@/lib/icons";
+import { useState, useMemo } from "react";
+import { format, subDays, subMonths, startOfMonth, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { TrendingUp, TrendingDown, Target, Minus } from "lucide-react";
+import type { Todo } from "@/types/todo";
 
 interface AnalyticsViewProps {
   todos: Todo[];
-  dividers: Divider[];
 }
 
-const AnalyticsView = ({ todos, dividers }: AnalyticsViewProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null); // null = Overall
-  const [showAll, setShowAll] = useState(false);
+type Period = "weekly" | "monthly" | "yearly";
 
-  const selectedTodo = selectedTodoId ? todos.find(t => t.id === selectedTodoId) || null : null;
+const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const today = new Date();
-
-  const getCompletionsForMonth = (todo: Todo) => {
-    return todo.completions.filter(dateStr => {
-      const date = new Date(dateStr);
-      return isSameMonth(date, currentMonth);
-    });
+  // Calculate daily completion percentage
+  const calculateDailyPercentage = (date: Date, todos: Todo[]): number => {
+    if (todos.length === 0) return 0;
+    const dateStr = format(date, "yyyy-MM-dd");
+    const completedCount = todos.filter(todo => todo.completions.includes(dateStr)).length;
+    return Math.round((completedCount / todos.length) * 100);
   };
 
-  const calculateStats = (todo: Todo) => {
-    const completions = getCompletionsForMonth(todo);
-    const completedDays = completions.length;
-    const totalDays = daysInMonth.length;
-    const percentage = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-
-    let currentStreak = 0;
-    const sortedCompletions = [...todo.completions].sort().reverse();
-    const todayStr = format(today, 'yyyy-MM-dd');
-    const yesterdayStr = format(new Date(today.getTime() - 86400000), 'yyyy-MM-dd');
-
-    if (sortedCompletions.includes(todayStr) || sortedCompletions.includes(yesterdayStr)) {
-      for (let i = 0; i < sortedCompletions.length; i++) {
-        const expectedDate = format(new Date(today.getTime() - (i * 86400000)), 'yyyy-MM-dd');
-        if (sortedCompletions.includes(expectedDate)) {
-          currentStreak++;
-        } else if (i === 0 && sortedCompletions.includes(yesterdayStr)) {
-          continue;
-        } else {
-          break;
-        }
-      }
-    }
-
-    let longestStreak = 0;
-    let tempStreak = 0;
-    const allCompletions = [...todo.completions].sort();
-    for (let i = 0; i < allCompletions.length; i++) {
-      if (i === 0) { tempStreak = 1; } else {
-        const prevDate = new Date(allCompletions[i - 1]);
-        const currDate = new Date(allCompletions[i]);
-        const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
-        tempStreak = diffDays === 1 ? tempStreak + 1 : 1;
-      }
-      longestStreak = Math.max(longestStreak, tempStreak);
-    }
-
-    return { completedDays, totalDays, percentage, currentStreak, longestStreak };
-  };
-
-  // Overall stats: aggregate across all todos
-  const calculateOverallStats = () => {
-    if (todos.length === 0) return { completedDays: 0, totalDays: 0, percentage: 0, currentStreak: 0, longestStreak: 0 };
+  // Get chart data based on selected period
+  const chartData = useMemo(() => {
+    const today = new Date();
     
-    // Average of individual todo percentages
-    const individualStats = todos.map(t => calculateStats(t));
-    const avgPercentage = Math.round(individualStats.reduce((sum, s) => sum + s.percentage, 0) / todos.length);
-    const totalCompleted = individualStats.reduce((sum, s) => sum + s.completedDays, 0);
-    const totalPossible = daysInMonth.length * todos.length;
-    const avgCurrentStreak = Math.round(individualStats.reduce((sum, s) => sum + s.currentStreak, 0) / todos.length);
-    const avgLongestStreak = Math.round(individualStats.reduce((sum, s) => sum + s.longestStreak, 0) / todos.length);
-
-    return { completedDays: totalCompleted, totalDays: totalPossible, percentage: avgPercentage, currentStreak: avgCurrentStreak, longestStreak: avgLongestStreak };
-  };
-
-  const isOverall = selectedTodoId === null;
-  const stats = isOverall ? calculateOverallStats() : (selectedTodo ? calculateStats(selectedTodo) : null);
-
-  // For calendar: overall shows aggregated heat, individual shows single
-  const getCalendarCompletions = () => {
-    if (isOverall) {
-      // Aggregate: a day is "completed" if majority of todos are done
-      const dayCounts: Record<string, number> = {};
-      todos.forEach(todo => {
-        todo.completions.forEach(dateStr => {
-          dayCounts[dateStr] = (dayCounts[dateStr] || 0) + 1;
-        });
+    if (selectedPeriod === "weekly") {
+      const days = Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
+      return days.map(day => ({
+        label: format(day, "EEE"),
+        fullDate: format(day, "MMM d"),
+        percentage: calculateDailyPercentage(day, todos),
+      }));
+    } else if (selectedPeriod === "monthly") {
+      const days = Array.from({ length: 30 }, (_, i) => subDays(today, 29 - i));
+      return days.map(day => ({
+        label: format(day, "d"),
+        fullDate: format(day, "MMM d"),
+        percentage: calculateDailyPercentage(day, todos),
+      }));
+    } else {
+      // Yearly: 12 months, averaged
+      const months = eachMonthOfInterval({
+        start: subMonths(today, 11),
+        end: today,
       });
-      return Object.keys(dayCounts).filter(dateStr => {
-        const date = new Date(dateStr);
-        return isSameMonth(date, currentMonth) && dayCounts[dateStr] >= Math.ceil(todos.length / 2);
+      return months.map(month => {
+        const daysInMonth = eachDayOfInterval({
+          start: startOfMonth(month),
+          end: month,
+        });
+        const monthlyPercentages = daysInMonth.map(day => calculateDailyPercentage(day, todos));
+        const avgPercentage = monthlyPercentages.length > 0
+          ? Math.round(monthlyPercentages.reduce((sum, p) => sum + p, 0) / monthlyPercentages.length)
+          : 0;
+        return {
+          label: format(month, "MMM"),
+          fullDate: format(month, "MMMM yyyy"),
+          percentage: avgPercentage,
+        };
       });
     }
-    return selectedTodo ? getCompletionsForMonth(selectedTodo) : [];
+  }, [selectedPeriod, todos]);
+
+  // Calculate stats for current period
+  const currentPeriodStats = useMemo(() => {
+    const percentages = chartData.map(d => d.percentage);
+    const average = percentages.length > 0
+      ? Math.round(percentages.reduce((sum, p) => sum + p, 0) / percentages.length)
+      : 0;
+    return { average, percentages };
+  }, [chartData]);
+
+  // Calculate improvement (compare to previous period)
+  const improvement = useMemo(() => {
+    const today = new Date();
+    let previousPeriodDays: Date[] = [];
+
+    if (selectedPeriod === "weekly") {
+      previousPeriodDays = Array.from({ length: 7 }, (_, i) => subDays(today, 13 - i));
+    } else if (selectedPeriod === "monthly") {
+      previousPeriodDays = Array.from({ length: 30 }, (_, i) => subDays(today, 59 - i));
+    } else {
+      const previousMonths = eachMonthOfInterval({
+        start: subMonths(today, 23),
+        end: subMonths(today, 12),
+      });
+      previousPeriodDays = previousMonths;
+    }
+
+    const previousPercentages = previousPeriodDays.map(day => {
+      if (selectedPeriod === "yearly") {
+        const daysInMonth = eachDayOfInterval({
+          start: startOfMonth(day),
+          end: day,
+        });
+        const monthlyPercentages = daysInMonth.map(d => calculateDailyPercentage(d, todos));
+        return monthlyPercentages.length > 0
+          ? Math.round(monthlyPercentages.reduce((sum, p) => sum + p, 0) / monthlyPercentages.length)
+          : 0;
+      }
+      return calculateDailyPercentage(day, todos);
+    });
+
+    const previousAvg = previousPercentages.length > 0
+      ? Math.round(previousPercentages.reduce((sum, p) => sum + p, 0) / previousPercentages.length)
+      : 0;
+
+    return currentPeriodStats.average - previousAvg;
+  }, [selectedPeriod, todos, currentPeriodStats.average]);
+
+  const hasData = chartData.some(d => d.percentage > 0);
+
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.[0]) return null;
+    return (
+      <div
+        className="glass-card px-3 py-2"
+        style={{
+          background: 'linear-gradient(135deg, hsla(240, 10%, 12%, 0.95), hsla(240, 8%, 8%, 0.95))',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid hsla(0, 0%, 100%, 0.18)',
+        }}
+      >
+        <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
+        <p className="text-sm font-bold text-primary">{payload[0].value}%</p>
+      </div>
+    );
   };
-
-  const calendarCompletions = getCalendarCompletions();
-
-  // Show More logic
-  const INITIAL_SHOW = 3;
-  const visibleTodos = showAll ? todos : todos.slice(0, INITIAL_SHOW);
-  const hasMore = todos.length > INITIAL_SHOW;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Habit selector */}
+      {/* Period Selector */}
       <div className="glass-card p-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Select Habit</h3>
-        <div className="flex flex-wrap gap-2">
-          {/* Overall button */}
-          <button
-            onClick={() => setSelectedTodoId(null)}
-            className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-300 ${
-              isOverall
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                : "bg-secondary/50 text-foreground hover:bg-secondary"
-            }`}
-          >
-            <BarChart3 className="h-4 w-4" />
-            <span className="text-sm font-medium">Overall</span>
-          </button>
-
-          {visibleTodos.map((todo) => {
-            const Icon = getIconComponent(todo.icon);
-            const isSelected = selectedTodoId === todo.id;
-            return (
-              <button
-                key={todo.id}
-                onClick={() => setSelectedTodoId(todo.id)}
-                className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-300 ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                    : "bg-secondary/50 text-foreground hover:bg-secondary"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="text-sm font-medium">{todo.text}</span>
-              </button>
-            );
-          })}
-
-          {hasMore && (
+        <div className="flex gap-2">
+          {(["weekly", "monthly", "yearly"] as Period[]).map((period) => (
             <button
-              onClick={() => setShowAll(!showAll)}
-              className="px-4 py-2 rounded-xl flex items-center gap-1 bg-secondary/30 text-muted-foreground hover:bg-secondary/50 transition-all"
+              key={period}
+              onClick={() => setSelectedPeriod(period)}
+              className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                selectedPeriod === period
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                  : "bg-secondary/50 text-foreground hover:bg-secondary"
+              }`}
             >
-              <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
-              <span className="text-sm font-medium">{showAll ? "Show Less" : `+${todos.length - INITIAL_SHOW} More`}</span>
+              {period.charAt(0).toUpperCase() + period.slice(1)}
             </button>
-          )}
+          ))}
         </div>
       </div>
 
-      {stats && (
+      {todos.length === 0 ? (
+        <div className="glass-card p-12 text-center">
+          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground mb-2">No habits to track yet</p>
+          <p className="text-sm text-muted-foreground">Add habits to see your progress analytics</p>
+        </div>
+      ) : !hasData ? (
+        <div className="glass-card p-12 text-center">
+          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground mb-2">No data available for this period</p>
+          <p className="text-sm text-muted-foreground">Start completing habits to build your analytics</p>
+        </div>
+      ) : (
         <>
-          {/* Stats cards */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="glass-card p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Average Completion */}
+            <div className="glass-card p-6 text-center">
+              <div className="flex items-center justify-center mb-3">
+                <Target className="h-5 w-5 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-primary">{stats.percentage}%</div>
-              <div className="text-xs text-muted-foreground">Completion Rate</div>
+              <div className="text-4xl font-bold text-primary mb-1">
+                {currentPeriodStats.average}%
+              </div>
+              <div className="text-sm text-muted-foreground">Average Completion</div>
             </div>
-            <div className="glass-card p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Flame className="h-5 w-5 text-primary" />
+
+            {/* Improvement */}
+            <div className="glass-card p-6 text-center">
+              <div className="flex items-center justify-center mb-3">
+                {improvement > 0 ? (
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                ) : improvement < 0 ? (
+                  <TrendingDown className="h-5 w-5 text-red-500" />
+                ) : (
+                  <Minus className="h-5 w-5 text-muted-foreground" />
+                )}
               </div>
-              <div className="text-3xl font-bold text-foreground">{stats.currentStreak}</div>
-              <div className="text-xs text-muted-foreground">{isOverall ? "Avg Streak" : "Current Streak"}</div>
-            </div>
-            <div className="glass-card p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Flame className="h-5 w-5 text-primary" />
+              <div className={`text-4xl font-bold mb-1 ${
+                improvement > 0 ? "text-green-500" : improvement < 0 ? "text-red-500" : "text-muted-foreground"
+              }`}>
+                {improvement > 0 ? "+" : ""}{improvement}%
               </div>
-              <div className="text-3xl font-bold text-foreground">{stats.longestStreak}</div>
-              <div className="text-xs text-muted-foreground">{isOverall ? "Avg Best" : "Longest Streak"}</div>
+              <div className="text-sm text-muted-foreground">Improvement</div>
             </div>
           </div>
 
-          {/* Calendar */}
+          {/* Bar Chart */}
           <div className="glass-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="h-8 w-8">
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <h3 className="text-lg font-semibold text-foreground">
-                {format(currentMonth, "MMMM yyyy")}
-              </h3>
-              <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="h-8 w-8">
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                <div key={i} className="text-center text-xs text-muted-foreground font-medium py-2">{day}</div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: monthStart.getDay() }).map((_, i) => (
-                <div key={`empty-${i}`} className="aspect-square" />
-              ))}
-              {daysInMonth.map((day) => {
-                const dateStr = format(day, "yyyy-MM-dd");
-                const isCompleted = calendarCompletions.includes(dateStr);
-                const isTodayDate = isToday(day);
-                const isFuture = !isBefore(day, today) && !isTodayDate;
-                return (
-                  <div
-                    key={dateStr}
-                    className={`
-                      aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all
-                      ${isFuture ? "opacity-30 text-muted-foreground" : ""}
-                      ${isCompleted ? "bg-primary text-primary-foreground" : "bg-secondary/30 text-foreground"}
-                      ${isTodayDate ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
-                    `}
-                  >
-                    {format(day, "d")}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-border">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {stats.completedDays} of {stats.totalDays} {isOverall ? "total completions" : "days completed"}
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-primary" />
-                  <span className="text-muted-foreground">Completed</span>
-                </div>
-              </div>
+            <h3 className="text-lg font-semibold text-foreground mb-6">Completion Trend</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsla(0, 0%, 100%, 0.05)" />
+                  <XAxis
+                    dataKey="label"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsla(0, 0%, 100%, 0.05)" }} />
+                  <Bar
+                    dataKey="percentage"
+                    fill="url(#barGradient)"
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={600}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </>
-      )}
-
-      {todos.length === 0 && (
-        <div className="glass-card p-12 text-center">
-          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No habits to analyze yet</p>
-          <p className="text-sm text-muted-foreground mt-2">Add some habits to see your progress!</p>
-        </div>
       )}
     </div>
   );
