@@ -142,12 +142,6 @@ const Index = () => {
       <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-10">
         <div className="flex items-center justify-between mb-4">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
-          {isGuest && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full">Guest</span>
-              <button onClick={handleSignOut} className="text-xs text-primary hover:underline">Sign in</button>
-            </div>
-          )}
         </div>
 
         {isLoading ? (
