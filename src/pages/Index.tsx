@@ -212,7 +212,9 @@ const Index = () => {
         )}
       </div>
 
-      {!isGuest && (
+      {isGuest ? (
+        <UserProfileMenu email="" onSignOut={handleSignOut} isGuest />
+      ) : (
         <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} />
       )}
 
