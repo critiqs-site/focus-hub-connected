@@ -132,7 +132,7 @@ export const useTodos = (userId: string | undefined) => {
     const newOrder = maxOrder + 1;
 
     if (isGuest) {
-      const newTodo: Todo = { id: crypto.randomUUID(), text, description: description || null, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder };
+      const newTodo: Todo = { id: crypto.randomUUID(), text: cleanText, description: cleanDesc || null, dividerId, icon: cleanIcon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder };
       const newTodos = [...todos, newTodo];
       setTodos(newTodos);
       persistGuest(newTodos);
@@ -140,7 +140,7 @@ export const useTodos = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text, icon, description: description || null, completions: [], order: newOrder }).select().single();
+    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text: cleanText, icon: cleanIcon, description: cleanDesc || null, completions: [], order: newOrder }).select().single();
     if (error) toast.error("Failed to add habit");
     else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [], pinned: (data as any).pinned || false, order: data.order || 0 }]); toast.success("Habit added"); }
   };
