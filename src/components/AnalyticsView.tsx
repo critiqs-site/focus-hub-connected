@@ -112,18 +112,22 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
 
   const hasData = chartData.some(d => d.percentage > 0);
 
+  // Premium glass morphism style
+  const glassStyle = {
+    background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
+    backdropFilter: 'blur(40px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+    border: '1px solid hsla(0, 0%, 100%, 0.12)',
+    boxShadow: 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)',
+  };
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.[0]) return null;
     return (
       <div
-        className="glass-card px-3 py-2"
-        style={{
-          background: 'linear-gradient(135deg, hsla(240, 10%, 12%, 0.95), hsla(240, 8%, 8%, 0.95))',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid hsla(0, 0%, 100%, 0.18)',
-        }}
+        className="px-3 py-2 rounded-xl"
+        style={glassStyle}
       >
         <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
         <p className="text-sm font-bold text-primary">{payload[0].value}%</p>
@@ -134,7 +138,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Period Selector */}
-      <div className="glass-card p-4">
+      <div className="p-4 rounded-2xl" style={glassStyle}>
         <div className="flex gap-2">
           {(["weekly", "monthly", "yearly"] as Period[]).map((period) => (
             <button
@@ -153,13 +157,13 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
       </div>
 
       {todos.length === 0 ? (
-        <div className="glass-card p-12 text-center">
+        <div className="p-12 text-center rounded-2xl" style={glassStyle}>
           <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-medium text-foreground mb-2">No habits to track yet</p>
           <p className="text-sm text-muted-foreground">Add habits to see your progress analytics</p>
         </div>
       ) : !hasData ? (
-        <div className="glass-card p-12 text-center">
+        <div className="p-12 text-center rounded-2xl" style={glassStyle}>
           <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-medium text-foreground mb-2">No data available for this period</p>
           <p className="text-sm text-muted-foreground">Start completing habits to build your analytics</p>
@@ -169,7 +173,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4">
             {/* Average Completion */}
-            <div className="glass-card p-6 text-center">
+            <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
                 <Target className="h-5 w-5 text-primary" />
               </div>
@@ -180,7 +184,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
             </div>
 
             {/* Improvement */}
-            <div className="glass-card p-6 text-center">
+            <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
                 {improvement > 0 ? (
                   <TrendingUp className="h-5 w-5 text-green-500" />
@@ -200,7 +204,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           </div>
 
           {/* Bar Chart */}
-          <div className="glass-card p-6">
+          <div className="p-6 rounded-2xl" style={glassStyle}>
             <h3 className="text-lg font-semibold text-foreground mb-6">Completion Trend</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
