@@ -78,10 +78,13 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleEdit = async (id: string, text: string) => {
-    const newTodos = todos.map((t) => t.id === id ? { ...t, text } : t);
+    const validated = todoSchema.shape.text.safeParse(text);
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    const cleanText = validated.data;
+    const newTodos = todos.map((t) => t.id === id ? { ...t, text: cleanText } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Habit updated"); return; }
-    const { error } = await supabase.from("todos").update({ text }).eq("id", id);
+    const { error } = await supabase.from("todos").update({ text: cleanText }).eq("id", id);
     if (error) { toast.error("Failed to update"); fetchData(); } else toast.success("Habit updated");
   };
 
