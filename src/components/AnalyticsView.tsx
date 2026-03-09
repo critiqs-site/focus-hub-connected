@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { format, subDays, subMonths, startOfMonth, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, Target, Minus } from "lucide-react";
+import { getFixedWeekDays, getPreviousFixedWeekDays } from "@/lib/utils";
 import type { Todo } from "@/types/todo";
 
 interface AnalyticsViewProps {
@@ -26,7 +27,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     const today = new Date();
     
     if (selectedPeriod === "weekly") {
-      const days = Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
+      const days = getFixedWeekDays(today);
       return days.map(day => ({
         label: format(day, "EEE"),
         fullDate: format(day, "MMM d"),
@@ -40,7 +41,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
         percentage: calculateDailyPercentage(day, todos),
       }));
     } else {
-      // Yearly: 12 months, averaged
       const months = eachMonthOfInterval({
         start: subMonths(today, 11),
         end: today,
@@ -75,22 +75,20 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
   // Calculate improvement (compare to previous period)
   const improvement = useMemo(() => {
     const today = new Date();
-    let previousPeriodDays: Date[] = [];
+    let previousPercentages: number[] = [];
 
     if (selectedPeriod === "weekly") {
-      previousPeriodDays = Array.from({ length: 7 }, (_, i) => subDays(today, 13 - i));
+      const prevDays = getPreviousFixedWeekDays(today);
+      previousPercentages = prevDays.map(day => calculateDailyPercentage(day, todos));
     } else if (selectedPeriod === "monthly") {
-      previousPeriodDays = Array.from({ length: 30 }, (_, i) => subDays(today, 59 - i));
+      const previousPeriodDays = Array.from({ length: 30 }, (_, i) => subDays(today, 59 - i));
+      previousPercentages = previousPeriodDays.map(day => calculateDailyPercentage(day, todos));
     } else {
       const previousMonths = eachMonthOfInterval({
         start: subMonths(today, 23),
         end: subMonths(today, 12),
       });
-      previousPeriodDays = previousMonths;
-    }
-
-    const previousPercentages = previousPeriodDays.map(day => {
-      if (selectedPeriod === "yearly") {
+      previousPercentages = previousMonths.map(day => {
         const daysInMonth = eachDayOfInterval({
           start: startOfMonth(day),
           end: day,
@@ -99,9 +97,8 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
         return monthlyPercentages.length > 0
           ? Math.round(monthlyPercentages.reduce((sum, p) => sum + p, 0) / monthlyPercentages.length)
           : 0;
-      }
-      return calculateDailyPercentage(day, todos);
-    });
+      });
+    }
 
     const hasPreviousData = previousPercentages.some(p => p > 0);
     const previousAvg = previousPercentages.length > 0
@@ -131,7 +128,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
         style={glassStyle}
       >
         <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
-        <p className="text-sm font-bold text-primary">{payload[0].value}%</p>
+        <p className="text-sm font-bold text-foreground">{payload[0].value}%</p>
       </div>
     );
   };

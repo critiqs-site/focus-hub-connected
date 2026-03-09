@@ -1,4 +1,5 @@
 import { format, isSameDay } from "date-fns";
+import { getFixedWeekDays } from "@/lib/utils";
 
 interface DateDisplayProps {
   weekStart: Date;
@@ -6,12 +7,7 @@ interface DateDisplayProps {
 
 const DateDisplay = ({ weekStart }: DateDisplayProps) => {
   const today = new Date();
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + i);
-    return date;
-  });
+  const days = getFixedWeekDays(today);
 
   return (
     <div className="mb-8 animate-slide-up" style={{ animationDelay: "0.1s" }}>

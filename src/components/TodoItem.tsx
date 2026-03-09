@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Pencil, Trash2, Check, X, Pin } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
-import { format, subDays, isSameDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
+import { getFixedWeekDays } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -46,8 +47,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
   const todayStr = format(today, "yyyy-MM-dd");
   const isTodayCompleted = completions.includes(todayStr);
 
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(today, 6 - i);
+  const fixedDays = getFixedWeekDays(today);
+  const days = fixedDays.map((date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const isCompleted = completions.includes(dateStr);
     const isToday = isSameDay(date, today);
@@ -56,7 +57,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
   });
 
   const completedCount = days.filter(d => d.isCompleted).length;
-  const percentage = Math.round((completedCount / 7) * 100);
+  const percentage = Math.round((completedCount / fixedDays.length) * 100);
 
   const handleQuickToggle = () => {
     onToggleDay(todo.id, todayStr);
@@ -218,21 +219,25 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                   key={day.dateStr}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleDay(todo.id, day.dateStr);
+                    if (day.isToday) {
+                      onToggleDay(todo.id, day.dateStr);
+                    }
                   }}
                   onPointerDown={(e) => e.stopPropagation()}
                   className={`
                     relative min-w-[2rem] w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center
                     transition-all duration-300 flex-shrink-0
                     ${isCompletedToday
-                      ? "bg-primary text-primary-foreground hover:scale-110"
+                      ? "bg-primary text-primary-foreground hover:scale-110 cursor-pointer"
                       : isCompletedPast
-                        ? "bg-muted-foreground/40 text-background hover:scale-110"
-                        : "border-2 border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110"
+                        ? "bg-muted-foreground/40 text-background cursor-default"
+                        : day.isToday
+                          ? "border-2 border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:scale-110 cursor-pointer"
+                          : "border-2 border-muted-foreground/30 text-muted-foreground cursor-default opacity-60"
                     }
                     ${day.isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}
                   `}
-                  title={format(day.date, "MMM d")}
+                  title={day.isToday ? format(day.date, "MMM d") + " (click to toggle)" : format(day.date, "MMM d")}
                 >
                   {day.isCompleted ? (
                     <Check className="h-4 w-4 animate-scale-in" />
