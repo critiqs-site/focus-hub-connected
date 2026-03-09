@@ -361,11 +361,9 @@ const FloatingAIChat = ({
         <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[560px] max-h-[80vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-scale-in overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
+              <img src={critiqsLogo} alt="CRITIQS AI" className="w-8 h-8 rounded-full object-cover" />
               <div>
-                <p className="text-sm font-semibold text-foreground">CritiQs AI</p>
+                <p className="text-sm font-semibold text-foreground">CRITIQS AI</p>
                 <p className="text-[10px] text-muted-foreground">Always here to help</p>
               </div>
             </div>
