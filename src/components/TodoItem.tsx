@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X, Pin } from "lucide-react";
+import { Pencil, Trash2, Check, X, Pin, GripVertical } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
 import { format, subDays, isSameDay } from "date-fns";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface TodoItemProps {
   todo: Todo;
@@ -18,6 +20,14 @@ interface TodoItemProps {
 const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCount }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: todo.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const handleSave = () => {
     if (editText.trim()) {
@@ -55,10 +65,11 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden ${
         todo.pinned ? "ring-2 ring-primary/50" : ""
       }`}
-      style={{ transition: 'border-color 0.3s, box-shadow 0.3s' }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
         (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
@@ -147,6 +158,16 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
               onClick={(e) => e.stopPropagation()}
             >
               <Button
+                {...attributes}
+                {...listeners}
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 glass-button cursor-grab active:cursor-grabbing"
+                title="Drag to reorder"
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+              </Button>
+              <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => {
@@ -227,6 +248,15 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
               className="flex md:hidden gap-1 ml-2 flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
+              <Button
+                {...attributes}
+                {...listeners}
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 glass-button cursor-grab active:cursor-grabbing"
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"
