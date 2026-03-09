@@ -236,7 +236,7 @@ Rules:
 
     console.log("Processing chat request with", messages.length, "messages");
 
-    const response = await fetcgetEndpoint()NT, {
+    const response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
