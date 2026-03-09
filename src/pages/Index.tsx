@@ -20,6 +20,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
 import { useNotes } from "@/hooks/useNotes";
 import { format } from "date-fns";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 const Index = () => {
   const navigate = useNavigate();
