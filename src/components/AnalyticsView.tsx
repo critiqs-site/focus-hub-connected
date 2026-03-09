@@ -173,7 +173,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4">
             {/* Average Completion */}
-            <div className="glass-card p-6 text-center">
+            <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
                 <Target className="h-5 w-5 text-primary" />
               </div>
@@ -184,7 +184,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
             </div>
 
             {/* Improvement */}
-            <div className="glass-card p-6 text-center">
+            <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
                 {improvement > 0 ? (
                   <TrendingUp className="h-5 w-5 text-green-500" />
@@ -204,7 +204,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           </div>
 
           {/* Bar Chart */}
-          <div className="glass-card p-6">
+          <div className="p-6 rounded-2xl" style={glassStyle}>
             <h3 className="text-lg font-semibold text-foreground mb-6">Completion Trend</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
