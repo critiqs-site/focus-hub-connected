@@ -199,7 +199,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
               }`}>
                 {improvement > 0 ? "+" : ""}{improvement}%
               </div>
-              <div className="text-sm text-muted-foreground">Improvement</div>
+              <div className="text-sm text-muted-foreground">{improvement > 0 ? "Improvement" : improvement < 0 ? "Decline" : "No Change"}</div>
             </div>
           </div>
 
