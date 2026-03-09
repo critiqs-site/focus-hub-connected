@@ -196,7 +196,12 @@ const Auth = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full h-12 rounded-2xl border-2 border-border hover:border-primary/40 font-medium gap-3"
+              className="w-full h-14 rounded-2xl font-medium gap-3 transition-all"
+              style={{
+                background: 'hsla(240, 10%, 10%, 0.3)',
+                border: '1px solid hsla(0, 0%, 100%, 0.12)',
+                backdropFilter: 'blur(10px)'
+              }}
               onClick={() => handleOAuth("google")}
               disabled={isLoading}
             >
