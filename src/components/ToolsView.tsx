@@ -1,4 +1,7 @@
-import { Dumbbell, Shirt, UtensilsCrossed, Wind } from "lucide-react";
+import physiqueIcon from "@/assets/tools/physique.png";
+import foodIcon from "@/assets/tools/food.png";
+import outfitIcon from "@/assets/tools/outfit.png";
+import breathingIcon from "@/assets/tools/breathing.png";
 import PhysiqueRater from "./PhysiqueRater";
 import OutfitRater from "./OutfitRater";
 import FoodScanner from "./FoodScanner";
