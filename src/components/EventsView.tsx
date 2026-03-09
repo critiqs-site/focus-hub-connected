@@ -267,7 +267,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                 value={selectedEvent.description}
                 onChange={e => onEditEvent(selectedEvent.id, { description: e.target.value })}
                 placeholder="Add detailed instructions, steps, or notes for this event..."
-                className="flex-1 min-h-[150px] bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/50 rounded-xl focus:ring-1 focus:ring-primary/30"
+                className="flex-1 min-h-[200px] lg:min-h-[250px] bg-transparent resize-none text-base text-foreground placeholder:text-muted-foreground/50 rounded-xl focus:ring-1 focus:ring-primary/30"
                 style={{ background: 'hsla(0, 0%, 100%, 0.03)', border: '1px solid hsla(0, 0%, 100%, 0.06)' }}
               />
             </div>
