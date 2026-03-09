@@ -237,7 +237,12 @@ const Auth = () => {
                 placeholder="name@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 bg-secondary/60 border-2 border-primary/20 focus:border-primary transition-all rounded-xl text-sm"
+                className="h-14 rounded-2xl text-base transition-all"
+                style={{
+                  background: 'hsla(240, 10%, 10%, 0.5)',
+                  border: '1px solid hsla(0, 0%, 100%, 0.15)',
+                  backdropFilter: 'blur(10px)'
+                }}
                 disabled={isLoading}
                 required
               />
