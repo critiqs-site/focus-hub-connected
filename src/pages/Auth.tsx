@@ -137,10 +137,17 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Enhanced glassmorphism background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="ambient-orb top-[-10%] right-[5%] w-[450px] h-[450px] bg-primary/10" />
-        <div className="ambient-orb bottom-[10%] left-[-5%] w-[350px] h-[350px] bg-primary/6" />
+        {/* Large flowing gradients */}
+        <div className="absolute top-[-20%] right-[10%] w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" 
+          style={{ background: 'radial-gradient(circle, hsla(24, 95%, 53%, 0.4), transparent 70%)' }} />
+        <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-25 blur-3xl"
+          style={{ background: 'radial-gradient(circle, hsla(240, 70%, 50%, 0.3), transparent 70%)' }} />
+        <div className="absolute top-[40%] left-[5%] w-[400px] h-[400px] rounded-full opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, hsla(280, 70%, 50%, 0.25), transparent 70%)' }} />
       </div>
+
       <div className="w-full max-w-md relative z-10">
         <button
           onClick={() => setStep("welcome")}
@@ -149,20 +156,28 @@ const Auth = () => {
           <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Back
         </button>
 
-        <div className="flex justify-center mb-4 animate-scale-in">
-          <img src={logoIcon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-xl" style={{ mixBlendMode: 'screen' }} />
+        <div className="flex justify-center mb-6 animate-scale-in">
+          <img src={logoIcon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }} />
         </div>
 
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-1">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">
             {isLogin ? "Welcome Back!" : "Register!"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             {isLogin ? "Great to see you again" : "One step away from being the beast!"}
           </p>
         </div>
 
-        <div className="bg-card/80 backdrop-blur-xl border-2 border-primary/30 p-8 rounded-3xl shadow-2xl shadow-primary/10">
+        {/* Premium glassmorphism card */}
+        <div className="p-8 rounded-3xl animate-slide-up relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, hsla(240, 10%, 12%, 0.4), hsla(240, 8%, 8%, 0.6))',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '1px solid hsla(0, 0%, 100%, 0.18)',
+            boxShadow: 'inset 0 1px 2px hsla(0, 0%, 100%, 0.15), 0 20px 60px -10px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(240, 8%, 15%, 0.2)'
+          }}>
           {/* Inline form message */}
           {formMessage && (
             <div
