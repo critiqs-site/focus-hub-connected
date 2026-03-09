@@ -26,7 +26,7 @@ const IconPickerGrid = ({ icons, selectedIcon, onSelect, batchSize = 15, columns
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-2">
-        <div className={cn("grid gap-2", `grid-cols-${columns}`)}>
+        <div className="grid grid-cols-5 gap-2">
           {visibleIcons.map((iconItem) => {
             const IconComp = getIconComponent(iconItem.name);
             return (
