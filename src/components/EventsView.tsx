@@ -245,7 +245,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
                 type="time"
                 value={selectedEvent.time}
                 onChange={e => onEditEvent(selectedEvent.id, { time: e.target.value })}
-                className="bg-transparent text-sm text-foreground outline-none px-3 py-2 rounded-xl [color-scheme:dark]"
+                className="bg-transparent text-base text-foreground outline-none px-4 py-3 rounded-xl [color-scheme:dark]"
                 style={{ ...glassStyle }}
               />
               <button
