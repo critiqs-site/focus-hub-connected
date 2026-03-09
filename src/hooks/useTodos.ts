@@ -175,5 +175,5 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to delete section"); fetchData(); } else toast.success("Section deleted");
   };
 
-  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleUpdateDescription, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, refetch: fetchData };
+  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleUpdateDescription, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin, refetch: fetchData };
 };
