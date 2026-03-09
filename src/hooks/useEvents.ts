@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ScheduledEvent } from "@/types/todo";
 import { eventSchema } from "@/lib/validation";
+import { requestNotificationPermission, scheduleEventNotification } from "@/lib/notifications";
 
 const GUEST_EVENTS_KEY = "guest_events";
 
@@ -58,6 +59,10 @@ export const useEvents = (userId: string | undefined) => {
   const addEvent = async (title: string, time: string, date: string, timeEnd?: string) => {
     const validated = eventSchema.safeParse({ title, time, date, timeEnd: timeEnd || "", description: "" });
     if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    
+    // Request notification permission on first event add
+    const hasPermission = await requestNotificationPermission();
+    
     if (isGuest) {
       const newEvent: ScheduledEvent = {
         id: crypto.randomUUID(), title, description: "", time, timeEnd: timeEnd || "", date,
@@ -67,6 +72,7 @@ export const useEvents = (userId: string | undefined) => {
       setEvents(updated);
       saveGuestEvents(updated);
       toast.success("Event added");
+      if (hasPermission) scheduleEventNotification(newEvent);
       return;
     }
     if (!userId) return;
@@ -77,12 +83,14 @@ export const useEvents = (userId: string | undefined) => {
       .single();
     if (error) { toast.error("Failed to add event"); }
     else {
-      setEvents(prev => [...prev, {
+      const created = {
         id: data.id, title: data.title, description: data.description,
         time: data.time, timeEnd: (data as any).time_end || "", date: data.date,
         completed: data.completed, createdAt: data.created_at,
-      }]);
+      };
+      setEvents(prev => [...prev, created]);
       toast.success("Event added");
+      if (hasPermission) scheduleEventNotification(created);
     }
   };
 
@@ -91,6 +99,10 @@ export const useEvents = (userId: string | undefined) => {
       const validated = eventSchema.safeParse({ title: e.title, time: e.time, date: e.date, timeEnd: e.timeEnd, description: e.description || "" });
       if (!validated.success) { toast.error(`Invalid event "${e.title}": ${validated.error.errors[0]?.message}`); return; }
     }
+    
+    // Request notification permission on first event add
+    const hasPermission = await requestNotificationPermission();
+    
     if (isGuest) {
       const created = newEvents.map(e => ({
         id: crypto.randomUUID(), title: e.title, description: e.description || "", time: e.time, timeEnd: e.timeEnd,
@@ -100,6 +112,7 @@ export const useEvents = (userId: string | undefined) => {
       setEvents(updated);
       saveGuestEvents(updated);
       toast.success(`${created.length} events added`);
+      if (hasPermission) created.forEach(scheduleEventNotification);
       return;
     }
     if (!userId) return;
@@ -113,6 +126,7 @@ export const useEvents = (userId: string | undefined) => {
       }));
       setEvents(prev => [...prev, ...mapped]);
       toast.success(`${mapped.length} events added`);
+      if (hasPermission) mapped.forEach(scheduleEventNotification);
     }
   };
 
