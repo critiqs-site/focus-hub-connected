@@ -83,10 +83,10 @@ export const useEvents = (userId: string | undefined) => {
     }
   };
 
-  const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string }>) => {
+  const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string; description?: string }>) => {
     if (isGuest) {
       const created = newEvents.map(e => ({
-        id: crypto.randomUUID(), title: e.title, description: "", time: e.time, timeEnd: e.timeEnd,
+        id: crypto.randomUUID(), title: e.title, description: e.description || "", time: e.time, timeEnd: e.timeEnd,
         date: e.date, completed: false, createdAt: new Date().toISOString(),
       }));
       const updated = [...events, ...created];
@@ -96,7 +96,7 @@ export const useEvents = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const rows = newEvents.map(e => ({ user_id: userId, title: e.title, time: e.time, time_end: e.timeEnd, date: e.date }));
+    const rows = newEvents.map(e => ({ user_id: userId, title: e.title, description: e.description || "", time: e.time, time_end: e.timeEnd, date: e.date }));
     const { data, error } = await supabase.from("scheduled_events").insert(rows).select();
     if (error) { toast.error("Failed to add events"); }
     else {
