@@ -101,6 +101,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           {/* Clickable icon area to toggle today */}
           <button
             onClick={handleQuickToggle}
+            onPointerDown={(e) => e.stopPropagation()}
             className={`relative p-2.5 md:p-3 lg:p-4 rounded-xl shrink-0 transition-all duration-300 ${
               isTodayCompleted
                 ? "bg-primary/20 orange-glow ring-2 ring-primary"
