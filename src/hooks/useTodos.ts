@@ -105,6 +105,10 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleUpdateDescription = async (id: string, description: string | null) => {
+    if (description !== null) {
+      const validated = todoSchema.shape.description.safeParse(description);
+      if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Description too long"); return; }
+    }
     const newTodos = todos.map((t) => t.id === id ? { ...t, description } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Description updated"); return; }
