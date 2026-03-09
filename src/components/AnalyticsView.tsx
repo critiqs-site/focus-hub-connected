@@ -157,13 +157,13 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
       </div>
 
       {todos.length === 0 ? (
-        <div className="glass-card p-12 text-center">
+        <div className="p-12 text-center rounded-2xl" style={glassStyle}>
           <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-medium text-foreground mb-2">No habits to track yet</p>
           <p className="text-sm text-muted-foreground">Add habits to see your progress analytics</p>
         </div>
       ) : !hasData ? (
-        <div className="glass-card p-12 text-center">
+        <div className="p-12 text-center rounded-2xl" style={glassStyle}>
           <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-medium text-foreground mb-2">No data available for this period</p>
           <p className="text-sm text-muted-foreground">Start completing habits to build your analytics</p>
