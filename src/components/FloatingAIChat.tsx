@@ -381,7 +381,7 @@ const FloatingAIChat = ({
             )}
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-                <Bot className="w-10 h-10 text-primary opacity-60" />
+                <img src={critiqsLogo} alt="CRITIQS AI" className="w-10 h-10 rounded-full object-cover opacity-60" />
                 <p className="text-sm text-muted-foreground opacity-60">Hey! Ask me anything about fitness, nutrition, or manage your habits 💪</p>
                 <div className="flex flex-col gap-2 w-full mt-2">
                   {[
