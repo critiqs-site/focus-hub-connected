@@ -313,10 +313,9 @@ const FloatingAIChat = ({
 
     return (
       <div key={i} className={`flex gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
-        {!isUser && (
-          <div className="w-6 h-6 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center mt-1">
-            <Bot className="w-3 h-3 text-primary" />
-          </div>
+         {!isUser && (
+          <img src={critiqsLogo} alt="CRITIQS AI" className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-1" />
+        
         )}
         <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
           isUser ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"
