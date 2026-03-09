@@ -125,6 +125,9 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleAddTodo = async (text: string, dividerId: string, icon: string, description?: string) => {
+    const validated = todoSchema.safeParse({ text, description: description || null, icon });
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    const { text: cleanText, description: cleanDesc, icon: cleanIcon } = validated.data;
     const maxOrder = Math.max(0, ...todos.filter(t => t.dividerId === dividerId).map(t => t.order));
     const newOrder = maxOrder + 1;
 
