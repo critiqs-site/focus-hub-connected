@@ -127,9 +127,6 @@ const FloatingAIChat = ({
         ctx += `\n[DATA]\nSections: ${divLines.join("; ")}\nTodos: ${todoLines.join("; ")}`;
       }
       if (interests.length) ctx += `\nInterests: ${interests.join(",")}`;
-      if (notes.length) {
-        ctx += `\nMoods: ${notes.slice(0, 3).map((n: any) => `${n.mood}`).join(",")}`;
-      }
       if (ctx) ctx += "\n[/DATA]";
 
       const processedMessages = allMessages.map(m => {
