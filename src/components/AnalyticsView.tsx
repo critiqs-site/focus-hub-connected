@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, subDays, subMonths, startOfMonth, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
+import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, isAfter, isBefore, startOfDay } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, Target, Minus } from "lucide-react";
 import { getFixedWeekDays, getPreviousFixedWeekDays } from "@/lib/utils";
@@ -14,7 +14,6 @@ type Period = "weekly" | "monthly" | "yearly";
 const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
 
-  // Calculate daily completion percentage
   const calculateDailyPercentage = (date: Date, todos: Todo[]): number => {
     if (todos.length === 0) return 0;
     const dateStr = format(date, "yyyy-MM-dd");
@@ -22,13 +21,14 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     return Math.round((completedCount / todos.length) * 100);
   };
 
-  // Get chart data based on selected period
   const chartData = useMemo(() => {
-    const today = new Date();
+    const today = startOfDay(new Date());
     
     if (selectedPeriod === "weekly") {
       const days = getFixedWeekDays(today);
-      return days.map(day => ({
+      // Only include days up to today
+      const validDays = days.filter(day => !isAfter(startOfDay(day), today));
+      return validDays.map(day => ({
         label: format(day, "EEE"),
         fullDate: format(day, "MMM d"),
         percentage: calculateDailyPercentage(day, todos),
@@ -46,9 +46,10 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
         end: today,
       });
       return months.map(month => {
+        const monthEnd = isAfter(endOfMonth(month), today) ? today : endOfMonth(month);
         const daysInMonth = eachDayOfInterval({
           start: startOfMonth(month),
-          end: month,
+          end: monthEnd,
         });
         const monthlyPercentages = daysInMonth.map(day => calculateDailyPercentage(day, todos));
         const avgPercentage = monthlyPercentages.length > 0
@@ -63,7 +64,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     }
   }, [selectedPeriod, todos]);
 
-  // Calculate stats for current period
   const currentPeriodStats = useMemo(() => {
     const percentages = chartData.map(d => d.percentage);
     const average = percentages.length > 0
@@ -72,17 +72,19 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     return { average, percentages };
   }, [chartData]);
 
-  // Calculate improvement (compare to previous period)
   const improvement = useMemo(() => {
-    const today = new Date();
+    const today = startOfDay(new Date());
     let previousPercentages: number[] = [];
 
     if (selectedPeriod === "weekly") {
       const prevDays = getPreviousFixedWeekDays(today);
       previousPercentages = prevDays.map(day => calculateDailyPercentage(day, todos));
     } else if (selectedPeriod === "monthly") {
-      const previousPeriodDays = Array.from({ length: 30 }, (_, i) => subDays(today, 59 - i));
-      previousPercentages = previousPeriodDays.map(day => calculateDailyPercentage(day, todos));
+      // Compare to actual previous calendar month
+      const prevMonthEnd = endOfMonth(subMonths(today, 1));
+      const prevMonthStart = startOfMonth(subMonths(today, 1));
+      const prevDays = eachDayOfInterval({ start: prevMonthStart, end: prevMonthEnd });
+      previousPercentages = prevDays.map(day => calculateDailyPercentage(day, todos));
     } else {
       const previousMonths = eachMonthOfInterval({
         start: subMonths(today, 23),
@@ -91,7 +93,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
       previousPercentages = previousMonths.map(day => {
         const daysInMonth = eachDayOfInterval({
           start: startOfMonth(day),
-          end: day,
+          end: endOfMonth(day),
         });
         const monthlyPercentages = daysInMonth.map(d => calculateDailyPercentage(d, todos));
         return monthlyPercentages.length > 0
@@ -110,7 +112,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
 
   const hasData = chartData.some(d => d.percentage > 0);
 
-  // Premium glass morphism style
   const glassStyle = {
     background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
     backdropFilter: 'blur(40px) saturate(180%)',
@@ -119,14 +120,10 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     boxShadow: 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)',
   };
 
-  // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.[0]) return null;
     return (
-      <div
-        className="px-3 py-2 rounded-xl"
-        style={glassStyle}
-      >
+      <div className="px-3 py-2 rounded-xl" style={glassStyle}>
         <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
         <p className="text-sm font-bold text-foreground">{payload[0].value}%</p>
       </div>
@@ -135,7 +132,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Period Selector */}
       <div className="p-4 rounded-2xl" style={glassStyle}>
         <div className="flex gap-2">
           {(["weekly", "monthly", "yearly"] as Period[]).map((period) => (
@@ -168,9 +164,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
         </div>
       ) : (
         <>
-          {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Average Completion */}
             <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
                 <Target className="h-5 w-5 text-primary" />
@@ -181,7 +175,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
               <div className="text-sm text-muted-foreground">Average Completion</div>
             </div>
 
-            {/* Improvement */}
             <div className="p-6 text-center rounded-2xl" style={glassStyle}>
               <div className="flex items-center justify-center mb-3">
                 {!improvement.hasPreviousData ? (
@@ -206,7 +199,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
             </div>
           </div>
 
-          {/* Bar Chart */}
           <div className="p-6 rounded-2xl" style={glassStyle}>
             <h3 className="text-lg font-semibold text-foreground mb-6">Completion Trend</h3>
             <div className="h-64">

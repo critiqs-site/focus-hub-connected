@@ -1,10 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
-import { format } from "date-fns";
-import { Clock, Plus, Trash2, CheckCircle2, Circle, X, Wand2, Loader2, CalendarClock, ChevronRight } from "lucide-react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { format, addDays } from "date-fns";
+import { Clock, Plus, Trash2, CheckCircle2, Circle, X, Wand2, Loader2, CalendarClock, ChevronRight, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { ScheduledEvent } from "@/types/todo";
 
 interface EventsViewProps {
@@ -34,6 +37,8 @@ const formatTime12 = (time: string) => {
 
 const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDeleteEvent, onToggleComplete }: EventsViewProps) => {
   const todayStr = format(new Date(), "yyyy-MM-dd");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAIForm, setShowAIForm] = useState(false);
@@ -44,25 +49,48 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
   const [aiLoading, setAiLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Debounce refs for title/description editing
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [localTitle, setLocalTitle] = useState("");
+  const [localDescription, setLocalDescription] = useState("");
+
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const todayEvents = useMemo(() =>
-    events.filter(e => e.date === todayStr).sort((a, b) => a.time.localeCompare(b.time)),
-    [events, todayStr]
+  const selectedEvent = events.find(e => e.id === selectedId);
+
+  // Sync local state when selected event changes
+  useEffect(() => {
+    if (selectedEvent) {
+      setLocalTitle(selectedEvent.title);
+      setLocalDescription(selectedEvent.description);
+    }
+  }, [selectedId, selectedEvent?.title, selectedEvent?.description]);
+
+  const debouncedEdit = useCallback((id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed">>) => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      onEditEvent(id, updates);
+    }, 500);
+  }, [onEditEvent]);
+
+  const dateEvents = useMemo(() =>
+    events.filter(e => e.date === selectedDateStr).sort((a, b) => a.time.localeCompare(b.time)),
+    [events, selectedDateStr]
   );
 
-  const selectedEvent = events.find(e => e.id === selectedId);
   const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+  const isToday = selectedDateStr === todayStr;
 
   const nextEvent = useMemo(() => {
-    return todayEvents.find(e => {
+    if (!isToday) return null;
+    return dateEvents.find(e => {
       const [h, m] = e.time.split(":").map(Number);
       return h * 60 + m > nowMinutes && !e.completed;
     });
-  }, [todayEvents, nowMinutes]);
+  }, [dateEvents, nowMinutes, isToday]);
 
   const getCountdown = (time: string) => {
     const [h, m] = time.split(":").map(Number);
@@ -75,6 +103,7 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
 
   const getEventStatus = (event: ScheduledEvent) => {
     if (event.completed) return "completed";
+    if (!isToday) return "upcoming";
     const [h, m] = event.time.split(":").map(Number);
     const startMin = h * 60 + m;
     if (event.timeEnd) {
@@ -86,12 +115,12 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
     return "past";
   };
 
-  const doneCount = todayEvents.filter(e => e.completed).length;
-  const donePercent = todayEvents.length > 0 ? Math.round((doneCount / todayEvents.length) * 100) : 0;
+  const doneCount = dateEvents.filter(e => e.completed).length;
+  const donePercent = dateEvents.length > 0 ? Math.round((doneCount / dateEvents.length) * 100) : 0;
 
   const handleAdd = () => {
     if (!newTitle.trim()) return;
-    onAddEvent(newTitle.trim(), newTimeStart, todayStr, newTimeEnd);
+    onAddEvent(newTitle.trim(), newTimeStart, selectedDateStr, newTimeEnd);
     setNewTitle("");
     setNewTimeStart("09:00");
     setNewTimeEnd("10:00");
@@ -115,7 +144,7 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
         title: e.title,
         time: e.time,
         timeEnd: e.timeEnd || "",
-        date: todayStr,
+        date: selectedDateStr,
         description: e.description || "",
       }));
       onAddMultipleEvents(mapped);
@@ -135,11 +164,40 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
       <div className="rounded-2xl p-6 lg:p-8 flex flex-col" style={glassStyle}>
         <div className="flex items-center gap-2 mb-5">
           <CalendarClock className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Coming Up</h3>
+          <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">
+            {isToday ? "Coming Up" : format(selectedDate, "MMM d")}
+          </h3>
+        </div>
+
+        {/* Date Picker */}
+        <div className="mb-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal bg-transparent border-muted-foreground/20 hover:bg-secondary/30",
+                  selectedDateStr === todayStr && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDateStr === todayStr ? "Today" : format(selectedDate, "PPP")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          {nextEvent ? (
+          {isToday && nextEvent ? (
             <div className="w-full space-y-6">
               <div className="w-full rounded-2xl p-6 lg:p-8" style={{ ...glassStyle, background: 'linear-gradient(135deg, hsla(24, 95%, 53%, 0.1) 0%, hsla(24, 95%, 53%, 0.03) 100%)' }}>
                 <p className="text-xs text-primary/70 font-semibold tracking-wider mb-3 uppercase">Next</p>
@@ -150,10 +208,9 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                 </p>
               </div>
 
-              {/* Show what's after */}
               {(() => {
-                const nextIdx = todayEvents.findIndex(e => e.id === nextEvent.id);
-                const after = todayEvents.slice(nextIdx + 1).filter(e => !e.completed).slice(0, 2);
+                const nextIdx = dateEvents.findIndex(e => e.id === nextEvent.id);
+                const after = dateEvents.slice(nextIdx + 1).filter(e => !e.completed).slice(0, 2);
                 if (after.length === 0) return null;
                 return (
                   <div className="space-y-2">
@@ -172,13 +229,17 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
           ) : (
             <div className="w-full rounded-2xl p-6 lg:p-8" style={glassStyle}>
               <p className="text-3xl mb-3">✨</p>
-              <p className="text-lg text-foreground font-semibold">You're free!</p>
-              <p className="text-sm text-muted-foreground mt-1">No upcoming tasks</p>
+              <p className="text-lg text-foreground font-semibold">
+                {dateEvents.length === 0 ? "No events" : "You're free!"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {dateEvents.length === 0 ? "Add events to this day" : "No upcoming tasks"}
+              </p>
             </div>
           )}
         </div>
 
-        {todayEvents.length > 0 && (
+        {dateEvents.length > 0 && (
           <div className="mt-6 pt-4" style={{ borderTop: '1px solid hsla(0, 0%, 100%, 0.06)' }}>
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-muted-foreground font-medium">Progress</span>
@@ -230,7 +291,7 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
               <p className="text-xs font-semibold text-primary uppercase tracking-wider">Create from AI</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Describe your schedule naturally. For multiple events, separate with commas or spaces.
+              Describe your schedule naturally. Events will be added to {selectedDateStr === todayStr ? "today" : format(selectedDate, "MMM d")}.
             </p>
             <Textarea
               value={aiPrompt}
@@ -304,16 +365,16 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
 
         {/* Notification Stack */}
         <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
-          {todayEvents.length === 0 ? (
+          {dateEvents.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
               <Clock className="h-8 w-8 text-muted-foreground/40 mb-3" />
-              <p className="text-sm text-muted-foreground">No schedule for today</p>
+              <p className="text-sm text-muted-foreground">No schedule for {selectedDateStr === todayStr ? "today" : format(selectedDate, "MMM d")}</p>
               <p className="text-xs text-muted-foreground/60 mt-1">Tap + to add or use Create from AI</p>
             </div>
           ) : (
             <div className="space-y-0">
               {(() => {
-                const sorted = [...todayEvents].sort((a, b) => {
+                const sorted = [...dateEvents].sort((a, b) => {
                   const sa = getEventStatus(a);
                   const sb = getEventStatus(b);
                   const order = { active: 0, upcoming: 1, past: 2, completed: 3 };
@@ -418,8 +479,11 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
           <div className="flex-1 flex flex-col space-y-4">
             <input
               type="text"
-              value={selectedEvent.title}
-              onChange={e => onEditEvent(selectedEvent.id, { title: e.target.value })}
+              value={localTitle}
+              onChange={e => {
+                setLocalTitle(e.target.value);
+                debouncedEdit(selectedEvent.id, { title: e.target.value });
+              }}
               className="w-full bg-transparent text-2xl lg:text-3xl font-bold text-foreground outline-none px-1 py-2 rounded-lg focus:ring-1 focus:ring-primary/30 transition-all"
             />
 
@@ -460,8 +524,11 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
             <div className="flex-1">
               <label className="text-sm text-muted-foreground font-medium mb-3 block">Instructions & Details</label>
               <Textarea
-                value={selectedEvent.description}
-                onChange={e => onEditEvent(selectedEvent.id, { description: e.target.value })}
+                value={localDescription}
+                onChange={e => {
+                  setLocalDescription(e.target.value);
+                  debouncedEdit(selectedEvent.id, { description: e.target.value });
+                }}
                 placeholder="Add detailed instructions, steps, or notes..."
                 className="flex-1 min-h-[200px] lg:min-h-[250px] bg-transparent resize-none text-base text-foreground placeholder:text-muted-foreground/50 rounded-xl focus:ring-1 focus:ring-primary/30"
                 style={{ background: 'hsla(0, 0%, 100%, 0.03)', border: '1px solid hsla(0, 0%, 100%, 0.06)' }}

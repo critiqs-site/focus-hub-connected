@@ -136,7 +136,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                 )}
               </div>
               {!isEditing && todo.description && (
-                <p className="hidden md:block text-xs text-muted-foreground mt-0.5 truncate max-w-[300px] lg:max-w-[400px]">
+                <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px] md:max-w-[300px] lg:max-w-[400px]">
                   {todo.description}
                 </p>
               )}
