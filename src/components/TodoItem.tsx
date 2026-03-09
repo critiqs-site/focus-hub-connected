@@ -68,6 +68,13 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
         (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
       }}
     >
+      {/* Pinned indicator */}
+      {todo.pinned && (
+        <div className="absolute top-3 right-3 z-10">
+          <Pin className="h-4 w-4 text-primary fill-primary" />
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1.5 lg:h-2" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
         <div
