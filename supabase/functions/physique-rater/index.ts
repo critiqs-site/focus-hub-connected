@@ -109,9 +109,9 @@ Deno.serve(async (req) => {
     }
 
     if (!parsed) {
-      console.log("Retrying with model...");
+      console.log("Retrying with fallback model...");
       try {
-        parsed = await callAI(apiKey, "gemini-fast", imageBase64);
+        parsed = await callAI(apiKey, "openai-fast", imageBase64);
       } catch (e) {
         console.error("Fallback model error:", e);
       }
