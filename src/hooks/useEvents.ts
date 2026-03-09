@@ -56,6 +56,8 @@ export const useEvents = (userId: string | undefined) => {
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const addEvent = async (title: string, time: string, date: string, timeEnd?: string) => {
+    const validated = eventSchema.safeParse({ title, time, date, timeEnd: timeEnd || "", description: "" });
+    if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
     if (isGuest) {
       const newEvent: ScheduledEvent = {
         id: crypto.randomUUID(), title, description: "", time, timeEnd: timeEnd || "", date,
