@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(AI_ENDPOINT, {
+    const response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,

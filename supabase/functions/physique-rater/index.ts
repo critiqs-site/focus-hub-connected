@@ -40,7 +40,7 @@ ONLY output raw JSON. No extra text.`;
 const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
 async function callAI(apiKey: string, model: string, imageUrl: string) {
-  const response = await fetch(AI_ENDPOINT, {
+  const response = await fetch(getEndpoint(), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
