@@ -170,7 +170,7 @@ const FloatingAIChat = ({
       setIsLoading(false);
       scrollToBottom();
     }
-  }, [todos, dividers, notes, interests]);
+  }, [todos, dividers, interests]);
 
   useEffect(() => {
     if (open && initialMessage && !initialSent.current) {
