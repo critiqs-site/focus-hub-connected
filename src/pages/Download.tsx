@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Download as DownloadIcon, CheckCircle, Monitor, Smartphone } from "lucide-react";
+import { Download as DownloadIcon, CheckCircle, Monitor, Smartphone, Bell, BellOff, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { requestNotificationPermission } from "@/lib/notifications";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -62,11 +64,17 @@ const browserInstructions: Record<BrowserType, { title: string; steps: string[] 
 
 const Download = () => {
   const [status, setStatus] = useState<"loading" | "ready" | "installed" | "unsupported">("loading");
+  const [notifStatus, setNotifStatus] = useState<"default" | "granted" | "denied">("default");
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const prompted = useRef(false);
   const browser = useMemo(() => detectBrowser(), []);
 
   useEffect(() => {
+    // Check notification permission
+    if ("Notification" in window) {
+      setNotifStatus(Notification.permission);
+    }
+
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setStatus("installed");
       return;
@@ -103,31 +111,47 @@ const Download = () => {
     deferredPrompt.current = null;
   };
 
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotifStatus(granted ? "granted" : "denied");
+  };
+
   const info = browserInstructions[browser];
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="glass-card max-w-md w-full p-8 text-center space-y-6 animate-fade-in">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4" />
+          Back to CRITIQS
+        </Link>
+
         <h1 className="text-2xl font-bold text-foreground">Download CRITIQS</h1>
+        <p className="text-sm text-muted-foreground">
+          Install the app for the best experience with offline support and push notifications.
+        </p>
 
         {status === "loading" && (
-          <p className="text-muted-foreground">Preparing download...</p>
+          <div className="py-8">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-muted-foreground mt-3">Preparing download...</p>
+          </div>
         )}
 
         {status === "ready" && (
-          <>
+          <div className="space-y-4">
             <p className="text-muted-foreground">
               Download has started. Click the button below if not.
             </p>
-            <Button onClick={triggerInstall} size="lg" className="gap-2">
+            <Button onClick={triggerInstall} size="lg" className="gap-2 w-full">
               <DownloadIcon className="h-5 w-5" />
               Download CRITIQS
             </Button>
-          </>
+          </div>
         )}
 
         {status === "installed" && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <CheckCircle className="h-12 w-12 text-primary mx-auto" />
             <p className="text-foreground font-medium">CRITIQS is already installed!</p>
             <p className="text-sm text-muted-foreground">Open it from your home screen or app launcher.</p>
@@ -153,6 +177,33 @@ const Download = () => {
             )}
           </div>
         )}
+
+        {/* Notification Section */}
+        <div className="pt-4 border-t border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center justify-center gap-2">
+            <Bell className="h-4 w-4 text-primary" />
+            Push Notifications
+          </h3>
+          {notifStatus === "granted" ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-primary">
+              <CheckCircle className="h-4 w-4" />
+              Notifications enabled
+            </div>
+          ) : notifStatus === "denied" ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <BellOff className="h-4 w-4" />
+              Notifications blocked. Enable in browser settings.
+            </div>
+          ) : (
+            <Button onClick={handleEnableNotifications} variant="outline" size="sm" className="gap-2">
+              <Bell className="h-4 w-4" />
+              Enable Notifications
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground mt-2">
+            Get reminders 5 minutes before your scheduled events.
+          </p>
+        </div>
       </div>
     </div>
   );
