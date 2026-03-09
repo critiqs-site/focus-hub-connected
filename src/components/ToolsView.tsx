@@ -29,8 +29,8 @@ const ToolsView = ({ onAskAI }: ToolsViewProps) => {
 
       <div className="glass-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Shirt className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg">
+            <img src={outfitIcon} alt="Outfit Rater" className="h-10 w-10 object-contain" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Outfit Rater</h2>
