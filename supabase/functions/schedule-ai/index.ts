@@ -24,21 +24,27 @@ ONLY output raw JSON array. No extra text.`;
 
 const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
     const { message } = await req.json();
 
     if (!message) {
-      return new Response(
-        JSON.stringify({ error: "No message provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "No message provided" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const apiKey = Deno.env.get("AI_SERVICE_KEY");
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const response = await fetch(getEndpoint(), {
@@ -59,17 +65,17 @@ const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
     if (!response.ok) {
       console.error("AI service error:", response.status);
-      return new Response(
-        JSON.stringify({ error: "AI service unavailable" }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "AI service unavailable" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "[]";
     const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    
-    let events = [];
+
+    let events: any[] = [];
     try {
       const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -84,9 +90,9 @@ const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
     });
   } catch (err) {
     console.error("Edge function error:", err);
-    return new Response(
-      JSON.stringify({ error: "Server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Server error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
