@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import type { Todo, Divider } from "@/types/todo";
+import { todoSchema, dividerSchema } from "@/lib/validation";
 
 const GUEST_TODOS_KEY = "guest_todos";
 const GUEST_DIVIDERS_KEY = "guest_dividers";
