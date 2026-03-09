@@ -129,7 +129,7 @@ const EventsView = ({ events, onAddEvent, onEditEvent, onDeleteEvent, onToggleCo
       </div>
 
       {/* MIDDLE — Today's Schedule */}
-      <div className="rounded-2xl p-5 lg:p-6 flex flex-col max-h-[70vh] lg:max-h-none" style={glassStyle}>
+      <div className="rounded-2xl p-6 lg:p-8 flex flex-col lg:min-h-[65vh]" style={glassStyle}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
