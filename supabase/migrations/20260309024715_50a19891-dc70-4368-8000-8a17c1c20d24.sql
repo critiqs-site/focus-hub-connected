@@ -1,0 +1,1 @@
+ALTER TABLE public.scheduled_events ADD COLUMN time_end text NOT NULL DEFAULT '';
