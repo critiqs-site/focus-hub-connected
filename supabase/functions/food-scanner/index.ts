@@ -213,15 +213,15 @@ Deno.serve(async (req) => {
 
     let parsed = null;
     try {
-      parsed = await callAI(apiKey, "gemini-fast", imageBase64);
+      parsed = await callAI(apiKey, "mistral", imageBase64);
     } catch (e) {
       console.error("Primary model error:", e);
     }
 
     if (!parsed) {
-      console.log("Falling back to secondary model...");
+      console.log("Retrying with model...");
       try {
-        parsed = await callAI(apiKey, "openai-fast", imageBase64);
+        parsed = await callAI(apiKey, "mistral", imageBase64);
       } catch (e) {
         console.error("Fallback model error:", e);
       }

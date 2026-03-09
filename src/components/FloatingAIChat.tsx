@@ -1,39 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, X, Send, Plus, Loader2, Bot, User, Check, Trash2, Pencil, ArrowRight, ImageIcon } from "lucide-react";
+import { MessageSquare, X, Send, Plus, Loader2, User, Check, Trash2, Pencil, ArrowRight, ImageIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import type { Todo, Divider } from "@/types/todo";
 import { supabase } from "@/integrations/supabase/client";
+import critiqsLogo from "@/assets/critiqs-ai-logo.png";
 
 import { TODO_ICON_NAMES, DIVIDER_ICON_NAMES } from "@/lib/icons";
-
-const SYSTEM_PROMPT = `You are CritiQs AI — a chill, smart fitness & wellness buddy.
-
-RULES:
-- Read the FULL conversation history before replying. Respond to what the user ACTUALLY said.
-- Only give a greeting on the VERY FIRST message (when there's no prior conversation). After that, respond naturally to the user's message.
-- Keep replies short: 2-4 sentences for chat, max 8 bullets for advice. 1-2 emojis.
-- If user asks "who are you" or similar, introduce yourself as CritiQs AI, their habit & wellness buddy.
-
-TODO ACTIONS (use only when relevant):
-[ACTION:DELETE:todoId:todoText] [ACTION:RENAME:todoId:newText:oldText] [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName] [ACTION:ICON:todoId:newIconName:todoText] [ACTION:DESCRIBE:todoId:description:todoText] [ACTION:SUGGEST:dividerName:todoText:iconName] [ACTION:ADD_ALL]
-
-TASK ICONS (use these for todos/habits): ${TODO_ICON_NAMES.join(",")}
-SECTION ICONS (use these for dividers/sections): ${DIVIDER_ICON_NAMES.join(",")}
-
-- For [ACTION:ICON], ONLY use icons from TASK ICONS list above.
-- For section-related operations, reference SECTION ICONS.
-- When user says "replace X with a better icon" or "change icon for X", use [ACTION:ICON:todoId:newIconName:todoText].
-- When user says "move X to Y section", use [ACTION:TRANSFER:todoId:targetDividerId:todoText:sectionName].
-- When user says "add description to X" or "describe X", use [ACTION:DESCRIBE:todoId:short description:todoText]. Descriptions should be brief (5-15 words), practical, like "30 min at mid-day" or "Before breakfast, 10 reps".
-
-TASK INSPIRATION (real human habits for suggestions):
-- Go Outside at Mid-day, Watch Self Improvement Videos, Do One Skill (Content/Editing/Coding)
-- Use Less Screen Time, Drink 2L Water, Read 10 Pages, Walk 10K Steps
-- No Sugar Today, Journal for 5 Min, Cold Shower, Stretch 10 Min
-- Practice Gratitude, Cook a Healthy Meal, Sleep Before 11 PM, No Social Media
-- Learn Something New, Call a Friend, Clean Room, Meditate 10 Min
-
-- Use EXACT IDs from context. Match names loosely. Text first, actions on new lines at end.`;
 
 type Message = { role: "user" | "assistant"; content: string; image?: string };
 
@@ -341,10 +313,9 @@ const FloatingAIChat = ({
 
     return (
       <div key={i} className={`flex gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
-        {!isUser && (
-          <div className="w-6 h-6 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center mt-1">
-            <Bot className="w-3 h-3 text-primary" />
-          </div>
+         {!isUser && (
+          <img src={critiqsLogo} alt="CRITIQS AI" className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-1" />
+        
         )}
         <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
           isUser ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"
@@ -389,11 +360,9 @@ const FloatingAIChat = ({
         <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[560px] max-h-[80vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-scale-in overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
+              <img src={critiqsLogo} alt="CRITIQS AI" className="w-8 h-8 rounded-full object-cover" />
               <div>
-                <p className="text-sm font-semibold text-foreground">CritiQs AI</p>
+                <p className="text-sm font-semibold text-foreground">CRITIQS AI</p>
                 <p className="text-[10px] text-muted-foreground">Always here to help</p>
               </div>
             </div>
@@ -412,7 +381,7 @@ const FloatingAIChat = ({
             )}
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-                <Bot className="w-10 h-10 text-primary opacity-60" />
+                <img src={critiqsLogo} alt="CRITIQS AI" className="w-10 h-10 rounded-full object-cover opacity-60" />
                 <p className="text-sm text-muted-foreground opacity-60">Hey! Ask me anything about fitness, nutrition, or manage your habits 💪</p>
                 <div className="flex flex-col gap-2 w-full mt-2">
                   {[
@@ -434,9 +403,7 @@ const FloatingAIChat = ({
             {messages.map((msg, i) => renderMessage(msg, i))}
             {isLoading && (
               <div className="flex gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Bot className="w-3 h-3 text-primary" />
-                </div>
+                <img src={critiqsLogo} alt="CRITIQS AI" className="w-6 h-6 rounded-full object-cover" />
                 <div className="bg-secondary rounded-2xl rounded-bl-sm px-3 py-2">
                   <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                 </div>
