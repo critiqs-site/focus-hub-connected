@@ -99,46 +99,9 @@ const Auth = () => {
     }
   };
 
-  if (step === "welcome") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="ambient-orb top-[-15%] left-[10%] w-[500px] h-[500px] bg-primary/12" />
-          <div className="ambient-orb bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary/8" />
-        </div>
-        <div className="w-full max-w-md text-center relative z-10">
-          <div className="relative mb-6 animate-scale-in">
-            <img src={logoIcon} alt="CRITIQS logo" className="mx-auto w-40 h-40 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }} />
-          </div>
-          <div className="animate-slide-up mb-2" style={{ animationDelay: "0.2s" }}>
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-1">
-              Welcome! 👋
-            </h1>
-          </div>
-          <div className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
-            <p className="text-xl text-muted-foreground mb-1">Are you ready</p>
-            <p className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-8">
-              to build some habits?
-            </p>
-          </div>
-          <div className="animate-slide-up" style={{ animationDelay: "0.5s" }}>
-            <Button
-              onClick={() => setStep("auth")}
-              className="w-full max-w-xs h-16 bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-bold text-xl rounded-2xl shadow-xl shadow-primary/40 transition-all hover:shadow-2xl hover:shadow-primary/50 hover:scale-105 active:scale-95 group"
-            >
-              Continue <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Enhanced glassmorphism background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Large flowing gradients */}
         <div className="absolute top-[-20%] right-[10%] w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" 
           style={{ background: 'radial-gradient(circle, hsla(24, 95%, 53%, 0.4), transparent 70%)' }} />
         <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-25 blur-3xl"
@@ -148,13 +111,6 @@ const Auth = () => {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        <button
-          onClick={() => setStep("welcome")}
-          className="mb-4 text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group"
-        >
-          <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Back
-        </button>
-
         <div className="flex justify-center mb-6 animate-scale-in">
           <img src={logoIcon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }} />
         </div>
