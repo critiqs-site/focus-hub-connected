@@ -65,7 +65,6 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
       className={`group p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-500 animate-scroll-fade-in relative overflow-hidden cursor-grab active:cursor-grabbing rounded-2xl backdrop-blur-3xl ${
