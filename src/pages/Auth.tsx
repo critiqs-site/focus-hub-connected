@@ -288,7 +288,11 @@ const Auth = () => {
             </div>
             <Button
               type="submit"
-              className="w-full h-12 bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-bold text-base shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] active:scale-95 rounded-xl group"
+              className="w-full h-14 font-bold text-lg shadow-xl transition-all hover:scale-[1.02] active:scale-95 rounded-2xl group"
+              style={{
+                background: 'linear-gradient(135deg, hsl(24, 95%, 53%), hsl(24, 95%, 48%))',
+                boxShadow: '0 0 40px hsla(24, 95%, 53%, 0.4), inset 0 1px 2px hsla(0, 0%, 100%, 0.2)'
+              }}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -296,7 +300,7 @@ const Auth = () => {
               ) : (
                 <>
                   {isLogin ? "Sign In" : "Create Account"}
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </Button>
