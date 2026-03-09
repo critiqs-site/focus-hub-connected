@@ -59,6 +59,10 @@ export const useEvents = (userId: string | undefined) => {
   const addEvent = async (title: string, time: string, date: string, timeEnd?: string) => {
     const validated = eventSchema.safeParse({ title, time, date, timeEnd: timeEnd || "", description: "" });
     if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
+    
+    // Request notification permission on first event add
+    const hasPermission = await requestNotificationPermission();
+    
     if (isGuest) {
       const newEvent: ScheduledEvent = {
         id: crypto.randomUUID(), title, description: "", time, timeEnd: timeEnd || "", date,
@@ -68,6 +72,7 @@ export const useEvents = (userId: string | undefined) => {
       setEvents(updated);
       saveGuestEvents(updated);
       toast.success("Event added");
+      if (hasPermission) scheduleEventNotification(newEvent);
       return;
     }
     if (!userId) return;
@@ -78,12 +83,14 @@ export const useEvents = (userId: string | undefined) => {
       .single();
     if (error) { toast.error("Failed to add event"); }
     else {
-      setEvents(prev => [...prev, {
+      const created = {
         id: data.id, title: data.title, description: data.description,
         time: data.time, timeEnd: (data as any).time_end || "", date: data.date,
         completed: data.completed, createdAt: data.created_at,
-      }]);
+      };
+      setEvents(prev => [...prev, created]);
       toast.success("Event added");
+      if (hasPermission) scheduleEventNotification(created);
     }
   };
 
