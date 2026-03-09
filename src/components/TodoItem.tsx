@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Check, X, Pin, GripVertical } from "lucide-react";
+import { Pencil, Trash2, Check, X, Pin } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { getIconComponent } from "@/lib/icons";
 import { format, subDays, isSameDay } from "date-fns";
@@ -25,8 +25,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: transition || 'transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   };
 
   const handleSave = () => {
@@ -67,9 +66,11 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
     <div
       ref={setNodeRef}
       style={style}
-      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden ${
+      {...attributes}
+      {...listeners}
+      className={`group glass-card p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-300 animate-scroll-fade-in relative overflow-hidden cursor-grab active:cursor-grabbing ${
         todo.pinned ? "ring-2 ring-primary/50" : ""
-      }`}
+      } ${isDragging ? "opacity-60 scale-105 rotate-1 shadow-2xl z-50" : "opacity-100"}`}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.borderColor = 'hsla(24,95%,53%,0.2)';
         (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px -8px hsla(24,95%,53%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.05), 0 4px 24px -4px hsla(0,0%,0%,0.4)';
@@ -100,6 +101,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           {/* Clickable icon area to toggle today */}
           <button
             onClick={handleQuickToggle}
+            onPointerDown={(e) => e.stopPropagation()}
             className={`relative p-2.5 md:p-3 lg:p-4 rounded-xl shrink-0 transition-all duration-300 ${
               isTodayCompleted
                 ? "bg-primary/20 orange-glow ring-2 ring-primary"
@@ -155,18 +157,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           {!isEditing && (
             <div
               className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0"
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              <Button
-                {...attributes}
-                {...listeners}
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 glass-button cursor-grab active:cursor-grabbing"
-                title="Drag to reorder"
-              >
-                <GripVertical className="h-3.5 w-3.5" />
-              </Button>
               <Button
                 size="sm"
                 variant="ghost"
@@ -219,6 +211,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                     e.stopPropagation();
                     onToggleDay(todo.id, day.dateStr);
                   }}
+                  onPointerDown={(e) => e.stopPropagation()}
                   className={`
                     relative min-w-[2rem] w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center
                     transition-all duration-300 flex-shrink-0
@@ -246,17 +239,8 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           {!isEditing && (
             <div
               className="flex md:hidden gap-1 ml-2 flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              <Button
-                {...attributes}
-                {...listeners}
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 glass-button cursor-grab active:cursor-grabbing"
-              >
-                <GripVertical className="h-3.5 w-3.5" />
-              </Button>
               <Button
                 size="sm"
                 variant="ghost"
