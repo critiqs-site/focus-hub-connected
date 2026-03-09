@@ -303,8 +303,8 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
           </div>
         )}
 
-        {/* Event Stream */}
-        <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin pr-1">
+        {/* Notification Stack */}
+        <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
           {todayEvents.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
               <Clock className="h-8 w-8 text-muted-foreground/40 mb-3" />
@@ -312,75 +312,114 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
               <p className="text-xs text-muted-foreground/60 mt-1">Tap + to add manually or ✨ AI to auto-generate</p>
             </div>
           ) : (
-            todayEvents.map((event, index) => {
-              const status = getEventStatus(event);
-              const isSelected = selectedId === event.id;
+            <div className="space-y-0">
+              {(() => {
+                // Sort: active first, then upcoming by time, then completed
+                const sorted = [...todayEvents].sort((a, b) => {
+                  const sa = getEventStatus(a);
+                  const sb = getEventStatus(b);
+                  const order = { active: 0, upcoming: 1, past: 2, completed: 3 };
+                  if (order[sa] !== order[sb]) return order[sa] - order[sb];
+                  return a.time.localeCompare(b.time);
+                });
 
-              return (
-                <button
-                  key={event.id}
-                  onClick={() => setSelectedId(event.id === selectedId ? null : event.id)}
-                  className={`w-full text-left rounded-xl p-3.5 flex items-start gap-3 transition-all duration-300 group relative ${
-                    isSelected ? 'ring-1 ring-primary/40' : ''
-                  }`}
-                  style={{
-                    ...glassStyle,
-                    opacity: status === "completed" ? 0.4 : status === "past" ? 0.55 : status === "upcoming" ? Math.max(0.5, 1 - index * 0.08) : 1,
-                    ...(status === "active" ? {
-                      background: 'hsla(24, 95%, 53%, 0.08)',
-                      borderColor: 'hsla(24, 95%, 53%, 0.25)',
-                      boxShadow: 'inset 0 1px 0 0 hsla(24, 95%, 53%, 0.1), 0 4px 20px hsla(24, 95%, 53%, 0.15)',
-                    } : {}),
-                  }}
-                >
-                  {/* Active indicator dot */}
-                  {status === "active" && (
-                    <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-                      </span>
-                      <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Active</span>
+                return sorted.map((event, index) => {
+                  const status = getEventStatus(event);
+                  const isSelected = selectedId === event.id;
+                  const isFirst = index === 0;
+                  const isLast = index === sorted.length - 1;
+
+                  // Fading: active = full, then progressively fade
+                  const fadeOpacity = status === "completed" ? 0.35 : status === "active" ? 1 : Math.max(0.45, 1 - (index * 0.12));
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="relative"
+                      style={{
+                        // Stack overlap effect like iOS notifications
+                        marginTop: index === 0 ? 0 : -2,
+                        zIndex: sorted.length - index,
+                      }}
+                    >
+                      <button
+                        onClick={() => setSelectedId(event.id === selectedId ? null : event.id)}
+                        className={`w-full text-left transition-all duration-300 group relative overflow-hidden ${
+                          isSelected ? 'ring-1 ring-primary/50' : ''
+                        }`}
+                        style={{
+                          opacity: fadeOpacity,
+                          background: status === "active"
+                            ? 'linear-gradient(135deg, hsla(24, 95%, 53%, 0.12) 0%, hsla(24, 95%, 53%, 0.04) 100%)'
+                            : 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.07) 0%, hsla(0, 0%, 100%, 0.03) 100%)',
+                          backdropFilter: 'blur(40px) saturate(180%)',
+                          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+                          border: status === "active"
+                            ? '1px solid hsla(24, 95%, 53%, 0.25)'
+                            : '1px solid hsla(0, 0%, 100%, 0.08)',
+                          borderRadius: isFirst && isLast ? '16px' : isFirst ? '16px 16px 4px 4px' : isLast ? '4px 4px 16px 16px' : '4px',
+                          padding: '14px 16px',
+                          boxShadow: status === "active"
+                            ? '0 4px 24px hsla(24, 95%, 53%, 0.15), inset 0 1px 0 hsla(24, 95%, 53%, 0.1)'
+                            : '0 2px 8px hsla(0, 0%, 0%, 0.2), inset 0 1px 0 hsla(0, 0%, 100%, 0.04)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Completion circle */}
+                          <button
+                            onClick={e => { e.stopPropagation(); onToggleComplete(event.id); }}
+                            className="flex-shrink-0"
+                          >
+                            {event.completed ? (
+                              <CheckCircle2 className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                            )}
+                          </button>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={`text-sm font-semibold truncate ${
+                                event.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                              }`}>
+                                {event.title}
+                              </p>
+                              {status === "active" && (
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                                  </span>
+                                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Active</span>
+                                </div>
+                              )}
+                            </div>
+                            {event.description && (
+                              <p className="text-xs text-muted-foreground/60 truncate mt-0.5">{event.description}</p>
+                            )}
+                          </div>
+
+                          {/* Time */}
+                          <div className="flex flex-col items-end flex-shrink-0">
+                            <span className={`text-xs font-medium tabular-nums ${
+                              status === "active" ? 'text-primary' : 'text-muted-foreground'
+                            }`}>
+                              {formatTime12(event.time)}
+                            </span>
+                            {event.timeEnd && (
+                              <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+                                {formatTime12(event.timeEnd)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
                     </div>
-                  )}
-
-                  <button
-                    onClick={e => { e.stopPropagation(); onToggleComplete(event.id); }}
-                    className="flex-shrink-0 mt-0.5"
-                  >
-                    {event.completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                    )}
-                  </button>
-
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-base font-semibold truncate ${
-                      event.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                    }`}>
-                      {event.title}
-                    </p>
-                    {event.description && (
-                      <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{event.description}</p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
-                    <span className={`text-xs font-medium tabular-nums ${
-                      status === "active" ? 'text-primary' : 'text-muted-foreground'
-                    }`}>
-                      {formatTime12(event.time)}
-                    </span>
-                    {event.timeEnd && (
-                      <span className="text-[10px] text-muted-foreground/60 tabular-nums">
-                        {formatTime12(event.timeEnd)}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })
+                  );
+                });
+              })()}
+            </div>
           )}
         </div>
       </div>
