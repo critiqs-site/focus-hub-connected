@@ -40,6 +40,7 @@ export const useTodos = (userId: string | undefined) => {
     else setTodos(todosRes.data.map((t) => ({
       id: t.id, text: t.text, description: (t as any).description || null, dividerId: t.divider_id, icon: t.icon,
       createdAt: format(new Date(t.created_at), "yyyy-MM-dd"), completions: t.completions || [], pinned: (t as any).pinned || false,
+      order: t.order || 0,
     })));
 
     setLoading(false);
@@ -116,8 +117,11 @@ export const useTodos = (userId: string | undefined) => {
   };
 
   const handleAddTodo = async (text: string, dividerId: string, icon: string, description?: string) => {
+    const maxOrder = Math.max(0, ...todos.filter(t => t.dividerId === dividerId).map(t => t.order));
+    const newOrder = maxOrder + 1;
+
     if (isGuest) {
-      const newTodo: Todo = { id: crypto.randomUUID(), text, description: description || null, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false };
+      const newTodo: Todo = { id: crypto.randomUUID(), text, description: description || null, dividerId, icon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder };
       const newTodos = [...todos, newTodo];
       setTodos(newTodos);
       persistGuest(newTodos);
@@ -125,9 +129,9 @@ export const useTodos = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text, icon, description: description || null, completions: [] }).select().single();
+    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text, icon, description: description || null, completions: [], order: newOrder }).select().single();
     if (error) toast.error("Failed to add habit");
-    else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [], pinned: (data as any).pinned || false }]); toast.success("Habit added"); }
+    else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [], pinned: (data as any).pinned || false, order: data.order || 0 }]); toast.success("Habit added"); }
   };
 
   const handleTogglePin = async (id: string) => {
@@ -175,5 +179,23 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to delete section"); fetchData(); } else toast.success("Section deleted");
   };
 
-  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleUpdateDescription, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin, refetch: fetchData };
+  const handleReorderTodos = async (todoIds: string[]) => {
+    const updatedTodos = todos.map(todo => {
+      const newIndex = todoIds.indexOf(todo.id);
+      return newIndex !== -1 ? { ...todo, order: newIndex } : todo;
+    });
+    setTodos(updatedTodos);
+
+    if (isGuest) {
+      persistGuest(updatedTodos);
+      return;
+    }
+
+    const updates = todoIds.map((id, index) => 
+      supabase.from("todos").update({ order: index }).eq("id", id)
+    );
+    await Promise.all(updates);
+  };
+
+  return { todos, dividers, loading, handleToggleDay, handleToggleToday, handleEdit, handleDelete, handleUpdateIcon, handleUpdateDescription, handleTransferTodo, handleAddTodo, handleAddDivider, handleDeleteDivider, handleTogglePin, handleReorderTodos, refetch: fetchData };
 };
