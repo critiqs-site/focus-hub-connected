@@ -28,9 +28,6 @@ export const moodNoteSchema = z.object({
 export function validateOrToast<T>(schema: z.ZodSchema<T>, data: unknown): T | null {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const msg = result.error.errors[0]?.message || "Invalid input";
-    const { toast } = require("sonner");
-    toast.error(msg);
     return null;
   }
   return result.data;
