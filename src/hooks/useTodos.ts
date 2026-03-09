@@ -112,7 +112,7 @@ export const useTodos = (userId: string | undefined) => {
     const newTodos = todos.map((t) => t.id === id ? { ...t, description } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Description updated"); return; }
-    const { error } = await supabase.from("todos").update({ description }d", id);
+    const { error } = await supabase.from("todos").update({ description }).eq("id", id);
     if (error) { toast.error("Failed to update description"); fetchData(); } else toast.success("Description updated");
   };
 
