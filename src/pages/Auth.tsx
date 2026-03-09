@@ -14,7 +14,6 @@ const authSchema = z.object({
 });
 
 const Auth = () => {
-  const [step, setStep] = useState<"welcome" | "auth">("welcome");
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
