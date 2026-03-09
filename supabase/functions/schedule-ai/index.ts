@@ -24,13 +24,14 @@ Example output: [{"title":"Breakfast","time":"09:00","timeEnd":"09:30","descript
 
 ONLY output raw JSON array. No extra text.`;
 
+const AI_ENDPOINT = "https://gen.pollinations.ai/v1/chat/completions";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Validate authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("POLLINATIONS_API_KEY");
+    const apiKey = Deno.env.get("AI_SERVICE_KEY");
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
+    const response = await fetch(AI_ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -88,7 +89,7 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error("AI error:", response.status);
+      console.error("AI service error:", response.status);
       return new Response(
         JSON.stringify({ error: "AI service unavailable" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -106,7 +107,7 @@ Deno.serve(async (req) => {
         events = JSON.parse(jsonMatch[0]);
       }
     } catch (e) {
-      console.error("Parse error:", e, "Content:", cleaned);
+      console.error("Parse error:", e);
     }
 
     return new Response(JSON.stringify({ events }), {
