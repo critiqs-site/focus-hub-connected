@@ -24,7 +24,7 @@ Example output: [{"title":"Breakfast","time":"09:00","timeEnd":"09:30","descript
 
 ONLY output raw JSON array. No extra text.`;
 
-const AI_ENDPOINT = "https://gen.pollinations.ai/v1/chat/completions";
+const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(AI_ENDPOINT, {
+    const response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
