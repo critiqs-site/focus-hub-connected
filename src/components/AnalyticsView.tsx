@@ -128,7 +128,7 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
         style={glassStyle}
       >
         <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
-        <p className="text-sm font-bold text-primary">{payload[0].value}%</p>
+        <p className="text-sm font-bold text-foreground">{payload[0].value}%</p>
       </div>
     );
   };
