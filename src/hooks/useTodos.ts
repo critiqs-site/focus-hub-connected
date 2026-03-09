@@ -178,7 +178,7 @@ export const useTodos = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const { data, error } = await supabase.from("dividers").insert({ user_id: userId, name, icon }).select().single();
+    const { data, error } = await supabase.from("dividers").insert({ user_id: userId, name: cleanName, icon: cleanIcon }).select().single();
     if (error) toast.error("Failed to add section");
     else { setDividers((prev) => [...prev, { id: data.id, name: data.name, icon: data.icon }]); toast.success("Section added"); }
   };
