@@ -98,7 +98,7 @@ STRICT RULES:
 
 CONTEXT: You silently see user's todos, sections, interests, and mood entries. Reference them when asked.`;
 
-const AI_ENDPOINT = "https://gen.pollinations.ai/v1/chat/completions";
+const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
 async function validateAuth(req: Request) {
   const authHeader = req.headers.get("Authorization");

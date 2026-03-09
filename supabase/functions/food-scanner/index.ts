@@ -122,7 +122,7 @@ Rating scale:
 
 ONLY output raw JSON. No extra text.`;
 
-const AI_ENDPOINT = "https://gen.pollinations.ai/v1/chat/completions";
+const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
 async function callAI(apiKey: string, model: string, imageUrl: string) {
   const response = await fetch(AI_ENDPOINT, {
