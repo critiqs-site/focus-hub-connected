@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Plus, CheckCircle2, Circle } from "lucide-react";
+import { Plus, CheckCircle2, Circle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Header from "@/components/Header";
 import TodoItem from "@/components/TodoItem";
@@ -15,6 +15,9 @@ import AnalyticsView from "@/components/AnalyticsView";
 import ToolsView from "@/components/ToolsView";
 import FloatingAIChat from "@/components/FloatingAIChat";
 import CompletionBanner from "@/components/CompletionBanner";
+import PremadeTodoChooser from "@/components/PremadeTodoChooser";
+import JournalView from "@/components/JournalView";
+import DailyReminders from "@/components/DailyReminders";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
@@ -22,6 +25,7 @@ import { useEvents } from "@/hooks/useEvents";
 import { format } from "date-fns";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import logoIcon from "@/assets/logo-icon.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,6 +38,7 @@ const Index = () => {
   const [selectedDividerId, setSelectedDividerId] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInitialMessage, setChatInitialMessage] = useState<{ text: string; image?: string } | null>(null);
+  const [showChooser, setShowChooser] = useState(false);
 
   const {
     todos, dividers, loading: todosLoading,
@@ -50,12 +55,45 @@ const Index = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
+  // Auto-guest mode for new visitors
   useEffect(() => {
-    if (!authLoading && !user && !isGuest) navigate("/auth");
-  }, [user, authLoading, navigate, isGuest]);
+    if (!authLoading && !user && !isGuest) {
+      localStorage.setItem("guestMode", "true");
+      const hasSeenChooser = localStorage.getItem("hasSeenChooser");
+      if (!hasSeenChooser) {
+        setShowChooser(true);
+      }
+      // Force re-render to pick up guest mode
+      window.location.reload();
+    }
+  }, [user, authLoading, isGuest]);
+
+  const handleChooserComplete = (selections: { category: string; categoryIcon: string; habits: { text: string; icon: string; description?: string }[] }[]) => {
+    localStorage.setItem("hasSeenChooser", "true");
+    setShowChooser(false);
+
+    if (selections.length === 0) return;
+
+    // Create dividers and todos from selections
+    selections.forEach(sel => {
+      handleAddDivider(sel.category, sel.categoryIcon).then(() => {
+        // Need to wait for divider to be created, then add todos
+        setTimeout(() => {
+          const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
+          const divider = guestDividers.find((d: any) => d.name === sel.category);
+          if (divider) {
+            sel.habits.forEach(habit => {
+              handleAddTodo(habit.text, divider.id, habit.icon, habit.description);
+            });
+          }
+        }, 100);
+      });
+    });
+  };
 
   const handleSignOut = async () => {
     localStorage.removeItem("guestMode");
+    localStorage.removeItem("hasSeenChooser");
     await signOut();
     navigate("/auth");
   };
@@ -65,15 +103,25 @@ const Index = () => {
     setChatOpen(true);
   };
 
+  // Loading screen with CRITIQS branding
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: 'radial-gradient(circle, hsla(0, 60%, 35%, 0.6), transparent 70%)' }} />
+          <img src={logoIcon} alt="CRITIQS" className="w-20 h-20 object-contain animate-pulse-logo relative z-10" />
+        </div>
+        <p className="text-sm text-muted-foreground animate-pulse">Loading your habits...</p>
       </div>
     );
   }
 
   if (!user && !isGuest) return null;
+
+  // Show premade chooser for first-time guests
+  if (showChooser && isGuest) {
+    return <PremadeTodoChooser onComplete={handleChooserComplete} />;
+  }
 
   const isLoading = todosLoading || eventsLoading;
   const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -145,8 +193,12 @@ const Index = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: 'radial-gradient(circle, hsla(0, 60%, 35%, 0.6), transparent 70%)' }} />
+              <img src={logoIcon} alt="CRITIQS" className="w-16 h-16 object-contain animate-pulse-logo relative z-10" />
+            </div>
+            <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
           </div>
         ) : activeTab === "todos" ? (
           <>
@@ -156,6 +208,7 @@ const Index = () => {
                 Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
               </div>
             )}
+            <DailyReminders />
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4 px-1">
                 <Circle className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground" />
@@ -205,6 +258,8 @@ const Index = () => {
           <AnalyticsView todos={todos} />
         ) : activeTab === "events" ? (
           <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
+        ) : activeTab === "journal" ? (
+          <JournalView userId={user?.id} />
         ) : activeTab === "tools" ? (
           <ToolsView onAskAI={handleAskAI} />
         ) : (

@@ -103,7 +103,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-20%] right-[10%] w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" 
-          style={{ background: 'radial-gradient(circle, hsla(24, 95%, 53%, 0.4), transparent 70%)' }} />
+          style={{ background: 'radial-gradient(circle, hsla(0, 60%, 35%, 0.4), transparent 70%)' }} />
         <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-25 blur-3xl"
           style={{ background: 'radial-gradient(circle, hsla(240, 70%, 50%, 0.3), transparent 70%)' }} />
         <div className="absolute top-[40%] left-[5%] w-[400px] h-[400px] rounded-full opacity-20 blur-3xl"
