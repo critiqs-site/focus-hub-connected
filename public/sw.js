@@ -1,4 +1,4 @@
-const CACHE_NAME = "critiqs-v2";
+const CACHE_NAME = "critiqs-v" + Date.now();
 const STATIC_ASSETS = ["/", "/index.html", "/favicon.png"];
 
 self.addEventListener("install", (event) => {
@@ -30,13 +30,41 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for static assets
+  // Network-first for HTML (ensures fresh app shell)
+  if (request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      fetch(request)
+        .then((resp) => {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return resp;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Cache-first for hashed assets (immutable)
+  if (request.url.match(/\/assets\/.*\.[a-f0-9]{8}\./)) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetch(request).then((resp) => {
+        const clone = resp.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        return resp;
+      }))
+    );
+    return;
+  }
+
+  // Network-first for everything else
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request).then((resp) => {
-      const clone = resp.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-      return resp;
-    }))
+    fetch(request)
+      .then((resp) => {
+        const clone = resp.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        return resp;
+      })
+      .catch(() => caches.match(request))
   );
 });
 
@@ -63,6 +91,11 @@ self.addEventListener("message", (event) => {
         });
       }, delay);
     }
+  }
+
+  // Force update check
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
   }
 });
 
