@@ -13,6 +13,22 @@ const getGuest = <T,>(key: string): T[] => {
 };
 const saveGuest = (key: string, data: unknown) => localStorage.setItem(key, JSON.stringify(data));
 
+const mapTodoRow = (t: any): Todo => ({
+  id: t.id,
+  text: t.text,
+  description: t.description || null,
+  dividerId: t.divider_id || t.dividerId,
+  icon: t.icon,
+  createdAt: t.created_at ? format(new Date(t.created_at), "yyyy-MM-dd") : t.createdAt,
+  completions: t.completions || [],
+  pinned: t.pinned || false,
+  order: t.order || 0,
+  goalDaysPerWeek: t.goal_days_per_week ?? t.goalDaysPerWeek ?? 7,
+  targetAmount: t.target_amount ?? t.targetAmount ?? null,
+  targetUnit: t.target_unit ?? t.targetUnit ?? null,
+  color: t.color ?? null,
+});
+
 export const useTodos = (userId: string | undefined) => {
   const isGuest = !userId && localStorage.getItem("guestMode") === "true";
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -22,7 +38,7 @@ export const useTodos = (userId: string | undefined) => {
   const fetchData = useCallback(async () => {
     if (isGuest) {
       setDividers(getGuest<Divider>(GUEST_DIVIDERS_KEY));
-      setTodos(getGuest<Todo>(GUEST_TODOS_KEY));
+      setTodos(getGuest<Todo>(GUEST_TODOS_KEY).map(t => ({ ...t, goalDaysPerWeek: t.goalDaysPerWeek ?? 7 })));
       setLoading(false);
       return;
     }
@@ -38,11 +54,7 @@ export const useTodos = (userId: string | undefined) => {
     else setDividers(dividersRes.data.map((d) => ({ id: d.id, name: d.name, icon: d.icon })));
 
     if (todosRes.error) console.error("Todos error:", todosRes.error);
-    else setTodos(todosRes.data.map((t) => ({
-      id: t.id, text: t.text, description: (t as any).description || null, dividerId: t.divider_id, icon: t.icon,
-      createdAt: format(new Date(t.created_at), "yyyy-MM-dd"), completions: t.completions || [], pinned: (t as any).pinned || false,
-      order: t.order || 0,
-    })));
+    else setTodos(todosRes.data.map(mapTodoRow));
 
     setLoading(false);
   }, [userId, isGuest]);
@@ -54,27 +66,21 @@ export const useTodos = (userId: string | undefined) => {
     if (newDividers) saveGuest(GUEST_DIVIDERS_KEY, newDividers);
   };
 
-  // Toggle by date string directly
   const handleToggleDay = async (id: string, dateStr: string) => {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
-
     const newCompletions = todo.completions.includes(dateStr)
       ? todo.completions.filter((d) => d !== dateStr)
       : [...todo.completions, dateStr];
-
     const newTodos = todos.map((t) => t.id === id ? { ...t, completions: newCompletions } : t);
     setTodos(newTodos);
-
     if (isGuest) { persistGuest(newTodos); return; }
     const { error } = await supabase.from("todos").update({ completions: newCompletions }).eq("id", id);
     if (error) { toast.error("Failed to update"); fetchData(); }
   };
 
-  // Convenience: toggle today
   const handleToggleToday = async (id: string) => {
-    const todayStr = format(new Date(), "yyyy-MM-dd");
-    await handleToggleDay(id, todayStr);
+    await handleToggleDay(id, format(new Date(), "yyyy-MM-dd"));
   };
 
   const handleEdit = async (id: string, text: string) => {
@@ -112,7 +118,7 @@ export const useTodos = (userId: string | undefined) => {
     const newTodos = todos.map((t) => t.id === id ? { ...t, description } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success("Description updated"); return; }
-    const { error } = await supabase.from("todos").update({ description } as any).eq("id", id);
+    const { error } = await supabase.from("todos").update({ description }).eq("id", id);
     if (error) { toast.error("Failed to update description"); fetchData(); } else toast.success("Description updated");
   };
 
@@ -124,7 +130,7 @@ export const useTodos = (userId: string | undefined) => {
     if (error) { toast.error("Failed to move"); fetchData(); } else toast.success("Habit moved");
   };
 
-  const handleAddTodo = async (text: string, dividerId: string, icon: string, description?: string) => {
+  const handleAddTodo = async (text: string, dividerId: string, icon: string, description?: string, goalDaysPerWeek = 7, targetAmount?: number, targetUnit?: string, color?: string) => {
     const validated = todoSchema.safeParse({ text, description: description || null, icon });
     if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
     const { text: cleanText, description: cleanDesc, icon: cleanIcon } = validated.data;
@@ -132,7 +138,11 @@ export const useTodos = (userId: string | undefined) => {
     const newOrder = maxOrder + 1;
 
     if (isGuest) {
-      const newTodo: Todo = { id: crypto.randomUUID(), text: cleanText, description: cleanDesc || null, dividerId, icon: cleanIcon, createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder };
+      const newTodo: Todo = {
+        id: crypto.randomUUID(), text: cleanText, description: cleanDesc || null, dividerId, icon: cleanIcon,
+        createdAt: format(new Date(), "yyyy-MM-dd"), completions: [], pinned: false, order: newOrder,
+        goalDaysPerWeek, targetAmount: targetAmount || null, targetUnit: targetUnit || null, color: color || null,
+      };
       const newTodos = [...todos, newTodo];
       setTodos(newTodos);
       persistGuest(newTodos);
@@ -140,28 +150,29 @@ export const useTodos = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const { data, error } = await supabase.from("todos").insert({ user_id: userId, divider_id: dividerId, text: cleanText, icon: cleanIcon, description: cleanDesc || null, completions: [], order: newOrder }).select().single();
+    const { data, error } = await supabase.from("todos").insert({
+      user_id: userId, divider_id: dividerId, text: cleanText, icon: cleanIcon,
+      description: cleanDesc || null, completions: [], order: newOrder,
+      goal_days_per_week: goalDaysPerWeek,
+      target_amount: targetAmount || null,
+      target_unit: targetUnit || null,
+      color: color || null,
+    }).select().single();
     if (error) toast.error("Failed to add habit");
-    else { setTodos((prev) => [...prev, { id: data.id, text: data.text, description: data.description || null, dividerId: data.divider_id, icon: data.icon, createdAt: format(new Date(data.created_at), "yyyy-MM-dd"), completions: data.completions || [], pinned: (data as any).pinned || false, order: data.order || 0 }]); toast.success("Habit added"); }
+    else { setTodos((prev) => [...prev, mapTodoRow(data)]); toast.success("Habit added"); }
   };
 
   const handleTogglePin = async (id: string) => {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
-
     const newPinned = !todo.pinned;
     const sameDividerTodos = todos.filter((t) => t.dividerId === todo.dividerId);
     const pinnedCount = sameDividerTodos.filter((t) => t.pinned && t.id !== id).length;
-
-    if (newPinned && pinnedCount >= 3) {
-      toast.error("Maximum 3 pinned habits per section");
-      return;
-    }
-
+    if (newPinned && pinnedCount >= 3) { toast.error("Maximum 3 pinned habits per section"); return; }
     const newTodos = todos.map((t) => t.id === id ? { ...t, pinned: newPinned } : t);
     setTodos(newTodos);
     if (isGuest) { persistGuest(newTodos); toast.success(newPinned ? "Habit pinned" : "Habit unpinned"); return; }
-    const { error } = await supabase.from("todos").update({ pinned: newPinned } as any).eq("id", id);
+    const { error } = await supabase.from("todos").update({ pinned: newPinned }).eq("id", id);
     if (error) { toast.error("Failed to update"); fetchData(); } else toast.success(newPinned ? "Habit pinned" : "Habit unpinned");
   };
 
@@ -199,13 +210,8 @@ export const useTodos = (userId: string | undefined) => {
       return newIndex !== -1 ? { ...todo, order: newIndex } : todo;
     });
     setTodos(updatedTodos);
-
-    if (isGuest) {
-      persistGuest(updatedTodos);
-      return;
-    }
-
-    const updates = todoIds.map((id, index) => 
+    if (isGuest) { persistGuest(updatedTodos); return; }
+    const updates = todoIds.map((id, index) =>
       supabase.from("todos").update({ order: index }).eq("id", id)
     );
     await Promise.all(updates);

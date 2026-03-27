@@ -8,6 +8,10 @@ export interface Todo {
   completions: string[];
   pinned?: boolean;
   order: number;
+  goalDaysPerWeek: number;
+  targetAmount?: number | null;
+  targetUnit?: string | null;
+  color?: string | null;
 }
 
 export interface Divider {
@@ -20,9 +24,15 @@ export interface ScheduledEvent {
   id: string;
   title: string;
   description: string;
-  time: string; // HH:mm start time
-  timeEnd: string; // HH:mm end time (optional, can be empty)
-  date: string; // yyyy-MM-dd
+  time: string;
+  timeEnd: string;
+  date: string;
   completed: boolean;
+  createdAt: string;
+}
+
+export interface DailyReminder {
+  id: string;
+  text: string;
   createdAt: string;
 }

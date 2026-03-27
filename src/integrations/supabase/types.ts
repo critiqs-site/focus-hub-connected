@@ -142,40 +142,52 @@ export type Database = {
       }
       todos: {
         Row: {
+          color: string | null
           completions: string[]
           created_at: string
           description: string | null
           divider_id: string
+          goal_days_per_week: number
           icon: string
           id: string
           order: number
           pinned: boolean
+          target_amount: number | null
+          target_unit: string | null
           text: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          color?: string | null
           completions?: string[]
           created_at?: string
           description?: string | null
           divider_id: string
+          goal_days_per_week?: number
           icon?: string
           id?: string
           order?: number
           pinned?: boolean
+          target_amount?: number | null
+          target_unit?: string | null
           text: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          color?: string | null
           completions?: string[]
           created_at?: string
           description?: string | null
           divider_id?: string
+          goal_days_per_week?: number
           icon?: string
           id?: string
           order?: number
           pinned?: boolean
+          target_amount?: number | null
+          target_unit?: string | null
           text?: string
           updated_at?: string
           user_id?: string
