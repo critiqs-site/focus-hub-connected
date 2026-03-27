@@ -245,8 +245,8 @@ const Auth = () => {
               type="submit"
               className="w-full h-14 font-bold text-lg shadow-xl transition-all hover:scale-[1.02] active:scale-95 rounded-2xl group"
               style={{
-                background: 'linear-gradient(135deg, hsl(24, 95%, 53%), hsl(24, 95%, 48%))',
-                boxShadow: '0 0 40px hsla(24, 95%, 53%, 0.4), inset 0 1px 2px hsla(0, 0%, 100%, 0.2)'
+                background: 'linear-gradient(135deg, hsl(0, 60%, 35%), hsl(0, 60%, 30%))',
+                boxShadow: '0 0 40px hsla(0, 60%, 35%, 0.4), inset 0 1px 2px hsla(0, 0%, 100%, 0.2)'
               }}
               disabled={isLoading}
             >
