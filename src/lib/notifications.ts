@@ -31,6 +31,26 @@ export function scheduleEventNotification(event: {
   });
 }
 
+export function scheduleMidnightReminder() {
+  if (!("serviceWorker" in navigator) || Notification.permission !== "granted") return;
+
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(23, 55, 0, 0); // 11:55 PM
+  
+  if (midnight.getTime() <= now.getTime()) return;
+
+  navigator.serviceWorker.ready.then((registration) => {
+    registration.active?.postMessage({
+      type: "SCHEDULE_NOTIFICATION",
+      title: "📝 Journal Time",
+      body: "Take a moment to reflect on your day",
+      time: midnight.getTime(),
+      tag: "midnight-journal",
+    });
+  });
+}
+
 function formatTime12(time: string): string {
   const [h, m] = time.split(":").map(Number);
   const ampm = h >= 12 ? "PM" : "AM";

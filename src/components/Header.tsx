@@ -8,6 +8,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
     { id: "todos", label: "Todos" },
     { id: "analytics", label: "Analytics" },
     { id: "events", label: "Schedule" },
+    { id: "journal", label: "Journal" },
     { id: "tools", label: "Tools" },
   ];
 
@@ -23,7 +24,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
                 ? "bg-primary/20 text-primary border border-primary/40"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
             }`}
-            style={activeTab === tab.id ? { boxShadow: '0 0 16px hsla(24, 95%, 53%, 0.2)' } : {}}
+            style={activeTab === tab.id ? { boxShadow: '0 0 16px hsla(0, 60%, 35%, 0.2)' } : {}}
           >
             {tab.label}
           </button>
