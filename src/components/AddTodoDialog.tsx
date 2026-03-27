@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import type { Divider } from "@/types/todo";
 import { TODO_ICONS, getIconComponent } from "@/lib/icons";
 import IconPickerGrid from "@/components/IconPickerGrid";
@@ -17,7 +14,6 @@ import { toast } from "sonner";
 
 const DESC_MAX = 60;
 
-// Keyword map for smarter matching
 const KEYWORD_MAP: Record<string, string[]> = {
   PersonStanding: ["meditate", "meditation", "stand", "yoga", "stretch", "posture"],
   Dumbbell: ["exercise", "gym", "workout", "lift", "weights", "train", "muscle", "bulk"],
@@ -109,23 +105,15 @@ function getTopIcons(query: string, count = 3): string[] {
   if (!query.trim()) return [];
   const q = query.toLowerCase();
   const words = q.split(/\s+/);
-
   const scores: { name: string; score: number }[] = TODO_ICONS.map((icon) => {
     let score = 0;
     const label = icon.label.toLowerCase();
     const name = icon.name.toLowerCase();
     const keywords = KEYWORD_MAP[icon.name] || [];
-
-    // Exact label match
     if (q === label) score += 10;
-    // Label contains query
     if (label.includes(q)) score += 5;
-    // Query contains label
     if (q.includes(label)) score += 4;
-    // Name match
     if (name.includes(q)) score += 3;
-
-    // Keyword matching
     for (const kw of keywords) {
       if (q.includes(kw)) score += 6;
       for (const w of words) {
@@ -133,26 +121,20 @@ function getTopIcons(query: string, count = 3): string[] {
         if (w.includes(kw) && kw.length > 2) score += 2;
       }
     }
-
-    // Word-level label matching
-    for (const w of words) {
-      if (w.length > 2 && label.includes(w)) score += 2;
-    }
-
+    for (const w of words) { if (w.length > 2 && label.includes(w)) score += 2; }
     return { name: icon.name, score };
   });
-
-  return scores
-    .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, count)
-    .map((s) => s.name);
+  return scores.filter(s => s.score > 0).sort((a, b) => b.score - a.score).slice(0, count).map(s => s.name);
 }
+
+const PRESET_COLORS = [
+  "#E74C3C", "#E67E22", "#F1C40F", "#2ECC71", "#3498DB", "#9B59B6", "#1ABC9C", "#E91E63",
+];
 
 interface AddTodoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (text: string, dividerId: string, icon: string, description?: string) => void;
+  onAdd: (text: string, dividerId: string, icon: string, description?: string, goalDaysPerWeek?: number, targetAmount?: number, targetUnit?: string, color?: string) => void;
   dividers: Divider[];
   preselectedDividerId?: string | null;
 }
@@ -164,173 +146,152 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
   const [selectedIcon, setSelectedIcon] = useState("PersonStanding");
   const [suggestedIcons, setSuggestedIcons] = useState<string[]>([]);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
+  const [goalDays, setGoalDays] = useState(7);
+  const [targetAmount, setTargetAmount] = useState("");
+  const [targetUnit, setTargetUnit] = useState("");
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open && preselectedDividerId) {
-      setDividerId(preselectedDividerId);
-    } else if (open && !preselectedDividerId && dividers[0]) {
-      setDividerId(dividers[0].id);
-    }
+    if (open && preselectedDividerId) setDividerId(preselectedDividerId);
+    else if (open && !preselectedDividerId && dividers[0]) setDividerId(dividers[0].id);
   }, [open, preselectedDividerId, dividers]);
 
-  useEffect(() => {
-    if (!open) {
-      setSuggestedIcons([]);
-    }
-  }, [open]);
-
-  const selectedDivider = dividers.find((d) => d.id === dividerId);
+  useEffect(() => { if (!open) { setSuggestedIcons([]); setGoalDays(7); setTargetAmount(""); setTargetUnit(""); setSelectedColor(null); } }, [open]);
 
   const handleAutoIcon = useCallback(async () => {
     setIsAutoDetecting(true);
     try {
       const availableIcons = TODO_ICONS.map(icon => icon.name);
-      
       const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: {
-          type: "icon-suggest",
-          todoText: text,
-          availableIcons,
-        },
+        body: { type: "icon-suggest", todoText: text, availableIcons },
       });
-
       if (error) throw error;
-
       const suggestions = data?.suggestions || [];
-      if (suggestions.length > 0) {
-        setSuggestedIcons(suggestions);
-        setSelectedIcon(suggestions[0]);
-      } else {
-        toast.error("No icon suggestions found");
-      }
+      if (suggestions.length > 0) { setSuggestedIcons(suggestions); setSelectedIcon(suggestions[0]); }
+      else toast.error("No icon suggestions found");
     } catch (error) {
       console.error("Icon detection error:", error);
-      toast.error("Failed to detect icons. Please try again.");
-    } finally {
-      setIsAutoDetecting(false);
-    }
+      toast.error("Failed to detect icons");
+    } finally { setIsAutoDetecting(false); }
   }, [text]);
 
   const handleSubmit = () => {
     if (text.trim() && dividerId) {
-      onAdd(text.trim(), dividerId, selectedIcon, description.trim() || undefined);
-      setText("");
-      setDescription("");
-      setSelectedIcon("PersonStanding");
-      setSuggestedIcons([]);
+      const amt = targetAmount ? parseInt(targetAmount) : undefined;
+      onAdd(text.trim(), dividerId, selectedIcon, description.trim() || undefined, goalDays, amt && !isNaN(amt) ? amt : undefined, targetUnit.trim() || undefined, selectedColor || undefined);
+      setText(""); setDescription(""); setSelectedIcon("PersonStanding"); setSuggestedIcons([]);
+      setGoalDays(7); setTargetAmount(""); setTargetUnit(""); setSelectedColor(null);
       onOpenChange(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card border-primary/20 bg-card/95 backdrop-blur-xl max-w-md">
+      <DialogContent className="glass-card border-primary/20 bg-card/95 backdrop-blur-xl max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             Add New Habit
-            {selectedDivider && (
+            {dividers.find(d => d.id === dividerId) && (
               <span className="text-sm font-normal text-muted-foreground">
-                → {selectedDivider.name}
+                → {dividers.find(d => d.id === dividerId)?.name}
               </span>
             )}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <Input
+            placeholder="What habit do you want to track?"
+            value={text} onChange={(e) => setText(e.target.value)}
+            className="bg-secondary/50 border-primary/30 focus:border-primary"
+            autoFocus onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+          />
+
+          <Input
+            placeholder="Short description (optional)"
+            value={description}
+            onChange={(e) => { if (e.target.value.length <= DESC_MAX) setDescription(e.target.value); }}
+            className="bg-secondary/50 border-primary/30 focus:border-primary text-sm"
+          />
+
+          {/* Goal days per week */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Goal</span>
+              <span className="text-foreground font-medium">{goalDays === 7 ? "Every day" : `${goalDays} days/week`}</span>
+            </div>
+            <Slider value={[goalDays]} onValueChange={([v]) => setGoalDays(v)} min={1} max={7} step={1} />
+          </div>
+
+          {/* Amount & unit */}
           <div className="flex gap-2">
             <Input
-              placeholder="What habit do you want to track?"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="bg-secondary/50 border-primary/30 focus:border-primary flex-1"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
+              placeholder="Amount (e.g. 1)"
+              value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)}
+              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm w-24"
+              type="number" min="1"
             />
-          </div>
-
-          {/* Short description */}
-          <div className="space-y-1">
             <Input
-              placeholder="Short description (optional, desktop only)"
-              value={description}
-              onChange={(e) => {
-                if (e.target.value.length <= DESC_MAX) setDescription(e.target.value);
-              }}
-              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
+              placeholder="Unit (e.g. times, minutes, pages)"
+              value={targetUnit} onChange={(e) => setTargetUnit(e.target.value)}
+              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm flex-1"
             />
-            <p className="text-xs text-muted-foreground text-right">
-              {description.length}/{DESC_MAX}
-            </p>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAutoIcon}
-            disabled={!text.trim() || isAutoDetecting}
-            className="w-full border-primary/30 hover:bg-primary/20 hover:border-primary"
-          >
+          {/* Color picker */}
+          <div className="space-y-1.5">
+            <span className="text-sm text-muted-foreground">Color accent</span>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setSelectedColor(null)}
+                className={`w-7 h-7 rounded-full border-2 transition-all ${!selectedColor ? 'border-foreground scale-110' : 'border-transparent'}`}
+                style={{ background: 'hsla(0, 0%, 100%, 0.1)' }}
+                title="None"
+              />
+              {PRESET_COLORS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setSelectedColor(c)}
+                  className={`w-7 h-7 rounded-full border-2 transition-all ${selectedColor === c ? 'border-foreground scale-110' : 'border-transparent'}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Button type="button" variant="outline" onClick={handleAutoIcon} disabled={!text.trim() || isAutoDetecting}
+            className="w-full border-primary/30 hover:bg-primary/20 hover:border-primary">
             {isAutoDetecting ? (
-              <span className="flex items-center gap-2">
-                <RefreshCw className="h-4 w-4 animate-spin" /> DETECTING...
-              </span>
+              <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> DETECTING...</span>
             ) : (
-              <span className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" /> AUTO DETECT ICON
-              </span>
+              <span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> AUTO DETECT ICON</span>
             )}
           </Button>
 
-          {/* AI suggested icons */}
           {suggestedIcons.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Top picks:</span>
               {suggestedIcons.map((iconName) => {
                 const IconComp = getIconComponent(iconName);
                 return (
-                  <button
-                    key={iconName}
-                    type="button"
-                    onClick={() => setSelectedIcon(iconName)}
-                    className={`p-2 rounded-xl transition-all duration-200 ${
-                      selectedIcon === iconName
-                        ? "bg-primary/20 border-2 border-primary orange-glow"
-                        : "bg-secondary/50 border-2 border-primary/40 hover:border-primary"
-                    }`}
-                  >
-                    <IconComp className={`h-5 w-5 ${
-                      selectedIcon === iconName ? "text-primary" : "text-muted-foreground"
-                    }`} />
+                  <button key={iconName} type="button" onClick={() => setSelectedIcon(iconName)}
+                    className={`p-2 rounded-xl transition-all duration-200 ${selectedIcon === iconName ? "bg-primary/20 border-2 border-primary" : "bg-secondary/50 border-2 border-primary/40 hover:border-primary"}`}>
+                    <IconComp className={`h-5 w-5 ${selectedIcon === iconName ? "text-primary" : "text-muted-foreground"}`} />
                   </button>
                 );
               })}
             </div>
           )}
 
-          {/* Icon Picker */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Or choose manually</label>
             <div className="max-h-48 overflow-y-auto pr-1">
-              <IconPickerGrid
-                icons={TODO_ICONS}
-                selectedIcon={selectedIcon}
-                onSelect={setSelectedIcon}
-                batchSize={15}
-              />
+              <IconPickerGrid icons={TODO_ICONS} selectedIcon={selectedIcon} onSelect={setSelectedIcon} batchSize={15} />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="glass-button">
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90">
-            Add Habit
-          </Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="glass-button">Cancel</Button>
+          <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90">Add Habit</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

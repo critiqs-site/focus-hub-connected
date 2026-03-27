@@ -1,116 +1,59 @@
 import { useState, useMemo } from "react";
-import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, isAfter, isBefore, startOfDay } from "date-fns";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, TrendingDown, Target, Minus } from "lucide-react";
-import { getFixedWeekDays, getPreviousFixedWeekDays } from "@/lib/utils";
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, isAfter, startOfDay, isSameDay, isSameMonth } from "date-fns";
+import { Flame, Target, TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Todo } from "@/types/todo";
 
 interface AnalyticsViewProps {
   todos: Todo[];
 }
 
-type Period = "weekly" | "monthly" | "yearly";
-
 const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
+  const [viewMonth, setViewMonth] = useState(new Date());
+  const today = startOfDay(new Date());
 
-  const calculateDailyPercentage = (date: Date, todos: Todo[]): number => {
+  const calculateDailyPercentage = (date: Date): number => {
     if (todos.length === 0) return 0;
     const dateStr = format(date, "yyyy-MM-dd");
     const completedCount = todos.filter(todo => todo.completions.includes(dateStr)).length;
     return Math.round((completedCount / todos.length) * 100);
   };
 
-  const chartData = useMemo(() => {
-    const today = startOfDay(new Date());
-    
-    if (selectedPeriod === "weekly") {
-      const days = getFixedWeekDays(today);
-      // Only include days up to today
-      const validDays = days.filter(day => !isAfter(startOfDay(day), today));
-      return validDays.map(day => ({
-        label: format(day, "EEE"),
-        fullDate: format(day, "MMM d"),
-        percentage: calculateDailyPercentage(day, todos),
-      }));
-    } else if (selectedPeriod === "monthly") {
-      const days = Array.from({ length: 30 }, (_, i) => subDays(today, 29 - i));
-      return days.map(day => ({
-        label: format(day, "d"),
-        fullDate: format(day, "MMM d"),
-        percentage: calculateDailyPercentage(day, todos),
-      }));
-    } else {
-      const months = eachMonthOfInterval({
-        start: subMonths(today, 11),
-        end: today,
-      });
-      return months.map(month => {
-        const monthEnd = isAfter(endOfMonth(month), today) ? today : endOfMonth(month);
-        const daysInMonth = eachDayOfInterval({
-          start: startOfMonth(month),
-          end: monthEnd,
-        });
-        const monthlyPercentages = daysInMonth.map(day => calculateDailyPercentage(day, todos));
-        const avgPercentage = monthlyPercentages.length > 0
-          ? Math.round(monthlyPercentages.reduce((sum, p) => sum + p, 0) / monthlyPercentages.length)
-          : 0;
-        return {
-          label: format(month, "MMM"),
-          fullDate: format(month, "MMMM yyyy"),
-          percentage: avgPercentage,
-        };
-      });
-    }
-  }, [selectedPeriod, todos]);
+  // Calendar data
+  const calendarData = useMemo(() => {
+    const monthStart = startOfMonth(viewMonth);
+    const monthEnd = endOfMonth(viewMonth);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const startDow = monthStart.getDay(); // 0=Sun
+    return { days, startDow, monthStart, monthEnd };
+  }, [viewMonth]);
 
-  const currentPeriodStats = useMemo(() => {
-    const percentages = chartData.map(d => d.percentage);
-    const average = percentages.length > 0
-      ? Math.round(percentages.reduce((sum, p) => sum + p, 0) / percentages.length)
-      : 0;
-    return { average, percentages };
-  }, [chartData]);
+  // Stats
+  const stats = useMemo(() => {
+    const monthDays = calendarData.days.filter(d => !isAfter(d, today));
+    const completedDays = monthDays.filter(d => calculateDailyPercentage(d) > 0).length;
+    const totalCompletions = monthDays.reduce((sum, d) => {
+      const dateStr = format(d, "yyyy-MM-dd");
+      return sum + todos.filter(t => t.completions.includes(dateStr)).length;
+    }, 0);
+    const totalPossible = monthDays.length * todos.length;
+    const completionRate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
 
-  const improvement = useMemo(() => {
-    const today = startOfDay(new Date());
-    let previousPercentages: number[] = [];
-
-    if (selectedPeriod === "weekly") {
-      const prevDays = getPreviousFixedWeekDays(today);
-      previousPercentages = prevDays.map(day => calculateDailyPercentage(day, todos));
-    } else if (selectedPeriod === "monthly") {
-      // Compare to actual previous calendar month
-      const prevMonthEnd = endOfMonth(subMonths(today, 1));
-      const prevMonthStart = startOfMonth(subMonths(today, 1));
-      const prevDays = eachDayOfInterval({ start: prevMonthStart, end: prevMonthEnd });
-      previousPercentages = prevDays.map(day => calculateDailyPercentage(day, todos));
-    } else {
-      const previousMonths = eachMonthOfInterval({
-        start: subMonths(today, 23),
-        end: subMonths(today, 12),
-      });
-      previousPercentages = previousMonths.map(day => {
-        const daysInMonth = eachDayOfInterval({
-          start: startOfMonth(day),
-          end: endOfMonth(day),
-        });
-        const monthlyPercentages = daysInMonth.map(d => calculateDailyPercentage(d, todos));
-        return monthlyPercentages.length > 0
-          ? Math.round(monthlyPercentages.reduce((sum, p) => sum + p, 0) / monthlyPercentages.length)
-          : 0;
-      });
+    // Calculate streak (consecutive days with >0% ending at today)
+    let streak = 0;
+    let checkDate = today;
+    for (let i = 0; i < 365; i++) {
+      if (calculateDailyPercentage(checkDate) > 0) {
+        streak++;
+        checkDate = subDays(checkDate, 1);
+      } else break;
     }
 
-    const hasPreviousData = previousPercentages.some(p => p > 0);
-    const previousAvg = previousPercentages.length > 0
-      ? Math.round(previousPercentages.reduce((sum, p) => sum + p, 0) / previousPercentages.length)
-      : 0;
+    // Today's stats
+    const todayStr = format(today, "yyyy-MM-dd");
+    const todayDone = todos.filter(t => t.completions.includes(todayStr)).length;
 
-    return { value: currentPeriodStats.average - previousAvg, hasPreviousData };
-  }, [selectedPeriod, todos, currentPeriodStats.average]);
-
-  const hasData = chartData.some(d => d.percentage > 0);
+    return { completedDays, completionRate, streak, todayDone, totalTodos: todos.length };
+  }, [calendarData, todos, today]);
 
   const glassStyle = {
     background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
@@ -120,125 +63,111 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     boxShadow: 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)',
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.[0]) return null;
+  const getHeatColor = (pct: number): string => {
+    if (pct === 0) return 'hsla(0, 0%, 100%, 0.04)';
+    if (pct <= 25) return 'hsla(0, 60%, 35%, 0.2)';
+    if (pct <= 50) return 'hsla(0, 60%, 35%, 0.4)';
+    if (pct <= 75) return 'hsla(0, 60%, 35%, 0.6)';
+    return 'hsla(0, 60%, 35%, 0.85)';
+  };
+
+  if (todos.length === 0) {
     return (
-      <div className="px-3 py-2 rounded-xl" style={glassStyle}>
-        <p className="text-xs text-muted-foreground mb-1">{payload[0].payload.fullDate}</p>
-        <p className="text-sm font-bold text-foreground">{payload[0].value}%</p>
+      <div className="p-12 text-center rounded-2xl animate-fade-in" style={glassStyle}>
+        <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-lg font-medium text-foreground mb-2">No habits to track yet</p>
+        <p className="text-sm text-muted-foreground">Add habits to see your progress analytics</p>
       </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="p-4 rounded-2xl" style={glassStyle}>
-        <div className="flex gap-2">
-          {(["weekly", "monthly", "yearly"] as Period[]).map((period) => (
-            <button
-              key={period}
-              onClick={() => setSelectedPeriod(period)}
-              className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
-                selectedPeriod === period
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                  : "bg-secondary/50 text-foreground hover:bg-secondary"
-              }`}
-            >
-              {period.charAt(0).toUpperCase() + period.slice(1)}
-            </button>
-          ))}
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="p-4 rounded-2xl text-center" style={glassStyle}>
+          <Flame className="h-5 w-5 mx-auto mb-2" style={{ color: '#FFD700' }} />
+          <div className="text-3xl font-bold" style={{ color: '#FFD700' }}>{stats.streak}</div>
+          <div className="text-xs text-muted-foreground">Day Streak</div>
+        </div>
+        <div className="p-4 rounded-2xl text-center" style={glassStyle}>
+          <Target className="h-5 w-5 text-primary mx-auto mb-2" />
+          <div className="text-3xl font-bold text-primary">{stats.completionRate}%</div>
+          <div className="text-xs text-muted-foreground">Completion Rate</div>
+        </div>
+        <div className="p-4 rounded-2xl text-center" style={glassStyle}>
+          <TrendingUp className="h-5 w-5 text-green-400 mx-auto mb-2" />
+          <div className="text-3xl font-bold text-foreground">{stats.todayDone}/{stats.totalTodos}</div>
+          <div className="text-xs text-muted-foreground">Today</div>
+        </div>
+        <div className="p-4 rounded-2xl text-center" style={glassStyle}>
+          <div className="text-2xl mb-2">📅</div>
+          <div className="text-3xl font-bold text-foreground">{stats.completedDays}</div>
+          <div className="text-xs text-muted-foreground">Active Days</div>
         </div>
       </div>
 
-      {todos.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl" style={glassStyle}>
-          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground mb-2">No habits to track yet</p>
-          <p className="text-sm text-muted-foreground">Add habits to see your progress analytics</p>
+      {/* Calendar heatmap */}
+      <div className="p-6 rounded-2xl" style={glassStyle}>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1))}
+            className="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <h3 className="text-lg font-semibold text-foreground">{format(viewMonth, "MMMM yyyy")}</h3>
+          <button onClick={() => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1))}
+            disabled={isSameMonth(viewMonth, today)}
+            className="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30">
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
-      ) : !hasData ? (
-        <div className="p-12 text-center rounded-2xl" style={glassStyle}>
-          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground mb-2">No data available for this period</p>
-          <p className="text-sm text-muted-foreground">Start completing habits to build your analytics</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-6 text-center rounded-2xl" style={glassStyle}>
-              <div className="flex items-center justify-center mb-3">
-                <Target className="h-5 w-5 text-primary" />
-              </div>
-              <div className="text-4xl font-bold text-primary mb-1">
-                {currentPeriodStats.average}%
-              </div>
-              <div className="text-sm text-muted-foreground">Average Completion</div>
-            </div>
 
-            <div className="p-6 text-center rounded-2xl" style={glassStyle}>
-              <div className="flex items-center justify-center mb-3">
-                {!improvement.hasPreviousData ? (
-                  <Minus className="h-5 w-5 text-muted-foreground" />
-                ) : improvement.value > 0 ? (
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                ) : improvement.value < 0 ? (
-                  <TrendingDown className="h-5 w-5 text-red-500" />
-                ) : (
-                  <Minus className="h-5 w-5 text-muted-foreground" />
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+            <div key={d} className="text-center text-[10px] text-muted-foreground font-medium py-1">{d}</div>
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {/* Empty cells for offset */}
+          {Array.from({ length: calendarData.startDow }).map((_, i) => (
+            <div key={`empty-${i}`} className="aspect-square" />
+          ))}
+          {calendarData.days.map(day => {
+            const isFuture = isAfter(day, today);
+            const pct = isFuture ? 0 : calculateDailyPercentage(day);
+            const isToday_ = isSameDay(day, today);
+            return (
+              <div
+                key={day.toISOString()}
+                className={`aspect-square rounded-lg flex flex-col items-center justify-center transition-all ${
+                  isToday_ ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : ''
+                } ${isFuture ? 'opacity-30' : ''}`}
+                style={{ background: getHeatColor(pct) }}
+                title={`${format(day, "MMM d")}: ${pct}%`}
+              >
+                <span className={`text-xs font-medium ${pct > 50 ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  {format(day, "d")}
+                </span>
+                {pct > 0 && !isFuture && (
+                  <span className="text-[8px] text-foreground/70">{pct}%</span>
                 )}
               </div>
-              <div className={`text-4xl font-bold mb-1 ${
-                !improvement.hasPreviousData ? "text-muted-foreground" :
-                improvement.value > 0 ? "text-green-500" : improvement.value < 0 ? "text-red-500" : "text-muted-foreground"
-              }`}>
-                {!improvement.hasPreviousData ? "—" : `${improvement.value > 0 ? "+" : ""}${improvement.value}%`}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {!improvement.hasPreviousData ? "No Previous Data" : improvement.value > 0 ? "Improvement" : improvement.value < 0 ? "Decline" : "No Change"}
-              </div>
-            </div>
-          </div>
+            );
+          })}
+        </div>
 
-          <div className="p-6 rounded-2xl" style={glassStyle}>
-            <h3 className="text-lg font-semibold text-foreground mb-6">Completion Trend</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsla(0, 0%, 100%, 0.05)" />
-                  <XAxis
-                    dataKey="label"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[0, 100]}
-                    ticks={[0, 25, 50, 75, 100]}
-                  />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsla(0, 0%, 100%, 0.05)" }} />
-                  <Bar
-                    dataKey="percentage"
-                    fill="url(#barGradient)"
-                    radius={[8, 8, 0, 0]}
-                    animationDuration={600}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </>
-      )}
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <span className="text-[10px] text-muted-foreground">Less</span>
+          {[0, 25, 50, 75, 100].map(v => (
+            <div key={v} className="w-4 h-4 rounded" style={{ background: getHeatColor(v) }} />
+          ))}
+          <span className="text-[10px] text-muted-foreground">More</span>
+        </div>
+      </div>
     </div>
   );
 };

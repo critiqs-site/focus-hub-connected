@@ -6,6 +6,9 @@ import PhysiqueRater from "./PhysiqueRater";
 import OutfitRater from "./OutfitRater";
 import FoodScanner from "./FoodScanner";
 import BreathingExercise from "./BreathingExercise";
+import PomodoroTimer from "./PomodoroTimer";
+import Stopwatch from "./Stopwatch";
+import { Timer, Clock } from "lucide-react";
 
 interface ToolsViewProps {
   onAskAI?: (image: string, message: string) => void;
@@ -14,6 +17,34 @@ interface ToolsViewProps {
 const ToolsView = ({ onAskAI }: ToolsViewProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Pomodoro Timer */}
+      <div className="glass-card p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Timer className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Pomodoro Timer</h2>
+            <p className="text-xs text-muted-foreground">Focus sessions with work/break cycles</p>
+          </div>
+        </div>
+        <PomodoroTimer />
+      </div>
+
+      {/* Stopwatch */}
+      <div className="glass-card p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Clock className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Stopwatch</h2>
+            <p className="text-xs text-muted-foreground">Track time with lap recording</p>
+          </div>
+        </div>
+        <Stopwatch />
+      </div>
+
       <div className="glass-card p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-1.5 rounded-lg">
@@ -47,7 +78,7 @@ const ToolsView = ({ onAskAI }: ToolsViewProps) => {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Food Scanner</h2>
-            <p className="text-xs text-muted-foreground">Snap a meal photo → instant calorie & macro estimates (protein, carbs, fats)</p>
+            <p className="text-xs text-muted-foreground">Snap a meal photo → instant calorie & macro estimates</p>
           </div>
         </div>
         <FoodScanner onAskAI={onAskAI} />
