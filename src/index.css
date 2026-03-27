@@ -13,8 +13,8 @@
     --popover: 240 8% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 24 95% 53%;
-    --primary-foreground: 0 0% 2%;
+    --primary: 0 60% 35%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 240 6% 14%;
     --secondary-foreground: 0 0% 98%;
@@ -22,29 +22,31 @@
     --muted: 240 6% 14%;
     --muted-foreground: 240 5% 64%;
 
-    --accent: 24 95% 53%;
-    --accent-foreground: 0 0% 2%;
+    --accent: 0 60% 35%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 6% 18%;
     --input: 240 6% 18%;
-    --ring: 24 95% 53%;
+    --ring: 0 60% 35%;
 
     --radius: 0.75rem;
 
     --glass-bg: 240 10% 100% / 0.05;
     --glass-border: 240 10% 100% / 0.1;
 
+    --streak-gold: 45 100% 50%;
+
     --sidebar-background: 240 8% 8%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 24 95% 53%;
-    --sidebar-primary-foreground: 0 0% 2%;
+    --sidebar-primary: 0 60% 35%;
+    --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 6% 14%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 6% 18%;
-    --sidebar-ring: 24 95% 53%;
+    --sidebar-ring: 0 60% 35%;
   }
 }
 
@@ -57,8 +59,8 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Poppins', sans-serif;
     background:
-      radial-gradient(ellipse 80% 60% at 50% 0%, hsla(24, 80%, 20%, 0.15) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80% 80%, hsla(24, 80%, 15%, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 60% at 50% 0%, hsla(0, 60%, 25%, 0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, hsla(0, 60%, 20%, 0.1) 0%, transparent 50%),
       radial-gradient(ellipse 50% 40% at 10% 60%, hsla(240, 30%, 15%, 0.12) 0%, transparent 50%),
       hsl(240, 10%, 4%);
     min-height: 100vh;
@@ -77,16 +79,26 @@
 
   .glass-button {
     @apply bg-transparent rounded-lg transition-all duration-300;
-    border: 1px solid hsla(24, 95%, 53%, 0.4);
+    border: 1px solid hsla(0, 60%, 35%, 0.4);
     color: hsl(var(--foreground));
   }
   .glass-button:hover {
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 20px hsla(24, 95%, 53%, 0.25);
+    box-shadow: 0 0 20px hsla(0, 60%, 35%, 0.25);
   }
 
+  .maroon-glow {
+    box-shadow: 0 0 30px hsla(0, 60%, 35%, 0.4);
+  }
+
+  /* Keep orange-glow as alias for backward compat */
   .orange-glow {
-    box-shadow: 0 0 30px hsla(24, 95%, 53%, 0.4);
+    box-shadow: 0 0 30px hsla(0, 60%, 35%, 0.4);
+  }
+
+  .streak-glow {
+    color: hsl(var(--streak-gold));
+    text-shadow: 0 0 12px hsla(45, 100%, 50%, 0.5);
   }
 
   .ambient-orb {
@@ -152,6 +164,10 @@
 
   .animate-blink {
     animation: blink 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-logo {
+    animation: pulseLogo 2s ease-in-out infinite;
   }
 
   @keyframes fadeIn {
@@ -220,5 +236,10 @@
   @keyframes blink {
     0%, 90%, 100% { transform: scaleY(1); }
     95% { transform: scaleY(0.1); }
+  }
+
+  @keyframes pulseLogo {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
   }
 }
