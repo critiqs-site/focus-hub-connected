@@ -1,165 +1,111 @@
 
 
-# CRITIQS Mega Feature Update
+# Phase 1 Rework Plan
 
-This is a very large request with 15+ features. I'll prioritize them into phases to avoid breaking the site. Here's the full plan:
+## 1. Theme Selection System
 
----
+**What**: Add a "Theme" button in the UserProfileMenu (for registered users only; guests see "Register"). Clicking opens a theme picker dialog with 6+ themes.
 
-## Phase 1: Core UX Changes (High Priority)
+**Themes** (each sets CSS variables on `:root` + persists to `localStorage`):
+- **Orange & Black** (default) — `--primary: 24 95% 53%`, dark bg
+- **Purple & Black** — `--primary: 270 60% 50%`, dark bg
+- **Maroon & Black** — `--primary: 0 60% 35%`, dark bg
+- **Red & White** — `--primary: 0 70% 50%`, light bg (`--background: 0 0% 98%`, `--foreground: 0 0% 10%`)
+- **Orange & White** — `--primary: 24 95% 53%`, light bg
+- **Purple & White** — `--primary: 270 60% 50%`, light bg
 
-### 1. Auto Guest Mode + Premade Todo Chooser
-- Remove redirect to `/auth` for new users — auto-enter guest mode
-- Replace the onboarding dialog with a **"Choose Your Habits"** screen shown to guests on first visit
-- Premade habit categories: Morning Routine, Health, Productivity, Mindfulness, Fitness, Learning
-- Each category shows 4-5 selectable habits with icons
-- User picks what they want, sections + todos are created in localStorage
-- "Sign up later" banner stays subtle at top
+**Files**:
+- New `src/components/ThemePicker.tsx` — grid of color swatches in a dialog, each swatch shows primary color + bg preview
+- New `src/hooks/useTheme.ts` — reads/writes `localStorage("critiqs-theme")`, applies CSS vars to `document.documentElement.style`
+- Edit `src/components/UserProfileMenu.tsx` — add "Theme" menu item for registered users
+- Edit `src/index.css` — revert primary back to orange as default; update body background/glass-card/glass-button to use `hsl(var(--primary))` instead of hardcoded maroon HSL values. All hardcoded `hsla(0, 60%, 35%, ...)` references get replaced with `var(--primary)` references
+- Edit `src/pages/Index.tsx` — call `useTheme()` at top level
+- Edit `src/components/PremadeTodoChooser.tsx` — replace hardcoded maroon colors with `hsl(var(--primary))`
 
-**Files**: `src/pages/Index.tsx`, `src/pages/Auth.tsx`, new `src/components/PremadeTodoChooser.tsx`
-
-### 2. Theme Color: Maroon & White
-- Update CSS variables: primary from orange (`24 95% 53%`) to maroon (`0 60% 35%`)
-- Foreground stays white, accent becomes maroon
-- Update all ambient orb colors, glow effects, gradients
-- Update button gradients in Auth page and elsewhere
-
-**Files**: `src/index.css`, `index.html` (theme-color meta)
-
-### 3. Streak System with Freeze Logic
-- Add `streak` and `streakFreezeDate` fields to the `Todo` type
-- Calculate streak per habit: consecutive days completed ending at today
-- **Freeze rule**: If user misses 1 day, streak doesn't reset — it freezes. Shows "⏸ Frozen — complete today to unfreeze". If missed again, streak resets to 0
-- Display streak count with golden flame icon next to each todo
-- Golden color (`#FFD700`) for streak display
-
-**DB Migration**: Add `streak` (int, default 0), `streak_freeze_date` (text, nullable) columns to `todos` table
-**Files**: `src/types/todo.ts`, `src/hooks/useTodos.ts`, `src/components/TodoItem.tsx`
-
-### 4. Better Loading Screen
-- Replace plain spinner with branded CRITIQS logo + pulsing animation
-- Add a loading progress bar or shimmer skeleton for the todo list
-
-**Files**: `src/pages/Index.tsx`
+**Light theme handling**: For white-bg themes, swap `--background`, `--foreground`, `--card`, `--secondary`, `--muted`, `--border` to light values. The `useTheme` hook applies a complete variable set per theme.
 
 ---
 
-## Phase 2: Todo Enhancements
+## 2. Better Todo Icons & Per-Todo Color
 
-### 5. Goal Setting (e.g., "3 days a week")
-- Add `goalDaysPerWeek` field to Todo (1-7, default 7)
-- Show goal progress: "3/3 this week ✓" or "1/3 this week"
-- Add goal selector in AddTodoDialog (slider or dropdown)
+**What**: Replace existing premade habit icons with bolder, more distinctive ones. Each todo gets a color from 4 presets (Orange, Maroon, Blue, Purple) — default matches current theme primary.
 
-**DB Migration**: Add `goal_days_per_week` (int, default 7) to `todos`
-**Files**: `src/types/todo.ts`, `src/components/AddTodoDialog.tsx`, `src/components/TodoItem.tsx`, `src/hooks/useTodos.ts`
-
-### 6. Amount & Time per Habit (e.g., "1 time, 15 minutes")
-- Add `targetAmount` (int) and `targetUnit` (text: "times", "minutes", "pages", etc.) fields
-- Display on todo card: "1x · 15 min"
-- Input fields in AddTodoDialog
-
-**DB Migration**: Add `target_amount` (int, nullable), `target_unit` (text, nullable) to `todos`
-**Files**: `src/types/todo.ts`, `src/components/AddTodoDialog.tsx`, `src/components/TodoItem.tsx`
-
-### 7. Color per Todo
-- Add `color` field to Todo (hex string, nullable)
-- Show as a thin left-border accent or tinted icon background
-- Color picker (6-8 preset colors) in AddTodoDialog
-
-**DB Migration**: Add `color` (text, nullable) to `todos`
-**Files**: `src/types/todo.ts`, `src/components/AddTodoDialog.tsx`, `src/components/TodoItem.tsx`
-
-### 8. Daily Reminder Section
-- Add a "Daily Reminders" section at the top or bottom of todos view
-- Quick-add text reminders that show every day (not trackable, just visible)
-- Stored separately or as a special divider type
-
-**DB Migration**: Add `reminders` table or use a flag on todos
-**Files**: New `src/components/DailyReminders.tsx`, `src/pages/Index.tsx`
+**Changes**:
+- Edit `src/components/AddTodoDialog.tsx`:
+  - Remove Amount & Unit fields (delete `targetAmount`/`targetUnit` inputs)
+  - Replace 8-color picker with 4 colors: Orange `#E67E22`, Maroon `#8B1A1A`, Blue `#3498DB`, Purple `#9B59B6` + a "Theme" option (uses current theme primary)
+- Edit `src/components/TodoItem.tsx`: Remove `targetAmount`/`targetUnit` display
+- Edit `src/components/PremadeTodoChooser.tsx`: Update habit icons to bolder choices where applicable
 
 ---
 
-## Phase 3: Analytics Overhaul
+## 3. Goal Slider Fix & Smart Day Spacing
 
-### 9. Calendar-Based Analytics
-- Replace current bar chart with a **monthly calendar heatmap** (like GitHub contributions)
-- Each day cell shows completion percentage via color intensity
-- Stats panel below calendar:
-  - Current streak (longest consecutive days with >0% completion)
-  - Todos finished: `X/Y`
-  - Completion rate: `XX%`
-- Keep period selector but make "Monthly" the default view with calendar
+**What**: Make the goal slider smoother and implement comfortable day spacing.
 
-**Files**: `src/components/AnalyticsView.tsx`
+**Changes**:
+- Edit `src/components/ui/slider.tsx` — increase thumb size, add smooth cursor styling
+- Edit `src/components/AddTodoDialog.tsx` — the slider already works, just ensure it's smooth (it likely is; the `step={1}` is correct for 1-7)
+- Edit `src/components/TodoItem.tsx` — implement spaced day selection logic: for goal=3 on a 7-day week, highlight days 1, 3, 5 (evenly spaced with gaps). The circles for "goal days" get a subtle indicator showing which days are "suggested"
+
+**Smart spacing algorithm**: For `goalDays` out of 7, calculate evenly spaced indices: `Math.round(i * 7 / goalDays)` for `i = 0..goalDays-1`. Show a subtle dot/ring on those day circles to indicate "recommended days."
 
 ---
 
-## Phase 4: Tools Expansion
+## 4. Premade Todos Rework
 
-### 10. Pomodoro Timer
-- 25/5 minute work/break cycle with customizable durations
-- Visual circular countdown timer
-- Session counter, notification on completion
+**What**: Replace the category-based habit chooser with a simple flow: enter name → pick from a flat list of 10 premade habits (select at least 1).
 
-**Files**: New `src/components/PomodoroTimer.tsx`, `src/components/ToolsView.tsx`
+**Premade habits**:
+1. Meditate for 5 minutes (Brain)
+2. Exercise for 10 minutes (Dumbbell)
+3. Call my parents at night (Phone)
+4. Drink 2L of water (Droplets)
+5. Read for 15 minutes (BookOpen)
+6. Sleep before midnight (Moon)
+7. No junk food today (Apple)
+8. Write in my journal (Pencil)
+9. Walk 10,000 steps (Footprints)
+10. Practice gratitude (Smile)
 
-### 11. Stopwatch
-- Simple start/stop/reset stopwatch
-- Lap recording capability
-
-**Files**: New `src/components/Stopwatch.tsx`, `src/components/ToolsView.tsx`
-
----
-
-## Phase 5: Journal / Notes Section
-
-### 12. Midnight Journal
-- Add "Journal" tab in the Header (between Schedule and Tools)
-- Simple note entry with date
-- Midnight reminder notification via service worker
-- Glass-card styled text area, one entry per day
-- Stored in existing `mood_notes` table (reuse the `note` field)
-
-**Files**: New `src/components/JournalView.tsx`, `src/components/Header.tsx`, `src/pages/Index.tsx`, `src/lib/notifications.ts`
+**Changes**:
+- Rewrite `src/components/PremadeTodoChooser.tsx` — two-step flow:
+  1. Name input
+  2. Flat checklist of 10 habits with icons, select ≥1
+  3. "Get Started" button creates a single "My Habits" divider + selected todos
+- Edit `src/pages/Index.tsx` — pass name to chooser, save guest name to localStorage
+- Edit `src/components/OnboardingDialog.tsx` — for registered users, replace interests selection with the same 10 habit picker. Save name to profile, create todos.
 
 ---
 
-## Database Migration (Single Migration)
+## 5. Better Loading Screen
 
-```sql
-ALTER TABLE todos
-  ADD COLUMN IF NOT EXISTS goal_days_per_week integer NOT NULL DEFAULT 7,
-  ADD COLUMN IF NOT EXISTS target_amount integer,
-  ADD COLUMN IF NOT EXISTS target_unit text,
-  ADD COLUMN IF NOT EXISTS color text,
-  ADD COLUMN IF NOT EXISTS streak integer NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS streak_freeze_date text;
-```
+**What**: Circular loading animation with CRITIQS logo inside. Shows until ALL data (todos, events, profile) is ready.
+
+**Changes**:
+- Edit `src/pages/Index.tsx` — replace both loading states with a centered logo inside a spinning ring (CSS border animation or SVG circle). Wait for `!authLoading && !todosLoading && !eventsLoading`.
+- Edit `src/index.css` — add `@keyframes spinRing` for the circular loader
 
 ---
 
-## Summary of New/Modified Files
+## 6. Auto-reload (Service Worker)
+
+The service worker (`public/sw.js`) already uses network-first for HTML and hashed assets are cache-busted by Vite. This is already working — no changes needed. The `sw.js` with `CACHE_NAME = "critiqs-v" + Date.now()` ensures new deployments invalidate old caches.
+
+---
+
+## Files Summary
 
 | Action | File |
 |--------|------|
-| Edit | `src/index.css` (maroon theme) |
-| Edit | `index.html` (theme-color) |
-| Edit | `src/types/todo.ts` (new fields) |
-| Edit | `src/hooks/useTodos.ts` (streak logic, new fields) |
-| Edit | `src/components/TodoItem.tsx` (streak, color, goal, amount display) |
-| Edit | `src/components/AddTodoDialog.tsx` (goal, amount, color pickers) |
-| Edit | `src/components/AnalyticsView.tsx` (calendar heatmap) |
-| Edit | `src/components/ToolsView.tsx` (add pomodoro, stopwatch) |
-| Edit | `src/components/Header.tsx` (add Journal tab) |
-| Edit | `src/pages/Index.tsx` (guest auto-login, journal tab, loading screen, reminders) |
-| Edit | `src/pages/Auth.tsx` (remove auto-redirect for new visitors) |
-| Edit | `src/lib/notifications.ts` (midnight reminder) |
-| Create | `src/components/PremadeTodoChooser.tsx` |
-| Create | `src/components/PomodoroTimer.tsx` |
-| Create | `src/components/Stopwatch.tsx` |
-| Create | `src/components/JournalView.tsx` |
-| Create | `src/components/DailyReminders.tsx` |
-
-This is approximately 18 files across 5 phases. Implementation will proceed phase by phase to avoid breaking anything.
+| Create | `src/components/ThemePicker.tsx` |
+| Create | `src/hooks/useTheme.ts` |
+| Edit | `src/components/UserProfileMenu.tsx` (add Theme button) |
+| Edit | `src/index.css` (orange default, CSS var references, loader animation) |
+| Edit | `src/components/AddTodoDialog.tsx` (remove amount/unit, 4-color picker) |
+| Edit | `src/components/TodoItem.tsx` (remove amount/unit, add goal day indicators) |
+| Edit | `src/components/ui/slider.tsx` (smoother thumb) |
+| Edit | `src/components/PremadeTodoChooser.tsx` (name + flat 10-habit picker) |
+| Edit | `src/components/OnboardingDialog.tsx` (name + 10-habit picker) |
+| Edit | `src/pages/Index.tsx` (useTheme, unified loading screen) |
 
