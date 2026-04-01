@@ -23,12 +23,10 @@ function calculateStreak(completions: string[]): { streak: number; frozen: boole
   const sorted = [...completions].sort().reverse();
   const today = format(new Date(), "yyyy-MM-dd");
   const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
-  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
 
   let streak = 0;
   let frozen = false;
 
-  // Check if completed today
   if (sorted[0] === today) {
     streak = 1;
     let checkDate = subDays(new Date(), 1);
@@ -38,12 +36,10 @@ function calculateStreak(completions: string[]): { streak: number; frozen: boole
         streak++;
         checkDate = subDays(checkDate, 1);
       } else {
-        // Check one more day back for freeze
         const dayBefore = format(subDays(checkDate, 1), "yyyy-MM-dd");
         if (sorted.includes(dayBefore)) {
-          // There was a single gap - count it as frozen but continue
           checkDate = subDays(checkDate, 2);
-          streak++; // count the day before gap
+          streak++;
           for (let j = i + 2; j < 365; j++) {
             const d = format(checkDate, "yyyy-MM-dd");
             if (sorted.includes(d)) { streak++; checkDate = subDays(checkDate, 1); }
@@ -54,7 +50,6 @@ function calculateStreak(completions: string[]): { streak: number; frozen: boole
       }
     }
   } else if (sorted[0] === yesterday) {
-    // Not done today but done yesterday - frozen state
     frozen = true;
     streak = 1;
     let checkDate = subDays(new Date(), 2);
@@ -63,9 +58,6 @@ function calculateStreak(completions: string[]): { streak: number; frozen: boole
       if (sorted.includes(dateStr)) { streak++; checkDate = subDays(checkDate, 1); }
       else break;
     }
-  } else if (sorted[0] === twoDaysAgo) {
-    // Missed 2 days - streak resets
-    return { streak: 0, frozen: false };
   }
 
   return { streak, frozen };
@@ -76,6 +68,16 @@ function getWeekCompletions(completions: string[], goalDays: number): { done: nu
   const days = getFixedWeekDays(today);
   const done = days.filter(d => completions.includes(format(d, "yyyy-MM-dd"))).length;
   return { done, goal: goalDays };
+}
+
+/** Returns 0-indexed day positions that are "suggested" for this goal count */
+function getSuggestedDays(goalDays: number): number[] {
+  if (goalDays >= 7) return [0, 1, 2, 3, 4, 5, 6];
+  const indices: number[] = [];
+  for (let i = 0; i < goalDays; i++) {
+    indices.push(Math.round(i * 7 / goalDays));
+  }
+  return indices;
 }
 
 const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCount }: TodoItemProps) => {
@@ -112,6 +114,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
 
   const { streak, frozen } = useMemo(() => calculateStreak(completions), [completions]);
   const weekProgress = useMemo(() => getWeekCompletions(completions, todo.goalDaysPerWeek), [completions, todo.goalDaysPerWeek]);
+  const suggestedDays = useMemo(() => getSuggestedDays(todo.goalDaysPerWeek), [todo.goalDaysPerWeek]);
 
   const handleQuickToggle = () => { onToggleDay(todo.id, todayStr); };
 
@@ -134,18 +137,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
         borderLeft: colorAccent ? `4px solid ${colorAccent}` : undefined,
         boxShadow: 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)',
       }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.12) 0%, hsla(0, 0%, 100%, 0.04) 100%)';
-        if (!colorAccent) (e.currentTarget as HTMLElement).style.border = '1px solid hsla(0, 60%, 35%, 0.25)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 1px hsla(0, 0%, 100%, 0.15), 0 0 30px -5px hsla(0, 60%, 35%, 0.2), 0 8px 32px hsla(0, 0%, 0%, 0.5)';
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)';
-        (e.currentTarget as HTMLElement).style.border = colorAccent ? `1px solid ${colorAccent}40` : '1px solid hsla(0, 0%, 100%, 0.12)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 1px hsla(0, 0%, 100%, 0.1), 0 8px 32px hsla(0, 0%, 0%, 0.4)';
-      }}
     >
-      {/* Pinned indicator */}
       {todo.pinned && (
         <div className="absolute top-3 right-3 z-10">
           <Pin className="h-4 w-4 text-primary fill-primary" />
@@ -153,10 +145,16 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
       )}
 
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1.5 lg:h-2" style={{ background: 'hsla(240, 6%, 14%, 0.5)' }}>
+      <div className="absolute top-0 left-0 right-0 h-1.5 lg:h-2" style={{ background: 'hsla(var(--secondary), 0.5)' }}>
         <div
           className="h-full transition-all duration-500"
-          style={{ width: `${percentage}%`, background: colorAccent ? `linear-gradient(90deg, ${colorAccent}, ${colorAccent}99)` : 'linear-gradient(90deg, hsl(var(--primary)), hsla(0, 60%, 35%, 0.7))', boxShadow: `0 0 12px ${colorAccent ? colorAccent + '66' : 'hsla(0, 60%, 35%, 0.4)'}` }}
+          style={{
+            width: `${percentage}%`,
+            background: colorAccent
+              ? `linear-gradient(90deg, ${colorAccent}, ${colorAccent}99)`
+              : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))',
+            boxShadow: `0 0 12px ${colorAccent ? colorAccent + '66' : 'hsl(var(--primary) / 0.4)'}`,
+          }}
         />
       </div>
 
@@ -167,7 +165,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
             onPointerDown={(e) => e.stopPropagation()}
             className={`relative p-2.5 md:p-3 lg:p-4 rounded-xl shrink-0 transition-all duration-300 ${
               isTodayCompleted
-                ? "bg-primary/20 maroon-glow ring-2 ring-primary"
+                ? "bg-primary/20 ring-2 ring-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
                 : "bg-primary/10 hover:bg-primary/20"
             }`}
             title={isTodayCompleted ? "Mark as not done today" : "Mark as done today"}
@@ -187,16 +185,14 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                     {todo.text}
                   </span>
                 )}
-                {/* Streak badge */}
                 {streak > 0 && (
-                  <span className="flex items-center gap-0.5 text-xs font-bold streak-glow shrink-0" title={frozen ? "Streak frozen — complete today!" : `${streak} day streak`}>
+                  <span className="flex items-center gap-0.5 text-xs font-bold shrink-0" title={frozen ? "Streak frozen — complete today!" : `${streak} day streak`}>
                     <Flame className="h-3.5 w-3.5" style={{ color: '#FFD700' }} />
                     <span style={{ color: '#FFD700' }}>{streak}</span>
                     {frozen && <span className="text-[10px] ml-0.5 text-yellow-500/70">⏸</span>}
                   </span>
                 )}
               </div>
-              {/* Meta line: description, goal, amount */}
               {!isEditing && (
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   {todo.description && (
@@ -209,11 +205,6 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                       weekProgress.done >= weekProgress.goal ? 'bg-green-500/20 text-green-400' : 'bg-secondary/50 text-muted-foreground'
                     }`}>
                       {weekProgress.done}/{weekProgress.goal}/wk {weekProgress.done >= weekProgress.goal ? '✓' : ''}
-                    </span>
-                  )}
-                  {todo.targetAmount && (
-                    <span className="text-[10px] text-muted-foreground bg-secondary/40 px-1.5 py-0.5 rounded-full">
-                      {todo.targetAmount}x{todo.targetUnit ? ` · ${todo.targetUnit}` : ''}
                     </span>
                   )}
                 </div>
@@ -238,7 +229,6 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
             )}
           </div>
 
-          {/* Hover actions - desktop */}
           {!isEditing && (
             <div className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0" onPointerDown={(e) => e.stopPropagation()}>
               <Button size="sm" variant="ghost" onClick={() => { if (!todo.pinned && pinnedCount >= 3) return; onTogglePin(todo.id); }}
@@ -256,10 +246,11 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           )}
         </div>
 
-        {/* 7 day circles */}
+        {/* 7 day circles with suggested day indicators */}
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
           <div className="flex items-center gap-1 md:gap-1.5 flex-nowrap">
-            {days.map((day) => {
+            {days.map((day, dayIndex) => {
+              const isSuggested = todo.goalDaysPerWeek < 7 && suggestedDays.includes(dayIndex);
               const isCompletedToday = day.isToday && day.isCompleted;
               const isCompletedPast = !day.isToday && day.isCompleted;
               return (
@@ -277,12 +268,15 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
                   title={day.isToday ? format(day.date, "MMM d") + " (click to toggle)" : format(day.date, "MMM d")}
                 >
                   {day.isCompleted ? <Check className="h-4 w-4 animate-scale-in" /> : <span className="text-xs lg:text-sm font-medium">{day.dayLabel}</span>}
+                  {/* Suggested day dot */}
+                  {isSuggested && !day.isCompleted && (
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary/60" />
+                  )}
                 </button>
               );
             })}
           </div>
 
-          {/* Mobile action buttons */}
           {!isEditing && (
             <div className="flex md:hidden gap-1 ml-2 flex-shrink-0" onPointerDown={(e) => e.stopPropagation()}>
               <Button size="sm" variant="ghost" onClick={() => { if (!todo.pinned && pinnedCount >= 3) return; onTogglePin(todo.id); }}

@@ -3,21 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getIconComponent } from "@/lib/icons";
 
-const INTERESTS = [
-  "Self Improvement",
-  "Business",
-  "Health & Fitness",
-  "Mindfulness",
-  "Productivity",
-  "Learning",
-  "Creativity",
-  "Relationships",
-  "Finance",
-  "Mental Health",
+const PREMADE_HABITS = [
+  { text: "Meditate for 5 minutes", icon: "Brain" },
+  { text: "Exercise for 10 minutes", icon: "Dumbbell" },
+  { text: "Call my parents at night", icon: "Phone" },
+  { text: "Drink 2L of water", icon: "Droplets" },
+  { text: "Read for 15 minutes", icon: "BookOpen" },
+  { text: "Sleep before midnight", icon: "Moon" },
+  { text: "No junk food today", icon: "Apple" },
+  { text: "Write in my journal", icon: "Pencil" },
+  { text: "Walk 10,000 steps", icon: "Footprints" },
+  { text: "Practice gratitude", icon: "Smile" },
 ];
 
 interface OnboardingDialogProps {
@@ -27,34 +28,33 @@ interface OnboardingDialogProps {
 }
 
 const OnboardingDialog = ({ open, userId, onComplete }: OnboardingDialogProps) => {
+  const [step, setStep] = useState<"name" | "habits">("name");
   const [name, setName] = useState("");
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
 
-  const toggleInterest = (interest: string) => {
-    setSelectedInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
-    );
+  const toggleHabit = (i: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.error("Please enter your name");
+    if (step === "name") {
+      if (!name.trim()) { toast.error("Please enter your name"); return; }
+      setStep("habits");
       return;
     }
-    if (selectedInterests.length === 0) {
-      toast.error("Please select at least one interest");
-      return;
-    }
+    if (selected.size === 0) { toast.error("Please select at least one habit"); return; }
 
     setIsLoading(true);
 
     const { error } = await supabase.from("profiles").upsert({
       user_id: userId,
       name: name.trim(),
-      interests: selectedInterests,
+      interests: [],
       onboarding_complete: true,
     });
 
@@ -65,33 +65,25 @@ const OnboardingDialog = ({ open, userId, onComplete }: OnboardingDialogProps) =
       return;
     }
 
-    // Create default sections and habits
+    // Create single divider + selected habits
     const { data: dividerData, error: dividerError } = await supabase
       .from("dividers")
-      .insert([
-        { user_id: userId, name: "Morning Routine", icon: "Sun" },
-        { user_id: userId, name: "Health", icon: "Heart" },
-        { user_id: userId, name: "Growth", icon: "TrendingUp" },
-      ])
+      .insert([{ user_id: userId, name: "My Habits", icon: "Star" }])
       .select();
 
     if (dividerError) {
       console.error("Divider error:", dividerError);
-    } else if (dividerData) {
-      const morningId = dividerData.find((d) => d.name === "Morning Routine")?.id;
-      const healthId = dividerData.find((d) => d.name === "Health")?.id;
-      const growthId = dividerData.find((d) => d.name === "Growth")?.id;
-
-      const defaultTodos = [
-        { user_id: userId, divider_id: morningId, text: "Wake up early", icon: "Sunrise" },
-        { user_id: userId, divider_id: morningId, text: "Meditate 10 mins", icon: "Brain" },
-        { user_id: userId, divider_id: healthId, text: "Exercise 30 mins", icon: "Dumbbell" },
-        { user_id: userId, divider_id: healthId, text: "Drink 8 glasses of water", icon: "Droplet" },
-        { user_id: userId, divider_id: growthId, text: "Read for 20 mins", icon: "BookOpen" },
-        { user_id: userId, divider_id: growthId, text: "Learn something new", icon: "Lightbulb" },
-      ].filter((t) => t.divider_id);
-
-      await supabase.from("todos").insert(defaultTodos);
+    } else if (dividerData && dividerData[0]) {
+      const dividerId = dividerData[0].id;
+      const habits = PREMADE_HABITS.filter((_, i) => selected.has(i));
+      const todosToInsert = habits.map((h, idx) => ({
+        user_id: userId,
+        divider_id: dividerId,
+        text: h.text,
+        icon: h.icon,
+        order: idx,
+      }));
+      await supabase.from("todos").insert(todosToInsert);
     }
 
     toast.success(`Welcome, ${name}! 🎉`);
@@ -109,63 +101,67 @@ const OnboardingDialog = ({ open, userId, onComplete }: OnboardingDialogProps) =
             </div>
           </div>
           <DialogTitle className="text-2xl font-bold text-center">
-            Let's get to know you
+            {step === "name" ? "What's your name?" : `Pick your habits, ${name}`}
           </DialogTitle>
           <p className="text-muted-foreground text-center text-sm">
-            This helps your AI guide personalize your experience
+            {step === "name" ? "Let's personalize your experience" : "Select at least 1 habit to get started"}
           </p>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-foreground font-medium">
-              What's your name?
-            </Label>
-            <Input
-              id="name"
-              placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-12 bg-secondary/50 border-primary/20 focus:border-primary"
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-foreground font-medium">
-              What are you interested in?
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {INTERESTS.map((interest) => (
-                <button
-                  key={interest}
-                  onClick={() => toggleInterest(interest)}
-                  disabled={isLoading}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedInterests.includes(interest)
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-                      : "bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
-                >
-                  {interest}
-                </button>
-              ))}
+        <div className="space-y-4 mt-4">
+          {step === "name" ? (
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-foreground font-medium">Your name</Label>
+              <Input
+                id="name"
+                placeholder="Enter your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-12 bg-secondary/50 border-primary/20 focus:border-primary"
+                disabled={isLoading}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) setStep("habits"); }}
+              />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Select multiple interests that resonate with you
-            </p>
-          </div>
+          ) : (
+            <div className="space-y-2 max-h-[45vh] overflow-y-auto scrollbar-hide pr-1">
+              {PREMADE_HABITS.map((habit, i) => {
+                const isSelected = selected.has(i);
+                const Icon = getIconComponent(habit.icon);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => toggleHabit(i)}
+                    disabled={isLoading}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+                      isSelected
+                        ? "bg-primary/15 border border-primary/40"
+                        : "bg-secondary/30 border border-transparent hover:bg-secondary/50"
+                    }`}
+                  >
+                    <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/20' : 'bg-secondary/50'}`}>
+                      <Icon className={`h-4 w-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </div>
+                    <span className={`flex-1 text-sm font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {habit.text}
+                    </span>
+                    {isSelected && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-lg shadow-lg shadow-primary/25 group"
+            disabled={isLoading || (step === "habits" && selected.size === 0)}
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg group"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                Get Started
+                {step === "name" ? "Next" : `Get Started (${selected.size})`}
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </>
             )}

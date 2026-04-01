@@ -127,8 +127,12 @@ function getTopIcons(query: string, count = 3): string[] {
   return scores.filter(s => s.score > 0).sort((a, b) => b.score - a.score).slice(0, count).map(s => s.name);
 }
 
-const PRESET_COLORS = [
-  "#E74C3C", "#E67E22", "#F1C40F", "#2ECC71", "#3498DB", "#9B59B6", "#1ABC9C", "#E91E63",
+const TODO_COLORS = [
+  { label: "Theme", value: null, css: "hsl(var(--primary))" },
+  { label: "Orange", value: "#E67E22", css: "#E67E22" },
+  { label: "Maroon", value: "#8B1A1A", css: "#8B1A1A" },
+  { label: "Blue", value: "#3498DB", css: "#3498DB" },
+  { label: "Purple", value: "#9B59B6", css: "#9B59B6" },
 ];
 
 interface AddTodoDialogProps {
@@ -147,8 +151,6 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
   const [suggestedIcons, setSuggestedIcons] = useState<string[]>([]);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
   const [goalDays, setGoalDays] = useState(7);
-  const [targetAmount, setTargetAmount] = useState("");
-  const [targetUnit, setTargetUnit] = useState("");
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   useEffect(() => {
@@ -156,7 +158,7 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
     else if (open && !preselectedDividerId && dividers[0]) setDividerId(dividers[0].id);
   }, [open, preselectedDividerId, dividers]);
 
-  useEffect(() => { if (!open) { setSuggestedIcons([]); setGoalDays(7); setTargetAmount(""); setTargetUnit(""); setSelectedColor(null); } }, [open]);
+  useEffect(() => { if (!open) { setSuggestedIcons([]); setGoalDays(7); setSelectedColor(null); } }, [open]);
 
   const handleAutoIcon = useCallback(async () => {
     setIsAutoDetecting(true);
@@ -177,10 +179,9 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
 
   const handleSubmit = () => {
     if (text.trim() && dividerId) {
-      const amt = targetAmount ? parseInt(targetAmount) : undefined;
-      onAdd(text.trim(), dividerId, selectedIcon, description.trim() || undefined, goalDays, amt && !isNaN(amt) ? amt : undefined, targetUnit.trim() || undefined, selectedColor || undefined);
+      onAdd(text.trim(), dividerId, selectedIcon, description.trim() || undefined, goalDays, undefined, undefined, selectedColor || undefined);
       setText(""); setDescription(""); setSelectedIcon("PersonStanding"); setSuggestedIcons([]);
-      setGoalDays(7); setTargetAmount(""); setTargetUnit(""); setSelectedColor(null);
+      setGoalDays(7); setSelectedColor(null);
       onOpenChange(false);
     }
   };
@@ -214,7 +215,7 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
           />
 
           {/* Goal days per week */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Goal</span>
               <span className="text-foreground font-medium">{goalDays === 7 ? "Every day" : `${goalDays} days/week`}</span>
@@ -222,38 +223,25 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
             <Slider value={[goalDays]} onValueChange={([v]) => setGoalDays(v)} min={1} max={7} step={1} />
           </div>
 
-          {/* Amount & unit */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Amount (e.g. 1)"
-              value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)}
-              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm w-24"
-              type="number" min="1"
-            />
-            <Input
-              placeholder="Unit (e.g. times, minutes, pages)"
-              value={targetUnit} onChange={(e) => setTargetUnit(e.target.value)}
-              className="bg-secondary/50 border-primary/30 focus:border-primary text-sm flex-1"
-            />
-          </div>
-
-          {/* Color picker */}
-          <div className="space-y-1.5">
-            <span className="text-sm text-muted-foreground">Color accent</span>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setSelectedColor(null)}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${!selectedColor ? 'border-foreground scale-110' : 'border-transparent'}`}
-                style={{ background: 'hsla(0, 0%, 100%, 0.1)' }}
-                title="None"
-              />
-              {PRESET_COLORS.map(c => (
+          {/* Color picker - 5 options */}
+          <div className="space-y-2">
+            <span className="text-sm text-muted-foreground">Color</span>
+            <div className="flex gap-3">
+              {TODO_COLORS.map((c) => (
                 <button
-                  key={c}
-                  onClick={() => setSelectedColor(c)}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${selectedColor === c ? 'border-foreground scale-110' : 'border-transparent'}`}
-                  style={{ background: c }}
-                />
+                  key={c.label}
+                  onClick={() => setSelectedColor(c.value)}
+                  className={`flex flex-col items-center gap-1 group`}
+                  title={c.label}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                      selectedColor === c.value ? 'border-foreground scale-110 shadow-lg' : 'border-transparent hover:scale-105'
+                    }`}
+                    style={{ background: c.css }}
+                  />
+                  <span className="text-[10px] text-muted-foreground">{c.label}</span>
+                </button>
               ))}
             </div>
           </div>
