@@ -420,6 +420,8 @@ const FloatingAIChat = ({
             </div>
           )}
 
+          <p className="text-[10px] text-muted-foreground text-center py-1 border-t border-border/50">AI can make mistakes. Please double check.</p>
+
           <div className="px-3 py-3 border-t border-border flex items-center gap-2">
             <button onClick={() => fileInputRef.current?.click()} className="text-muted-foreground hover:text-primary transition-colors p-1">
               <Plus className="w-5 h-5" />

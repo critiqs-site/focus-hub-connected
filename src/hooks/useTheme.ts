@@ -29,23 +29,23 @@ const DARK_BASE = {
 };
 
 const LIGHT_BASE = {
-  "--background": "0 0% 97%",
-  "--foreground": "240 10% 10%",
+  "--background": "0 0% 96%",
+  "--foreground": "240 10% 8%",
   "--card": "0 0% 100%",
-  "--card-foreground": "240 10% 10%",
+  "--card-foreground": "240 10% 8%",
   "--popover": "0 0% 100%",
-  "--popover-foreground": "240 10% 10%",
-  "--secondary": "240 5% 90%",
-  "--secondary-foreground": "240 10% 10%",
-  "--muted": "240 5% 90%",
-  "--muted-foreground": "240 5% 40%",
-  "--border": "240 5% 82%",
-  "--input": "240 5% 82%",
+  "--popover-foreground": "240 10% 8%",
+  "--secondary": "240 4% 92%",
+  "--secondary-foreground": "240 10% 8%",
+  "--muted": "240 4% 92%",
+  "--muted-foreground": "240 5% 35%",
+  "--border": "240 5% 80%",
+  "--input": "240 5% 80%",
   "--sidebar-background": "0 0% 100%",
-  "--sidebar-foreground": "240 10% 10%",
-  "--sidebar-accent": "240 5% 93%",
-  "--sidebar-accent-foreground": "240 10% 10%",
-  "--sidebar-border": "240 5% 85%",
+  "--sidebar-foreground": "240 10% 8%",
+  "--sidebar-accent": "240 5% 94%",
+  "--sidebar-accent-foreground": "240 10% 8%",
+  "--sidebar-border": "240 5% 83%",
 };
 
 export const THEMES: ThemeConfig[] = [
