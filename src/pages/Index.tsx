@@ -284,21 +284,23 @@ const Index = () => {
         <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} themeId={themeId} onSetTheme={setTheme} />
       )}
 
-      <FloatingAIChat
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-        initialMessage={chatInitialMessage}
-        onInitialMessageConsumed={() => setChatInitialMessage(null)}
-        todos={todos}
-        dividers={dividers}
-        interests={profile?.interests || []}
-        onAddTodo={handleAddTodo}
-        onDeleteTodo={handleDelete}
-        onRenameTodo={handleEdit}
-        onTransferTodo={handleTransferTodo}
-        onUpdateIcon={handleUpdateIcon}
-        onUpdateDescription={handleUpdateDescription}
-      />
+      {!isGuest && (
+        <FloatingAIChat
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+          initialMessage={chatInitialMessage}
+          onInitialMessageConsumed={() => setChatInitialMessage(null)}
+          todos={todos}
+          dividers={dividers}
+          interests={profile?.interests || []}
+          onAddTodo={handleAddTodo}
+          onDeleteTodo={handleDelete}
+          onRenameTodo={handleEdit}
+          onTransferTodo={handleTransferTodo}
+          onUpdateIcon={handleUpdateIcon}
+          onUpdateDescription={handleUpdateDescription}
+        />
+      )}
     </div>
   );
 };
