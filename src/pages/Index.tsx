@@ -272,7 +272,7 @@ const Index = () => {
         ) : activeTab === "journal" ? (
           <JournalView userId={user?.id} />
         ) : activeTab === "tools" ? (
-          <ToolsView onAskAI={handleAskAI} />
+          <ToolsView onAskAI={handleAskAI} isGuest={isGuest} />
         ) : (
           <ComingSoon section={activeTab} />
         )}
