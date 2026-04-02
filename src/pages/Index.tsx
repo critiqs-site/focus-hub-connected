@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
 import { useEvents } from "@/hooks/useEvents";
+import { useTheme } from "@/hooks/useTheme";
 import { format } from "date-fns";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -32,6 +33,7 @@ const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const isGuest = !user && localStorage.getItem("guestMode") === "true";
   const { profile, needsOnboarding, completeOnboarding } = useProfile(user?.id);
+  const { themeId, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("todos");
   const [showAddTodo, setShowAddTodo] = useState(false);
   const [showAddDivider, setShowAddDivider] = useState(false);
@@ -63,37 +65,35 @@ const Index = () => {
       if (!hasSeenChooser) {
         setShowChooser(true);
       }
-      // Force re-render to pick up guest mode
       window.location.reload();
     }
   }, [user, authLoading, isGuest]);
 
-  const handleChooserComplete = (selections: { category: string; categoryIcon: string; habits: { text: string; icon: string; description?: string }[] }[]) => {
+  const handleChooserComplete = (name: string, habits: { text: string; icon: string }[]) => {
     localStorage.setItem("hasSeenChooser", "true");
+    if (name) localStorage.setItem("guestName", name);
     setShowChooser(false);
 
-    if (selections.length === 0) return;
+    if (habits.length === 0) return;
 
-    // Create dividers and todos from selections
-    selections.forEach(sel => {
-      handleAddDivider(sel.category, sel.categoryIcon).then(() => {
-        // Need to wait for divider to be created, then add todos
-        setTimeout(() => {
-          const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
-          const divider = guestDividers.find((d: any) => d.name === sel.category);
-          if (divider) {
-            sel.habits.forEach(habit => {
-              handleAddTodo(habit.text, divider.id, habit.icon, habit.description);
-            });
-          }
-        }, 100);
-      });
+    // Create a "My Habits" divider then add selected todos
+    handleAddDivider("My Habits", "Star").then(() => {
+      setTimeout(() => {
+        const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
+        const divider = guestDividers.find((d: any) => d.name === "My Habits");
+        if (divider) {
+          habits.forEach(habit => {
+            handleAddTodo(habit.text, divider.id, habit.icon);
+          });
+        }
+      }, 100);
     });
   };
 
   const handleSignOut = async () => {
     localStorage.removeItem("guestMode");
     localStorage.removeItem("hasSeenChooser");
+    localStorage.removeItem("guestName");
     await signOut();
     navigate("/auth");
   };
@@ -103,13 +103,14 @@ const Index = () => {
     setChatOpen(true);
   };
 
-  // Loading screen with CRITIQS branding
+  // Unified loading screen
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <div className="relative">
-          <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: 'radial-gradient(circle, hsla(0, 60%, 35%, 0.6), transparent 70%)' }} />
-          <img src={logoIcon} alt="CRITIQS" className="w-20 h-20 object-contain animate-pulse-logo relative z-10" />
+          <div className="spin-ring">
+            <img src={logoIcon} alt="CRITIQS" className="w-14 h-14 object-contain relative z-10" />
+          </div>
         </div>
         <p className="text-sm text-muted-foreground animate-pulse">Loading your habits...</p>
       </div>
@@ -194,9 +195,8 @@ const Index = () => {
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: 'radial-gradient(circle, hsla(0, 60%, 35%, 0.6), transparent 70%)' }} />
-              <img src={logoIcon} alt="CRITIQS" className="w-16 h-16 object-contain animate-pulse-logo relative z-10" />
+            <div className="spin-ring">
+              <img src={logoIcon} alt="CRITIQS" className="w-12 h-12 object-contain relative z-10" />
             </div>
             <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
           </div>
@@ -242,11 +242,7 @@ const Index = () => {
                   </div>
                 );
               })}
-              <button onClick={() => setShowAddDivider(true)} className="w-full border-dashed border-2 border-primary/30 hover:border-primary/60 p-4 flex items-center justify-center gap-2 transition-all duration-300 hover:bg-primary/5 cursor-pointer group mt-6 rounded-2xl" style={{
-                background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.04) 0%, hsla(0, 0%, 100%, 0.01) 100%)',
-                backdropFilter: 'blur(40px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-              }}>
+              <button onClick={() => setShowAddDivider(true)} className="w-full border-dashed border-2 border-primary/30 hover:border-primary/60 p-4 flex items-center justify-center gap-2 transition-all duration-300 hover:bg-primary/5 cursor-pointer group mt-6 rounded-2xl glass-card">
                 <Plus className="h-5 w-5 text-primary" />
                 <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Add Section</span>
               </button>
@@ -268,9 +264,9 @@ const Index = () => {
       </div>
 
       {isGuest ? (
-        <UserProfileMenu email="" onSignOut={handleSignOut} isGuest />
+        <UserProfileMenu email="" onSignOut={handleSignOut} isGuest themeId={themeId} onSetTheme={setTheme} />
       ) : (
-        <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} />
+        <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} themeId={themeId} onSetTheme={setTheme} />
       )}
 
       <FloatingAIChat
