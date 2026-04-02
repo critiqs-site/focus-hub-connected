@@ -41,6 +41,7 @@ const Index = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInitialMessage, setChatInitialMessage] = useState<{ text: string; image?: string } | null>(null);
   const [showChooser, setShowChooser] = useState(false);
+  const [showFewer, setShowFewer] = useState(false);
 
   const {
     todos, dividers, loading: todosLoading,
