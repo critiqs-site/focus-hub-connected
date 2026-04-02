@@ -14,7 +14,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
 
   return (
     <div className="overflow-x-auto -mx-2 px-2">
-      <div className="flex gap-2 mb-6 lg:mb-8 rounded-xl p-1.5 min-w-max backdrop-blur-xl" style={{ background: 'hsla(240, 8%, 10%, 0.5)', border: '1px solid hsla(0, 0%, 100%, 0.06)' }}>
+      <div className="flex gap-2 mb-6 lg:mb-8 rounded-xl p-1.5 min-w-max backdrop-blur-xl glass-card">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -24,7 +24,7 @@ const Header = ({ activeTab, onTabChange }: HeaderProps) => {
                 ? "bg-primary/20 text-primary border border-primary/40"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
             }`}
-            style={activeTab === tab.id ? { boxShadow: '0 0 16px hsla(0, 60%, 35%, 0.2)' } : {}}
+            style={activeTab === tab.id ? { boxShadow: '0 0 16px hsl(var(--primary) / 0.2)' } : {}}
           >
             {tab.label}
           </button>

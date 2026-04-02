@@ -256,6 +256,8 @@ const FoodScanner = ({ onAskAI }: FoodScannerProps) => {
             </ul>
           </div>
 
+          <p className="text-xs text-muted-foreground text-center italic">AI can make mistakes. Please double check.</p>
+
           <Button onClick={reset} variant="outline" className="w-full">Scan Another Meal</Button>
 
           {onAskAI && (
