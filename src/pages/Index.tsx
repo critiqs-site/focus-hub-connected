@@ -215,9 +215,23 @@ const Index = () => {
                 <Circle className="h-5 w-5 lg:h-6 lg:w-6 text-muted-foreground" />
                 <h2 className="text-lg lg:text-xl font-semibold text-foreground">Remaining</h2>
                 <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">{remainingTodos.length}</span>
+                <div className="ml-auto flex gap-1">
+                  <button
+                    onClick={() => setShowFewer(false)}
+                    className={`px-2.5 py-1 rounded-lg text-xs transition-all ${!showFewer ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setShowFewer(true)}
+                    className={`px-2.5 py-1 rounded-lg text-xs transition-all ${showFewer ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Top 3
+                  </button>
+                </div>
               </div>
               <div className="space-y-4">
-                {remainingTodos.length > 0 ? renderTodoSection(remainingTodos, dividers) : todos.length > 0 ? (
+                {remainingTodos.length > 0 ? renderTodoSection(showFewer ? remainingTodos.slice(0, 3) : remainingTodos, dividers) : todos.length > 0 ? (
                   <p className="text-muted-foreground text-sm italic pl-8 mb-4">All done for today! 🎉</p>
                 ) : null}
               </div>
