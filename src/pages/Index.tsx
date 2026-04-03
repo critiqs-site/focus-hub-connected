@@ -42,6 +42,7 @@ const Index = () => {
   const [chatInitialMessage, setChatInitialMessage] = useState<{ text: string; image?: string } | null>(null);
   const [showChooser, setShowChooser] = useState(false);
   const [showFewer, setShowFewer] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(Infinity);
 
   const {
     todos, dividers, loading: todosLoading,
