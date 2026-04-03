@@ -1,67 +1,74 @@
 
 
-# Phase 2 Implementation Plan
+# Phase 2 Fixes & Improvements
 
-## 1. Show All / Show Fewer Toggle for Todos
+## 1. Daily Reminders — Smaller + Persistent + Easier UX
 
-**What**: Add a toggle above the "Remaining" section. Default = "Show All". When "Show Fewer" is selected, only show top 3 remaining todos. When one is completed, the next one slides in.
+**Problem**: Quote card is too big, "Manage Reminders" is confusing for new users, and reminders disappear between sessions.
 
-**Changes**:
-- Edit `src/pages/Index.tsx`: Add state `showFewer` (default false). When true, slice `remainingTodos` to first 3. Add a small toggle button row ("Show All" / "Show Fewer") above the Remaining header.
-
-## 2. Daily Reminders Rework — Random Motivational Quote
-
-**What**: Completely rework DailyReminders. It becomes its own section. Users can add as many reminder notes as they want. On every app open, one random reminder is picked and shown as a big motivational quote. A refresh button picks a new random one.
-
-**Changes**:
+**Fix**:
 - Edit `src/components/DailyReminders.tsx`:
-  - When reminders exist: show a large glass-card with a random reminder as a quote (bigger text, quotation marks, centered)
-  - Add a refresh (🔄) button to re-randomize
-  - Below the quote, show "Manage Reminders" expand to see full list with add/remove
-  - When no reminders: show the "Add Daily Reminder" button which navigates to the reminder manager
-- Edit `src/pages/Index.tsx`: Keep DailyReminders in its current position above todos
+  - **Shrink the quote card**: Reduce padding from `p-6` to `p-4`, quote icon from `h-8 w-8` to `h-5 w-5`, text from `text-lg` to `text-base`. Keep it compact — 2-3 lines max
+  - **Persistence**: Already uses `localStorage` with key `daily_reminders` — investigate why it's not loading. Likely the `REMINDERS_KEY` or the component is re-mounting. Add a `console.log` guard and ensure `useEffect` runs correctly. The load logic looks correct; the issue may be that `randomIndex` defaults to 0 but `reminders` is empty on first render causing `reminders[0]?.text` to be undefined — this is already handled. Need to verify the localStorage key hasn't been cleared elsewhere
+  - **Simpler UX**: Replace "Manage Reminders" toggle with an inline "+" button next to the refresh button. When clicked, show an input field directly below the quote. Show a small "x" on each reminder only when in edit mode. Add an "Edit" pencil icon button to enter edit mode — much more intuitive than "Manage Reminders"
+  - When no reminders exist, show a smaller dashed-border card saying "Add a daily reminder to stay motivated" with a + button
 
-## 3. Fix Light Theme Appearance
+## 2. Show All / Show Fewer — Progressive Loading
 
-**What**: The white/light themes look bad because `glass-card` uses hardcoded dark HSL values (`hsla(240, 8%, 10%, 0.6)`). Need to make glass-card and other components adapt to light mode.
+**Problem**: "Top 3" currently shows 3 and stops. User wants progressive "Show more" that reveals 3 more each time.
 
-**Changes**:
-- Edit `src/index.css`:
-  - Add `.light-theme .glass-card` override with light-appropriate glass: `background: hsla(0, 0%, 100%, 0.7)`, `border: 1px solid hsla(0,0%,0%,0.08)`, lighter shadow
-  - Add `.light-theme body` background with softer gradients suitable for white
-  - Add `.light-theme .spin-ring::before` with appropriate border colors
-- Edit `src/hooks/useTheme.ts`: Fine-tune the LIGHT_BASE values — make muted-foreground darker for better readability, adjust border contrast
-- Edit `src/components/Header.tsx`: Replace hardcoded `hsla(240, 8%, 10%, 0.5)` background with a CSS class that adapts to theme
+**Fix**:
+- Edit `src/pages/Index.tsx`:
+  - Add state `visibleCount` (default: Infinity for "All" mode, 3 for "Fewer" mode)
+  - When "Top 3" is selected: set `visibleCount = 3`
+  - When "All" is selected: set `visibleCount = Infinity`
+  - Slice `remainingTodos` to `visibleCount` before passing to `renderTodoSection`
+  - If `visibleCount < remainingTodos.length`, show a "Show more" button below todos that increments `visibleCount += 3`
+  - Reset `visibleCount` when toggling between All/Fewer
 
-## 4. Fix Non-Orange Dark Themes
+## 3. Schedule View Rework
 
-**What**: Purple and Maroon dark themes may have hardcoded orange/maroon references (e.g., Header tab glow `hsla(0, 60%, 35%, 0.2)`). Audit and replace with `var(--primary)` references.
+**Problem**: "Coming Up" shows "Next" even when something is active. Schedule stream is notification-style stacked cards instead of time-slot sections. Theme colors hardcoded as orange in schedule.
 
-**Changes**:
-- Edit `src/components/Header.tsx`: Replace `hsla(0, 60%, 35%, 0.2)` in boxShadow with `hsl(var(--primary) / 0.2)` via template literal or CSS variable
+**Fix** — Edit `src/components/EventsView.tsx`:
 
-## 5. Tools View — Separate Manual & AI Sections
+### 3a. Coming Up — Show Active Event
+- Compute `activeEvent` using `getEventStatus(e) === "active"` 
+- If `activeEvent` exists: show it with pulsing dot + "ACTIVE NOW" label + time range, instead of "Next"
+- Below active, show exactly 1 "NEXT" event (the next upcoming non-completed one)
+- If no active event: show "NEXT" as current behavior but only 1 event
 
-**What**: Split tools into two sections: "Manual Tools" (Pomodoro, Stopwatch, Breathing) and "AI Tools" (Physique Rater, Outfit Rater, Food Scanner). Add "AI can make mistakes. Please double check." disclaimer under AI tools section header.
+### 3b. Schedule Stream — Time-Slot Sections
+- Instead of stacked notification cards, group events by their start hour
+- Render as timeline: left side shows hour label (e.g., "9 PM"), right side shows the event card with title + duration (e.g., "1 hour")
+- Each event card is a larger block with rounded corners, proper spacing between time slots
+- Layout reference (from uploaded image): time label on left, event block spanning to the right with title + duration badge
 
-**Changes**:
-- Edit `src/components/ToolsView.tsx`:
-  - Add section headers: "⚙️ Manual Tools" and "🤖 AI Tools"
-  - Group Pomodoro + Stopwatch + Breathing under Manual
-  - Group Physique + Outfit + Food under AI
-  - Add disclaimer text under AI header
-  - Accept `isGuest` prop — if guest, show "Sign in to use AI tools" instead of rendering the AI tool components
+### 3c. Theme-Aware Colors
+- Replace all hardcoded `hsla(24, 95%, 53%, ...)` with `hsl(var(--primary) / opacity)` using template literals
+- Active event glow, background gradient, border — all should use `var(--primary)`
 
-- Edit `src/pages/Index.tsx`: Pass `isGuest` prop to ToolsView
+### 3d. Per-Event Color Tinting
+- Add optional `color` field to `ScheduledEvent` type in `src/types/todo.ts`
+- In manual add form: add a small color picker (green, red, yellow, blue, purple, or "auto")
+- In AI generation: have the edge function return a `color` field based on event category (break=green, work=red, play=yellow, study=blue, exercise=purple)
+- Edit `supabase/functions/schedule-ai/index.ts`: add color assignment to the AI prompt instructions
+- The event card background uses the assigned color tint instead of primary
+- Need to add `color` column to `scheduled_events` table via migration
+- Edit `src/hooks/useEvents.ts`: map `color` field from DB
 
-## 6. AI Disclaimer + Guest AI Restriction
+## 4. Journal — View Older Entries
 
-**What**: For guests, disable the floating AI chat button entirely. Add "AI can make mistakes. Please double check." to every AI tool result and the chat window.
+**Problem**: Journal only shows today's entry, no way to browse past entries.
 
-**Changes**:
-- Edit `src/pages/Index.tsx`: Only render `<FloatingAIChat>` when `!isGuest`
-- Edit `src/components/FloatingAIChat.tsx`: Add small disclaimer text at bottom of chat area: "AI can make mistakes. Please double check."
-- Edit `src/components/PhysiqueRater.tsx`, `src/components/OutfitRater.tsx`, `src/components/FoodScanner.tsx`: Add disclaimer below results
+**Fix** — Edit `src/components/JournalView.tsx`:
+- Add a date navigator (left/right arrows + date display) above the journal form
+- State: `selectedDate` (default: today)
+- When navigating to a past date: load that date's entry (from Supabase or localStorage)
+- Past entries are read-only (dimmed save button, or just view mode)
+- Today's entry remains editable
+- For guests: iterate through `guest_journal` localStorage keys
+- Add a "Today" button to quickly jump back to current date
 
 ---
 
@@ -69,14 +76,12 @@
 
 | Action | File |
 |--------|------|
-| Edit | `src/pages/Index.tsx` (show fewer toggle, pass isGuest to tools, hide AI chat for guests) |
-| Edit | `src/components/DailyReminders.tsx` (random quote display, refresh, manage UI) |
-| Edit | `src/index.css` (light theme glass-card, body bg overrides) |
-| Edit | `src/hooks/useTheme.ts` (tune light base values) |
-| Edit | `src/components/Header.tsx` (remove hardcoded colors) |
-| Edit | `src/components/ToolsView.tsx` (manual vs AI sections, guest restriction) |
-| Edit | `src/components/FloatingAIChat.tsx` (disclaimer) |
-| Edit | `src/components/PhysiqueRater.tsx` (disclaimer) |
-| Edit | `src/components/OutfitRater.tsx` (disclaimer) |
-| Edit | `src/components/FoodScanner.tsx` (disclaimer) |
+| Edit | `src/components/DailyReminders.tsx` (smaller, simpler UX) |
+| Edit | `src/pages/Index.tsx` (progressive show more) |
+| Edit | `src/components/EventsView.tsx` (active now, timeline layout, theme colors, per-event color) |
+| Edit | `src/components/JournalView.tsx` (date navigator for older entries) |
+| Edit | `src/types/todo.ts` (add color to ScheduledEvent) |
+| Edit | `src/hooks/useEvents.ts` (map color field) |
+| Edit | `supabase/functions/schedule-ai/index.ts` (add color to AI output) |
+| Create | Migration for `color` column on `scheduled_events` |
 
