@@ -48,6 +48,7 @@ export const useEvents = (userId: string | undefined) => {
           date: e.date,
           completed: e.completed,
           createdAt: e.created_at,
+          color: e.color || null,
         }))
       );
     }
@@ -56,17 +57,16 @@ export const useEvents = (userId: string | undefined) => {
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  const addEvent = async (title: string, time: string, date: string, timeEnd?: string) => {
+  const addEvent = async (title: string, time: string, date: string, timeEnd?: string, color?: string) => {
     const validated = eventSchema.safeParse({ title, time, date, timeEnd: timeEnd || "", description: "" });
     if (!validated.success) { toast.error(validated.error.errors[0]?.message || "Invalid input"); return; }
     
-    // Request notification permission on first event add
     const hasPermission = await requestNotificationPermission();
     
     if (isGuest) {
       const newEvent: ScheduledEvent = {
         id: crypto.randomUUID(), title, description: "", time, timeEnd: timeEnd || "", date,
-        completed: false, createdAt: new Date().toISOString(),
+        completed: false, createdAt: new Date().toISOString(), color: color || null,
       };
       const updated = [...events, newEvent];
       setEvents(updated);
@@ -78,15 +78,15 @@ export const useEvents = (userId: string | undefined) => {
     if (!userId) return;
     const { data, error } = await supabase
       .from("scheduled_events")
-      .insert({ user_id: userId, title, time, time_end: timeEnd || "", date })
+      .insert({ user_id: userId, title, time, time_end: timeEnd || "", date, color: color || null })
       .select()
       .single();
     if (error) { toast.error("Failed to add event"); }
     else {
-      const created = {
+      const created: ScheduledEvent = {
         id: data.id, title: data.title, description: data.description,
         time: data.time, timeEnd: (data as any).time_end || "", date: data.date,
-        completed: data.completed, createdAt: data.created_at,
+        completed: data.completed, createdAt: data.created_at, color: (data as any).color || null,
       };
       setEvents(prev => [...prev, created]);
       toast.success("Event added");
@@ -94,19 +94,18 @@ export const useEvents = (userId: string | undefined) => {
     }
   };
 
-  const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string; description?: string }>) => {
+  const addMultipleEvents = async (newEvents: Array<{ title: string; time: string; timeEnd: string; date: string; description?: string; color?: string }>) => {
     for (const e of newEvents) {
       const validated = eventSchema.safeParse({ title: e.title, time: e.time, date: e.date, timeEnd: e.timeEnd, description: e.description || "" });
       if (!validated.success) { toast.error(`Invalid event "${e.title}": ${validated.error.errors[0]?.message}`); return; }
     }
     
-    // Request notification permission on first event add
     const hasPermission = await requestNotificationPermission();
     
     if (isGuest) {
       const created = newEvents.map(e => ({
         id: crypto.randomUUID(), title: e.title, description: e.description || "", time: e.time, timeEnd: e.timeEnd,
-        date: e.date, completed: false, createdAt: new Date().toISOString(),
+        date: e.date, completed: false, createdAt: new Date().toISOString(), color: e.color || null,
       }));
       const updated = [...events, ...created];
       setEvents(updated);
@@ -116,13 +115,13 @@ export const useEvents = (userId: string | undefined) => {
       return;
     }
     if (!userId) return;
-    const rows = newEvents.map(e => ({ user_id: userId, title: e.title, description: e.description || "", time: e.time, time_end: e.timeEnd, date: e.date }));
+    const rows = newEvents.map(e => ({ user_id: userId, title: e.title, description: e.description || "", time: e.time, time_end: e.timeEnd, date: e.date, color: e.color || null }));
     const { data, error } = await supabase.from("scheduled_events").insert(rows).select();
     if (error) { toast.error("Failed to add events"); }
     else {
       const mapped = data.map((d: any) => ({
         id: d.id, title: d.title, description: d.description, time: d.time,
-        timeEnd: d.time_end || "", date: d.date, completed: d.completed, createdAt: d.created_at,
+        timeEnd: d.time_end || "", date: d.date, completed: d.completed, createdAt: d.created_at, color: d.color || null,
       }));
       setEvents(prev => [...prev, ...mapped]);
       toast.success(`${mapped.length} events added`);
@@ -130,7 +129,7 @@ export const useEvents = (userId: string | undefined) => {
     }
   };
 
-  const editEvent = async (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed">>) => {
+  const editEvent = async (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed" | "color">>) => {
     if (updates.title !== undefined) {
       const v = eventSchema.shape.title.safeParse(updates.title);
       if (!v.success) { toast.error(v.error.errors[0]?.message || "Invalid title"); return; }

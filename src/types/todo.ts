@@ -29,6 +29,7 @@ export interface ScheduledEvent {
   date: string;
   completed: boolean;
   createdAt: string;
+  color?: string | null;
 }
 
 export interface DailyReminder {

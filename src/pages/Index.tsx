@@ -42,6 +42,7 @@ const Index = () => {
   const [chatInitialMessage, setChatInitialMessage] = useState<{ text: string; image?: string } | null>(null);
   const [showChooser, setShowChooser] = useState(false);
   const [showFewer, setShowFewer] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(Infinity);
 
   const {
     todos, dividers, loading: todosLoading,
@@ -217,21 +218,33 @@ const Index = () => {
                 <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">{remainingTodos.length}</span>
                 <div className="ml-auto flex gap-1">
                   <button
-                    onClick={() => setShowFewer(false)}
+                    onClick={() => { setShowFewer(false); setVisibleCount(Infinity); }}
                     className={`px-2.5 py-1 rounded-lg text-xs transition-all ${!showFewer ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     All
                   </button>
                   <button
-                    onClick={() => setShowFewer(true)}
+                    onClick={() => { setShowFewer(true); setVisibleCount(3); }}
                     className={`px-2.5 py-1 rounded-lg text-xs transition-all ${showFewer ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    Top 3
+                    Show Fewer
                   </button>
                 </div>
               </div>
               <div className="space-y-4">
-                {remainingTodos.length > 0 ? renderTodoSection(showFewer ? remainingTodos.slice(0, 3) : remainingTodos, dividers) : todos.length > 0 ? (
+                {remainingTodos.length > 0 ? (
+                  <>
+                    {renderTodoSection(showFewer ? remainingTodos.slice(0, visibleCount) : remainingTodos, dividers)}
+                    {showFewer && visibleCount < remainingTodos.length && (
+                      <button
+                        onClick={() => setVisibleCount(prev => prev + 3)}
+                        className="w-full py-2.5 rounded-xl text-sm text-primary hover:bg-primary/10 transition-all border border-primary/20 hover:border-primary/40"
+                      >
+                        Show more ({remainingTodos.length - visibleCount} remaining)
+                      </button>
+                    )}
+                  </>
+                ) : todos.length > 0 ? (
                   <p className="text-muted-foreground text-sm italic pl-8 mb-4">All done for today! 🎉</p>
                 ) : null}
               </div>
