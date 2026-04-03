@@ -4,11 +4,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a schedule parser. The user will describe their daily schedule in natural language. Extract individual events with title, start time, end time, and a brief description.
+const SYSTEM_PROMPT = `You are a schedule parser. The user will describe their daily schedule in natural language. Extract individual events with title, start time, end time, description, and a color category.
 
 Rules:
 - Output ONLY valid JSON array, no extra text
-- Each item: {"title":"<short title>","time":"<HH:mm 24h>","timeEnd":"<HH:mm 24h>","description":"<1-2 sentence description>"}
+- Each item: {"title":"<short title>","time":"<HH:mm 24h>","timeEnd":"<HH:mm 24h>","description":"<1-2 sentence description>","color":"<color>"}
 - Convert all times to 24-hour format (e.g. 9 AM = 09:00, 2:30 PM = 14:30)
 - If no end time given, estimate reasonable duration (meals ~30min, gym ~1hr, work ~2-4hr, meetings ~1hr)
 - Keep titles SHORT (2-5 words), capitalize properly
@@ -17,8 +17,17 @@ Rules:
 - If user says "morning" assume 08:00-09:00, "afternoon" = 13:00-14:00, "evening" = 18:00-19:00, "night" = 21:00-22:00
 - Extract ALL events mentioned, even casual ones
 
+Color assignment rules (pick the most fitting):
+- "red" = work, meetings, deadlines, assignments
+- "green" = breaks, rest, relaxation, meditation
+- "blue" = study, research, reading, learning
+- "yellow" = play, games, fun, social, hobbies
+- "purple" = exercise, gym, sports, fitness
+- "orange" = meals, eating, cooking, food
+- "pink" = self-care, grooming, shopping, personal
+
 Example input: "eating breakfast at 9 to 9:30, gym from 10 to 11:30, lunch at 1pm, work from 2 to 6, dinner at 7:30"
-Example output: [{"title":"Breakfast","time":"09:00","timeEnd":"09:30","description":"Morning meal to start the day"},{"title":"Gym Session","time":"10:00","timeEnd":"11:30","description":"Workout session for fitness"},{"title":"Lunch","time":"13:00","timeEnd":"13:30","description":"Midday meal break"},{"title":"Work","time":"14:00","timeEnd":"18:00","description":"Afternoon work block"},{"title":"Dinner","time":"19:30","timeEnd":"20:00","description":"Evening dinner"}]
+Example output: [{"title":"Breakfast","time":"09:00","timeEnd":"09:30","description":"Morning meal to start the day","color":"orange"},{"title":"Gym Session","time":"10:00","timeEnd":"11:30","description":"Workout session for fitness","color":"purple"},{"title":"Lunch","time":"13:00","timeEnd":"13:30","description":"Midday meal break","color":"orange"},{"title":"Work","time":"14:00","timeEnd":"18:00","description":"Afternoon work block","color":"red"},{"title":"Dinner","time":"19:30","timeEnd":"20:00","description":"Evening dinner","color":"orange"}]
 
 ONLY output raw JSON array. No extra text.`;
 
