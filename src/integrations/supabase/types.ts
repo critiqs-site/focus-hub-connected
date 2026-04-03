@@ -103,6 +103,7 @@ export type Database = {
       }
       scheduled_events: {
         Row: {
+          color: string | null
           completed: boolean
           created_at: string
           date: string
@@ -115,6 +116,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           completed?: boolean
           created_at?: string
           date: string
@@ -127,6 +129,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           completed?: boolean
           created_at?: string
           date?: string
