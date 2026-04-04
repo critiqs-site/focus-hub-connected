@@ -130,16 +130,47 @@ const Index = () => {
   const isLoading = todosLoading || eventsLoading;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
-  const remainingTodos = todos.filter(t => !t.completions.includes(todayStr)).sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return 0;
-  });
-  const doneTodos = todos.filter(t => t.completions.includes(todayStr)).sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return 0;
-  });
+  // Determine today's index within the fixed week for goal-based auto-skip
+  const todayDayIndex = useMemo(() => {
+    const today = new Date();
+    const fixedDays = getFixedWeekDays(today);
+    return fixedDays.findIndex(d => format(d, "yyyy-MM-dd") === todayStr);
+  }, [todayStr]);
+
+  // Separate todos into remaining, done, and rest-day
+  const { remainingTodos, doneTodos, restDayTodos } = useMemo(() => {
+    const remaining: typeof todos = [];
+    const done: typeof todos = [];
+    const restDay: typeof todos = [];
+
+    for (const t of todos) {
+      const isCompletedToday = t.completions.includes(todayStr);
+      if (isCompletedToday) {
+        done.push(t);
+      } else if (t.goalDaysPerWeek < 7 && todayDayIndex >= 0) {
+        const suggested = getSuggestedDays(t.goalDaysPerWeek);
+        if (!suggested.includes(todayDayIndex)) {
+          restDay.push(t);
+        } else {
+          remaining.push(t);
+        }
+      } else {
+        remaining.push(t);
+      }
+    }
+
+    const sortFn = (a: typeof todos[0], b: typeof todos[0]) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return 0;
+    };
+
+    return {
+      remainingTodos: remaining.sort(sortFn),
+      doneTodos: done.sort(sortFn),
+      restDayTodos: restDay.sort(sortFn),
+    };
+  }, [todos, todayStr, todayDayIndex]);
 
   const handleDragEnd = (event: DragEndEvent, sectionTodos: typeof todos) => {
     const { active, over } = event;
