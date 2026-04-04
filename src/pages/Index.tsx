@@ -283,14 +283,29 @@ const Index = () => {
                 ) : null}
               </div>
             </div>
-            {doneTodos.length > 0 && (
+            {(doneTodos.length > 0 || restDayTodos.length > 0) && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4 px-1">
                   <CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
                   <h2 className="text-lg lg:text-xl font-semibold text-foreground">Done</h2>
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{doneTodos.length}</span>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{doneTodos.length + restDayTodos.length}</span>
                 </div>
-                <div className="space-y-4 opacity-80">{renderTodoSection(doneTodos, dividers)}</div>
+                <div className="space-y-4 opacity-80">
+                  {renderTodoSection(doneTodos, dividers)}
+                  {/* Rest day todos */}
+                  {restDayTodos.length > 0 && (
+                    <div className="space-y-3">
+                      {restDayTodos.map((todo, idx) => (
+                        <div key={todo.id} className="animate-todo-in relative" style={{ animationDelay: `${idx * 80}ms` }}>
+                          <div className="absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/80 text-[10px] text-muted-foreground font-medium">
+                            <Moon className="h-3 w-3" /> Rest day
+                          </div>
+                          <TodoItem todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={0} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             <div className="space-y-4">
