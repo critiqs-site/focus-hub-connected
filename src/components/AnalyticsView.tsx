@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, isAfter, startOfDay, isSameDay, isSameMonth } from "date-fns";
-import { Flame, Target, TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isAfter, startOfDay, isSameDay, isSameMonth } from "date-fns";
+import { Flame, Target, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Todo } from "@/types/todo";
 
 interface AnalyticsViewProps {
@@ -18,16 +18,14 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     return Math.round((completedCount / todos.length) * 100);
   };
 
-  // Calendar data
   const calendarData = useMemo(() => {
     const monthStart = startOfMonth(viewMonth);
     const monthEnd = endOfMonth(viewMonth);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-    const startDow = monthStart.getDay(); // 0=Sun
+    const startDow = monthStart.getDay();
     return { days, startDow, monthStart, monthEnd };
   }, [viewMonth]);
 
-  // Stats
   const stats = useMemo(() => {
     const monthDays = calendarData.days.filter(d => !isAfter(d, today));
     const completedDays = monthDays.filter(d => calculateDailyPercentage(d) > 0).length;
@@ -38,7 +36,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
     const totalPossible = monthDays.length * todos.length;
     const completionRate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
 
-    // Calculate streak (consecutive days with >0% ending at today)
     let streak = 0;
     let checkDate = today;
     for (let i = 0; i < 365; i++) {
@@ -48,11 +45,20 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
       } else break;
     }
 
-    // Today's stats
     const todayStr = format(today, "yyyy-MM-dd");
     const todayDone = todos.filter(t => t.completions.includes(todayStr)).length;
 
     return { completedDays, completionRate, streak, todayDone, totalTodos: todos.length };
+  }, [calendarData, todos, today]);
+
+  // Bar chart data
+  const barChartData = useMemo(() => {
+    const monthDays = calendarData.days.filter(d => !isAfter(d, today));
+    return monthDays.map(d => ({
+      day: format(d, "d"),
+      pct: calculateDailyPercentage(d),
+      isToday: isSameDay(d, today),
+    }));
   }, [calendarData, todos, today]);
 
   const glassStyle = {
@@ -65,10 +71,10 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
 
   const getHeatColor = (pct: number): string => {
     if (pct === 0) return 'hsla(0, 0%, 100%, 0.04)';
-    if (pct <= 25) return 'hsla(0, 60%, 35%, 0.2)';
-    if (pct <= 50) return 'hsla(0, 60%, 35%, 0.4)';
-    if (pct <= 75) return 'hsla(0, 60%, 35%, 0.6)';
-    return 'hsla(0, 60%, 35%, 0.85)';
+    if (pct <= 25) return 'hsl(var(--primary) / 0.15)';
+    if (pct <= 50) return 'hsl(var(--primary) / 0.3)';
+    if (pct <= 75) return 'hsl(var(--primary) / 0.5)';
+    return 'hsl(var(--primary) / 0.75)';
   };
 
   if (todos.length === 0) {
@@ -122,16 +128,13 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           </button>
         </div>
 
-        {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
             <div key={d} className="text-center text-[10px] text-muted-foreground font-medium py-1">{d}</div>
           ))}
         </div>
 
-        {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-1">
-          {/* Empty cells for offset */}
           {Array.from({ length: calendarData.startDow }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
           ))}
@@ -159,7 +162,6 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           })}
         </div>
 
-        {/* Legend */}
         <div className="flex items-center justify-center gap-2 mt-4">
           <span className="text-[10px] text-muted-foreground">Less</span>
           {[0, 25, 50, 75, 100].map(v => (
@@ -168,6 +170,31 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
           <span className="text-[10px] text-muted-foreground">More</span>
         </div>
       </div>
+
+      {/* Monthly Bar Chart */}
+      {barChartData.length > 0 && (
+        <div className="p-6 rounded-2xl" style={glassStyle}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">Daily Completion</h3>
+          <div className="flex items-end gap-[2px] h-32">
+            {barChartData.map((bar, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full min-w-0">
+                <div
+                  className={`w-full rounded-t-sm transition-all duration-300 min-h-[2px] ${bar.isToday ? 'ring-1 ring-primary ring-offset-1 ring-offset-background' : ''}`}
+                  style={{
+                    height: `${Math.max(bar.pct, 2)}%`,
+                    background: bar.pct > 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.1)',
+                    opacity: bar.pct > 0 ? 0.5 + (bar.pct / 200) : 0.2,
+                  }}
+                  title={`Day ${bar.day}: ${bar.pct}%`}
+                />
+                {(parseInt(bar.day) === 1 || parseInt(bar.day) % 5 === 0 || bar.isToday) && (
+                  <span className={`text-[8px] mt-1 ${bar.isToday ? 'text-primary font-bold' : 'text-muted-foreground'}`}>{bar.day}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -57,13 +57,13 @@ const getDuration = (start: string, end: string) => {
 };
 
 const EVENT_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  red: { bg: 'hsla(0, 70%, 50%, 0.12)', border: 'hsla(0, 70%, 50%, 0.3)', text: 'hsl(0, 70%, 60%)' },
-  green: { bg: 'hsla(140, 60%, 45%, 0.12)', border: 'hsla(140, 60%, 45%, 0.3)', text: 'hsl(140, 60%, 55%)' },
-  blue: { bg: 'hsla(210, 70%, 50%, 0.12)', border: 'hsla(210, 70%, 50%, 0.3)', text: 'hsl(210, 70%, 60%)' },
-  yellow: { bg: 'hsla(45, 80%, 50%, 0.12)', border: 'hsla(45, 80%, 50%, 0.3)', text: 'hsl(45, 80%, 55%)' },
-  purple: { bg: 'hsla(270, 60%, 55%, 0.12)', border: 'hsla(270, 60%, 55%, 0.3)', text: 'hsl(270, 60%, 65%)' },
-  orange: { bg: 'hsla(24, 80%, 50%, 0.12)', border: 'hsla(24, 80%, 50%, 0.3)', text: 'hsl(24, 80%, 55%)' },
-  pink: { bg: 'hsla(330, 60%, 55%, 0.12)', border: 'hsla(330, 60%, 55%, 0.3)', text: 'hsl(330, 60%, 65%)' },
+  red: { bg: 'hsla(0, 70%, 50%, 0.06)', border: 'hsla(0, 70%, 50%, 0.15)', text: 'hsl(0, 70%, 60%)' },
+  green: { bg: 'hsla(140, 60%, 45%, 0.06)', border: 'hsla(140, 60%, 45%, 0.15)', text: 'hsl(140, 60%, 55%)' },
+  blue: { bg: 'hsla(210, 70%, 50%, 0.06)', border: 'hsla(210, 70%, 50%, 0.15)', text: 'hsl(210, 70%, 60%)' },
+  yellow: { bg: 'hsla(45, 80%, 50%, 0.06)', border: 'hsla(45, 80%, 50%, 0.15)', text: 'hsl(45, 80%, 55%)' },
+  purple: { bg: 'hsla(270, 60%, 55%, 0.06)', border: 'hsla(270, 60%, 55%, 0.15)', text: 'hsl(270, 60%, 65%)' },
+  orange: { bg: 'hsla(24, 80%, 50%, 0.06)', border: 'hsla(24, 80%, 50%, 0.15)', text: 'hsl(24, 80%, 55%)' },
+  pink: { bg: 'hsla(330, 60%, 55%, 0.06)', border: 'hsla(330, 60%, 55%, 0.15)', text: 'hsl(330, 60%, 65%)' },
 };
 
 const COLOR_OPTIONS = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'pink'];
@@ -285,14 +285,14 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
 
           {/* Next Event */}
           {isToday && nextEvent && (
-            <div className="w-full rounded-2xl p-5 lg:p-6" style={{
+            <div className="w-full rounded-xl p-3 lg:p-4" style={{
               ...glassStyle,
-              background: `linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.02) 100%)`,
+              background: `linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 100%)`,
             }}>
-              <p className="text-xs text-primary/70 font-semibold tracking-wider mb-2 uppercase">Next</p>
-              <p className="text-xl lg:text-2xl font-bold text-foreground mb-1">{nextEvent.title}</p>
-              <p className="text-lg text-primary font-bold">in {getCountdown(nextEvent.time)}</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] text-primary/70 font-semibold tracking-wider mb-1 uppercase">Next</p>
+              <p className="text-base lg:text-lg font-bold text-foreground mb-0.5">{nextEvent.title}</p>
+              <p className="text-sm text-primary font-bold">in {getCountdown(nextEvent.time)}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {formatTime12(nextEvent.time)}{nextEvent.timeEnd ? ` — ${formatTime12(nextEvent.timeEnd)}` : ""}
               </p>
             </div>

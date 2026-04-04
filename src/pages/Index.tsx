@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, CheckCircle2, Circle } from "lucide-react";
+import { Plus, CheckCircle2, Circle, Moon } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Header from "@/components/Header";
 import TodoItem from "@/components/TodoItem";
@@ -24,6 +24,7 @@ import { useTodos } from "@/hooks/useTodos";
 import { useEvents } from "@/hooks/useEvents";
 import { useTheme } from "@/hooks/useTheme";
 import { format } from "date-fns";
+import { getFixedWeekDays, getSuggestedDays } from "@/lib/utils";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import logoIcon from "@/assets/logo-icon.png";
@@ -129,16 +130,47 @@ const Index = () => {
   const isLoading = todosLoading || eventsLoading;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
-  const remainingTodos = todos.filter(t => !t.completions.includes(todayStr)).sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return 0;
-  });
-  const doneTodos = todos.filter(t => t.completions.includes(todayStr)).sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return 0;
-  });
+  // Determine today's index within the fixed week for goal-based auto-skip
+  const todayDayIndex = useMemo(() => {
+    const today = new Date();
+    const fixedDays = getFixedWeekDays(today);
+    return fixedDays.findIndex(d => format(d, "yyyy-MM-dd") === todayStr);
+  }, [todayStr]);
+
+  // Separate todos into remaining, done, and rest-day
+  const { remainingTodos, doneTodos, restDayTodos } = useMemo(() => {
+    const remaining: typeof todos = [];
+    const done: typeof todos = [];
+    const restDay: typeof todos = [];
+
+    for (const t of todos) {
+      const isCompletedToday = t.completions.includes(todayStr);
+      if (isCompletedToday) {
+        done.push(t);
+      } else if (t.goalDaysPerWeek < 7 && todayDayIndex >= 0) {
+        const suggested = getSuggestedDays(t.goalDaysPerWeek);
+        if (!suggested.includes(todayDayIndex)) {
+          restDay.push(t);
+        } else {
+          remaining.push(t);
+        }
+      } else {
+        remaining.push(t);
+      }
+    }
+
+    const sortFn = (a: typeof todos[0], b: typeof todos[0]) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return 0;
+    };
+
+    return {
+      remainingTodos: remaining.sort(sortFn),
+      doneTodos: done.sort(sortFn),
+      restDayTodos: restDay.sort(sortFn),
+    };
+  }, [todos, todayStr, todayDayIndex]);
 
   const handleDragEnd = (event: DragEndEvent, sectionTodos: typeof todos) => {
     const { active, over } = event;
@@ -166,8 +198,10 @@ const Index = () => {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, dividerTodos)}>
             <SortableContext items={dividerTodos.map(t => t.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
-                {dividerTodos.map((todo) => (
-                  <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
+                {dividerTodos.map((todo, todoIdx) => (
+                  <div key={todo.id} className="animate-todo-in" style={{ animationDelay: `${todoIdx * 80}ms` }}>
+                    <TodoItem todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
+                  </div>
                 ))}
               </div>
             </SortableContext>
@@ -249,14 +283,29 @@ const Index = () => {
                 ) : null}
               </div>
             </div>
-            {doneTodos.length > 0 && (
+            {(doneTodos.length > 0 || restDayTodos.length > 0) && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4 px-1">
                   <CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
                   <h2 className="text-lg lg:text-xl font-semibold text-foreground">Done</h2>
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{doneTodos.length}</span>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{doneTodos.length + restDayTodos.length}</span>
                 </div>
-                <div className="space-y-4 opacity-80">{renderTodoSection(doneTodos, dividers)}</div>
+                <div className="space-y-4 opacity-80">
+                  {renderTodoSection(doneTodos, dividers)}
+                  {/* Rest day todos */}
+                  {restDayTodos.length > 0 && (
+                    <div className="space-y-3">
+                      {restDayTodos.map((todo, idx) => (
+                        <div key={todo.id} className="animate-todo-in relative" style={{ animationDelay: `${idx * 80}ms` }}>
+                          <div className="absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/80 text-[10px] text-muted-foreground font-medium">
+                            <Moon className="h-3 w-3" /> Rest day
+                          </div>
+                          <TodoItem todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={0} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             <div className="space-y-4">
