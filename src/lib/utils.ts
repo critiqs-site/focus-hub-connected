@@ -6,6 +6,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Returns 0-indexed day positions that are "suggested" for this goal count */
+export function getSuggestedDays(goalDays: number): number[] {
+  if (goalDays >= 7) return [0, 1, 2, 3, 4, 5, 6];
+  const indices: number[] = [];
+  for (let i = 0; i < goalDays; i++) {
+    indices.push(Math.round(i * 7 / goalDays));
+  }
+  return indices;
+}
+
 /**
  * Returns the fixed 7-day block for a given date within its month.
  * Blocks: 1-7, 8-14, 15-21, 22-end of month.
@@ -15,7 +25,7 @@ export function getFixedWeekDays(date: Date): Date[] {
   const weekIndex = Math.floor((dayOfMonth - 1) / 7);
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
-  const startDay = weekIndex * 7 + 1; // 1, 8, 15, 22
+  const startDay = weekIndex * 7 + 1;
 
   const days: Date[] = [];
   for (let i = 0; i < 7; i++) {
@@ -35,14 +45,12 @@ export function getPreviousFixedWeekDays(date: Date): Date[] {
   const weekIndex = Math.floor((dayOfMonth - 1) / 7);
 
   if (weekIndex > 0) {
-    // Previous block in same month
     const prev = new Date(date);
     prev.setDate((weekIndex - 1) * 7 + 1);
     return getFixedWeekDays(prev);
   } else {
-    // Last block of previous month
     const prevMonthEnd = new Date(startOfMonth(date));
-    prevMonthEnd.setDate(0); // last day of prev month
+    prevMonthEnd.setDate(0);
     const prevWeekIndex = Math.floor((prevMonthEnd.getDate() - 1) / 7);
     const d = new Date(prevMonthEnd);
     d.setDate(prevWeekIndex * 7 + 1);
