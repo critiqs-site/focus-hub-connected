@@ -24,6 +24,7 @@ import { useTodos } from "@/hooks/useTodos";
 import { useEvents } from "@/hooks/useEvents";
 import { useTheme } from "@/hooks/useTheme";
 import { format } from "date-fns";
+import { getFixedWeekDays, getSuggestedDays } from "@/lib/utils";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import logoIcon from "@/assets/logo-icon.png";
