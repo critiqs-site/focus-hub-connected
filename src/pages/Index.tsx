@@ -198,8 +198,10 @@ const Index = () => {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, dividerTodos)}>
             <SortableContext items={dividerTodos.map(t => t.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
-                {dividerTodos.map((todo) => (
-                  <TodoItem key={todo.id} todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
+                {dividerTodos.map((todo, todoIdx) => (
+                  <div key={todo.id} className="animate-todo-in" style={{ animationDelay: `${todoIdx * 80}ms` }}>
+                    <TodoItem todo={todo} onToggleDay={handleToggleDay} onEdit={handleEdit} onDelete={handleDelete} onTogglePin={handleTogglePin} pinnedCount={pinnedCount} />
+                  </div>
                 ))}
               </div>
             </SortableContext>
