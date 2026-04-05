@@ -106,27 +106,6 @@ const Index = () => {
     setChatOpen(true);
   };
 
-  // Unified loading screen
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <div className="relative">
-          <div className="spin-ring">
-            <img src={logoIcon} alt="CRITIQS" className="w-14 h-14 object-contain relative z-10" />
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground animate-pulse">Loading your habits...</p>
-      </div>
-    );
-  }
-
-  if (!user && !isGuest) return null;
-
-  // Show premade chooser for first-time guests
-  if (showChooser && isGuest) {
-    return <PremadeTodoChooser onComplete={handleChooserComplete} />;
-  }
-
   const isLoading = todosLoading || eventsLoading;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
@@ -171,6 +150,27 @@ const Index = () => {
       restDayTodos: restDay.sort(sortFn),
     };
   }, [todos, todayStr, todayDayIndex]);
+
+  // Unified loading screen
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <div className="relative">
+          <div className="spin-ring">
+            <img src={logoIcon} alt="CRITIQS" className="w-14 h-14 object-contain relative z-10" />
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground animate-pulse">Loading your habits...</p>
+      </div>
+    );
+  }
+
+  if (!user && !isGuest) return null;
+
+  // Show premade chooser for first-time guests
+  if (showChooser && isGuest) {
+    return <PremadeTodoChooser onComplete={handleChooserComplete} />;
+  }
 
   const handleDragEnd = (event: DragEndEvent, sectionTodos: typeof todos) => {
     const { active, over } = event;
