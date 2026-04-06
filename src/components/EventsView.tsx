@@ -443,7 +443,6 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                     <div className="absolute left-[-3px] top-4 w-1.5 h-1.5 rounded-full bg-primary/40" />
                     {group.events.map(event => {
                       const status = getEventStatus(event);
-                      const colors = getEventColors(event);
                       const isSelected = selectedId === event.id;
                       const duration = getDuration(event.time, event.timeEnd);
 
@@ -453,16 +452,12 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
                           onClick={() => setSelectedId(event.id === selectedId ? null : event.id)}
                           className={`w-full text-left transition-all duration-200 rounded-xl p-3.5 group relative ${isSelected ? 'ring-1 ring-primary/50' : ''}`}
                           style={{
-                            background: colors
-                              ? `linear-gradient(135deg, ${colors.bg} 0%, transparent 100%)`
-                              : status === "active"
-                                ? `linear-gradient(135deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--primary) / 0.04) 100%)`
-                                : 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.06) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
-                            border: colors
-                              ? `1px solid ${colors.border}`
-                              : status === "active"
-                                ? `1px solid hsl(var(--primary) / 0.25)`
-                                : '1px solid hsla(0, 0%, 100%, 0.08)',
+                            background: status === "active"
+                              ? `linear-gradient(135deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--primary) / 0.04) 100%)`
+                              : 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.06) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
+                            border: status === "active"
+                              ? `1px solid hsl(var(--primary) / 0.25)`
+                              : '1px solid hsla(0, 0%, 100%, 0.08)',
                             opacity: status === "completed" ? 0.4 : 1,
                             boxShadow: status === "active" ? `0 4px 16px hsl(var(--primary) / 0.12)` : 'none',
                           }}

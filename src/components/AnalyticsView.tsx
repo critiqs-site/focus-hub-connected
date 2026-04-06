@@ -33,7 +33,8 @@ const AnalyticsView = ({ todos }: AnalyticsViewProps) => {
       const dateStr = format(d, "yyyy-MM-dd");
       return sum + todos.filter(t => t.completions.includes(dateStr)).length;
     }, 0);
-    const totalPossible = monthDays.length * todos.length;
+    // Use full month length as denominator so 1/30 = 3.3% not 1/6 = 17%
+    const totalPossible = calendarData.days.length * todos.length;
     const completionRate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
 
     let streak = 0;

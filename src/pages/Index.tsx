@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, CheckCircle2, Circle, Moon } from "lucide-react";
+import { Plus, CheckCircle2, Circle, Moon, X, Megaphone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Header from "@/components/Header";
 import TodoItem from "@/components/TodoItem";
@@ -18,6 +18,7 @@ import CompletionBanner from "@/components/CompletionBanner";
 import PremadeTodoChooser from "@/components/PremadeTodoChooser";
 import JournalView from "@/components/JournalView";
 import DailyReminders from "@/components/DailyReminders";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
@@ -44,6 +45,16 @@ const Index = () => {
   const [showChooser, setShowChooser] = useState(false);
   const [showFewer, setShowFewer] = useState(false);
   const [visibleCount, setVisibleCount] = useState(Infinity);
+  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+
+  // Fetch active announcement
+  useEffect(() => {
+    supabase.from("announcements").select("message").eq("active", true).order("created_at", { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setAnnouncement(data[0].message);
+      });
+  }, []);
 
   const {
     todos, dividers, loading: todosLoading,
@@ -223,6 +234,19 @@ const Index = () => {
       </div>
 
       <Navbar />
+
+      {/* Announcement Banner */}
+      {announcement && !announcementDismissed && (
+        <div className="relative z-20 bg-primary/15 border-b border-primary/20 px-4 py-2.5">
+          <div className="max-w-6xl mx-auto flex items-center justify-center gap-3">
+            <Megaphone className="h-4 w-4 text-primary flex-shrink-0" />
+            <p className="text-sm text-foreground font-medium">{announcement}</p>
+            <button onClick={() => setAnnouncementDismissed(true)} className="text-muted-foreground hover:text-foreground ml-2 flex-shrink-0">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-10">
         <div className="flex items-center justify-between mb-4">
