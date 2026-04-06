@@ -45,6 +45,16 @@ const Index = () => {
   const [showChooser, setShowChooser] = useState(false);
   const [showFewer, setShowFewer] = useState(false);
   const [visibleCount, setVisibleCount] = useState(Infinity);
+  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+
+  // Fetch active announcement
+  useEffect(() => {
+    supabase.from("announcements").select("message").eq("active", true).order("created_at", { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setAnnouncement(data[0].message);
+      });
+  }, []);
 
   const {
     todos, dividers, loading: todosLoading,
