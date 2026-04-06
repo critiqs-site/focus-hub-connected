@@ -235,6 +235,19 @@ const Index = () => {
 
       <Navbar />
 
+      {/* Announcement Banner */}
+      {announcement && !announcementDismissed && (
+        <div className="relative z-20 bg-primary/15 border-b border-primary/20 px-4 py-2.5">
+          <div className="max-w-6xl mx-auto flex items-center justify-center gap-3">
+            <Megaphone className="h-4 w-4 text-primary flex-shrink-0" />
+            <p className="text-sm text-foreground font-medium">{announcement}</p>
+            <button onClick={() => setAnnouncementDismissed(true)} className="text-muted-foreground hover:text-foreground ml-2 flex-shrink-0">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-10">
         <div className="flex items-center justify-between mb-4">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
