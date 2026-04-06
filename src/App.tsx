@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Download from "./pages/Download";
 import NotFound from "./pages/NotFound";
+import Owner from "./pages/Owner";
 
 const queryClient = new QueryClient();
 
