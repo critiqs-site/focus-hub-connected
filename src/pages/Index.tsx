@@ -18,6 +18,7 @@ import CompletionBanner from "@/components/CompletionBanner";
 import PremadeTodoChooser from "@/components/PremadeTodoChooser";
 import JournalView from "@/components/JournalView";
 import DailyReminders from "@/components/DailyReminders";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTodos } from "@/hooks/useTodos";
