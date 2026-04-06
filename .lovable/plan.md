@@ -1,59 +1,76 @@
 
 
-# Phase 2 Fixes Plan
+# Comprehensive Fix & Owner Page Plan
 
-## 1. Goal-Based Auto-Skip for Non-Required Days
+## 1. Analytics Completion Rate Fix
 
-**Problem**: Todos with goals like "4 days/week" show as remaining even on days they don't need to be done. User wants non-scheduled days to appear as already done.
-
-**Fix** in `src/pages/Index.tsx`:
-- When filtering `remainingTodos` and `doneTodos`, check if today is a "suggested day" for the todo's goal
-- If `todo.goalDaysPerWeek < 7` and today's index in the fixed week is NOT in `getSuggestedDays(todo.goalDaysPerWeek)`, AND the todo is not already completed today, treat it as "done" (move to Done section with a "Not scheduled today" indicator)
-- Import `getSuggestedDays` logic (or move to utils) and `getFixedWeekDays` to determine today's day index
-
-**Also edit** `src/components/TodoItem.tsx`: Add a subtle "rest day" indicator when the todo appears in Done but wasn't actually completed
-
-## 2. Todo Load-In Animation (Staggered)
-
-**Fix** in `src/pages/Index.tsx` and `src/index.css`:
-- Add staggered `animation-delay` to each `TodoItem` wrapper based on index
-- In `src/index.css`: Add a `@keyframes todo-slide-in` animation (translateY(20px) + opacity 0 → 0 + 1)
-- Apply class `animate-todo-in` with `animation-fill-mode: backwards` so each item appears sequentially
-- Each item gets `style={{ animationDelay: '${index * 80}ms' }}`
-
-## 3. Analytics Fixes + Bar Chart
-
-**Problem**: Analytics may not properly track past days (it uses `calculateDailyPercentage` which checks `todos.completions` — this should work since completions persist). The real issue is the heatmap uses hardcoded maroon colors instead of theme-aware primary.
+**Bug**: Completion rate shows 17% instead of ~3% because it divides by only elapsed days in the current month (e.g., 6 days in April = 1/6 = 17%). User expects it over the full month (30 days).
 
 **Fix** in `src/components/AnalyticsView.tsx`:
-- Replace hardcoded `hsla(0, 60%, 35%, ...)` in `getHeatColor` with `hsl(var(--primary) / opacity)` values
-- Add a **monthly bar chart** below the calendar heatmap:
-  - For each day of the viewed month (up to today), render a vertical bar
-  - Bar height = completion percentage (0-100%)
-  - X-axis = day numbers, Y-axis implied by bar height
-  - Use primary color for bars
-  - Pure CSS/div-based chart (no library needed)
-  - Show day labels every 5 days to avoid clutter
+- Change `totalPossible` to use `calendarData.days.length * todos.length` (full month, e.g., 30 days) instead of `monthDays.length * todos.length` (only elapsed days)
+- This makes 1 completed day out of 30 = 3.3% as expected
+- Also review streak logic and bar chart to ensure correctness
 
-## 4. Schedule — Smaller "Next" Card + Lower Color Opacity
+## 2. Auto-Update (Discord-style Refresh)
+
+**Problem**: Service worker caches old assets. Users must Ctrl+F5 to see updates.
+
+**Fix** in `src/main.tsx`:
+- After registering SW, listen for `controllerchange` event and auto-reload
+- On every page load, call `registration.update()` to check for new SW
+- When a new SW is waiting, post `SKIP_WAITING` message to activate it immediately
+- This triggers `controllerchange` which auto-reloads the page — seamless update like Discord
+
+**Fix** in `public/sw.js`:
+- The `CACHE_NAME = "critiqs-v" + Date.now()` already ensures new caches on install
+- Add version-check: on activate, post message to all clients to reload if stale
+
+## 3. Remove Color Tint from Schedule Stream
 
 **Fix** in `src/components/EventsView.tsx`:
-- **Next card**: Reduce padding from `p-5 lg:p-6` to `p-3 lg:p-4`, reduce title font from `text-xl lg:text-2xl` to `text-lg`, reduce countdown font
-- **Event colors**: In `EVENT_COLORS`, reduce background opacity from `0.12` to `0.06`, border from `0.3` to `0.15` — more subtle tinting
+- Remove the `EVENT_COLORS` object and `getEventColors()` usage from timeline event cards
+- Use only the neutral glass style for all events (no green/yellow/red tinting)
+- Keep the color picker in the add form and details panel for future use (stored in DB) but don't apply visual tinting in the stream
+- Active events still get the primary-color glow
 
-## 5. Journal — Calendar with Entry Indicators
+## 4. Owner Page (`/owner`)
 
-**Fix** in `src/components/JournalView.tsx`:
-- Replace the simple chevron date navigator with a proper calendar (using existing `Calendar` component from shadcn)
-- Fetch all journal dates that have entries (from Supabase: `select date from mood_notes where user_id = ?` or from guest localStorage)
-- On the calendar, highlight dates that have journal entries with a colored dot (primary color)
-- Clicking a date loads that entry
-- Keep the "Today" button for quick navigation
-- Past entries remain read-only
+### 4a. Security Design
+- When user navigates to `/owner`, show a generic 404 page initially
+- Use `visibilitychange` event: when user leaves tab and returns after 5+ seconds, show a password + pet name form
+- Password and pet name are hardcoded as hashed values (or stored as secrets) — validated client-side against a simple hash
+- On correct entry, show the admin dashboard
+- Session stored in `sessionStorage` (cleared on tab close)
 
-## 6. Verify Tools Work
+### 4b. Admin Dashboard Features
+- **User List**: Create an edge function `admin-stats` that uses the service role key to query `auth.users` and aggregate data. Returns: list of users (email, created_at, last_sign_in_at), total registered count, total guest count (from profiles or approximation)
+- **Todo Analytics**: Query `todos` table aggregate stats: total todos created (excluding defaults from premade list), completion rates
+- **Tool Usage**: Since tool usage isn't tracked, add a simple counter in localStorage/DB (future). For now show available tools count
+- **Announcements**: Create an `announcements` table (id, message, active, created_at). Owner can create/delete announcements. Active announcements show as a banner at the top of the app for all users
+- **Refresh button** to re-fetch all stats
+- **Charts**: Simple bar charts for user signups over time, todo creation trends
 
-**What**: The tools (Pomodoro, Stopwatch, Breathing) are standalone React components — they should work. No code changes needed unless broken. Will not modify unless issues found.
+### 4c. Announcement Banner
+- In `src/pages/Index.tsx`: fetch active announcements from `announcements` table (public SELECT policy)
+- Display as a dismissible banner at the top with the announcement text
+
+### 4d. Database Changes
+- New table `announcements` with columns: `id` (uuid), `message` (text), `active` (boolean, default true), `created_at` (timestamptz)
+- RLS: public SELECT for all (even anon), INSERT/UPDATE/DELETE restricted (no public policy — only via service role from edge function)
+
+### 4e. Edge Function: `admin-stats`
+- Validates a shared admin secret (not user auth — owner uses password)
+- Uses service role to query `auth.admin.listUsers()`, aggregate `todos`, `scheduled_events`, `mood_notes` counts
+- Returns: user list, total todos, total events, total journal entries
+
+### 4f. Edge Function: `admin-announce`
+- Validates admin secret
+- CRUD for announcements table using service role
+
+## 5. General Code Quality Checks
+- Verify all tools (Pomodoro, Stopwatch, Breathing) render without errors — they are self-contained React components, should work
+- Verify journal loads entries correctly
+- Ensure daily reminders persist across sessions
 
 ---
 
@@ -61,11 +78,13 @@
 
 | Action | File |
 |--------|------|
-| Edit | `src/pages/Index.tsx` (goal-based auto-skip, staggered animation delays) |
-| Edit | `src/components/TodoItem.tsx` (rest day indicator) |
-| Edit | `src/index.css` (todo-slide-in keyframes) |
-| Edit | `src/components/AnalyticsView.tsx` (theme-aware heatmap colors, bar chart) |
-| Edit | `src/components/EventsView.tsx` (smaller Next card, lower color opacity) |
-| Edit | `src/components/JournalView.tsx` (calendar with entry dots) |
-| Edit | `src/lib/utils.ts` (export getSuggestedDays if needed) |
+| Edit | `src/components/AnalyticsView.tsx` (fix completion rate denominator) |
+| Edit | `src/main.tsx` (SW auto-update logic) |
+| Edit | `src/components/EventsView.tsx` (remove color tints from stream) |
+| Create | `src/pages/Owner.tsx` (admin dashboard with 404 disguise + auth) |
+| Edit | `src/App.tsx` (add /owner route) |
+| Edit | `src/pages/Index.tsx` (announcement banner) |
+| Create | `supabase/functions/admin-stats/index.ts` (user & usage stats) |
+| Create | `supabase/functions/admin-announce/index.ts` (announcement CRUD) |
+| Create | Migration for `announcements` table |
 
