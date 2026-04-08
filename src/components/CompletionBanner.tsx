@@ -53,51 +53,37 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
   const glowOpacity = 0.15 + badge.glowIntensity * 0.55;
 
   return (
-    <div className="mb-5 lg:mb-8 flex flex-col items-center gap-3 lg:gap-4">
-      {/* Big badge icon with glow */}
+    <div className="mb-3 lg:mb-5 flex flex-col items-center gap-2">
+      {/* Compact badge icon with glow */}
       <div className="relative flex items-center justify-center">
-        {/* Glow layers */}
-        <div
-          className="absolute rounded-full blur-2xl transition-all duration-700"
-          style={{
-            width: `${glowSize * 2.5}px`,
-            height: `${glowSize * 2.5}px`,
-            background: `radial-gradient(circle, rgba(${badge.glow}, ${glowOpacity}) 0%, rgba(${badge.glow}, 0) 70%)`,
-          }}
-        />
         <div
           className="absolute rounded-full blur-xl transition-all duration-700"
           style={{
-            width: `${glowSize * 1.6}px`,
-            height: `${glowSize * 1.6}px`,
-            background: `radial-gradient(circle, rgba(${badge.glow}, ${glowOpacity * 0.8}) 0%, rgba(${badge.glow}, 0) 60%)`,
+            width: `${glowSize * 1.8}px`,
+            height: `${glowSize * 1.8}px`,
+            background: `radial-gradient(circle, rgba(${badge.glow}, ${glowOpacity * 0.6}) 0%, rgba(${badge.glow}, 0) 70%)`,
           }}
         />
-
-        {/* Badge container */}
         <div
-          className={`relative z-10 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 w-[120px] h-[120px] lg:w-[160px] lg:h-[160px] ${
+          className={`relative z-10 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all duration-500 w-[80px] h-[80px] lg:w-[100px] lg:h-[100px] ${
             animating ? "scale-110" : "scale-100"
           }`}
           style={{
             background: `linear-gradient(145deg, hsla(0, 0%, 100%, 0.08), hsla(0, 0%, 100%, 0.02))`,
             backdropFilter: "blur(20px)",
             border: `1px solid rgba(${badge.glow}, ${0.15 + badge.glowIntensity * 0.3})`,
-            boxShadow: `
-              0 0 ${glowSize}px rgba(${badge.glow}, ${glowOpacity * 0.4}),
-              inset 0 1px 0 hsla(0, 0%, 100%, 0.08)
-            `,
+            boxShadow: `0 0 ${glowSize}px rgba(${badge.glow}, ${glowOpacity * 0.4}), inset 0 1px 0 hsla(0, 0%, 100%, 0.08)`,
           }}
         >
           <img
             src={badge.image}
             alt={badge.label}
-            className={`w-14 h-14 lg:w-20 lg:h-20 object-contain drop-shadow-lg transition-all duration-500 ${
+            className={`w-8 h-8 lg:w-12 lg:h-12 object-contain drop-shadow-lg transition-all duration-500 ${
               animating ? "animate-[spin_0.5s_ease-out]" : ""
             }`}
           />
           <span
-            className="text-2xl lg:text-4xl font-black tracking-tight text-foreground"
+            className="text-lg lg:text-2xl font-black tracking-tight text-foreground"
             style={{
               textShadow: `0 0 ${10 + badge.glowIntensity * 20}px rgba(${badge.glow}, ${glowOpacity * 0.6})`,
             }}
@@ -107,19 +93,17 @@ const CompletionBanner = ({ todos }: CompletionBannerProps) => {
         </div>
       </div>
 
-      {/* Label and progress */}
-      <div className="w-full max-w-sm lg:max-w-md text-center space-y-2">
+      <div className="w-full max-w-xs lg:max-w-sm text-center space-y-1">
         <p
-          className="text-sm lg:text-base font-bold tracking-wide uppercase transition-all duration-500"
+          className="text-[10px] lg:text-xs font-bold tracking-wide uppercase transition-all duration-500"
           style={{
             color: `rgba(${badge.glow}, ${0.6 + badge.glowIntensity * 0.4})`,
-            textShadow: `0 0 12px rgba(${badge.glow}, ${glowOpacity * 0.3})`,
           }}
         >
           {badge.label}
         </p>
-        <Progress value={percentage} className="h-2 bg-secondary/40" />
-        <p className="text-xs text-muted-foreground">
+        <Progress value={percentage} className="h-1.5 bg-secondary/40" />
+        <p className="text-[10px] text-muted-foreground">
           {done}/{total} habits completed today
         </p>
       </div>

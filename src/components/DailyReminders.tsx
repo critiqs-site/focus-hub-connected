@@ -60,7 +60,7 @@ const DailyReminders = () => {
   // No reminders — compact add prompt
   if (reminders.length === 0) {
     return (
-      <div className="mb-4">
+      <div className="mb-2">
         {showAdd ? (
           <div className="flex gap-2 mb-4">
             <Input
@@ -91,12 +91,12 @@ const DailyReminders = () => {
   }
 
   return (
-    <div className="mb-4 space-y-2">
+    <div className="mb-2 space-y-2">
       {/* Compact quote display */}
-      <div className="glass-card p-4 relative">
-        <div className="flex items-start gap-2.5">
-          <Quote className="h-5 w-5 text-primary/30 flex-shrink-0 mt-0.5" />
-          <p className="text-base font-medium text-foreground leading-relaxed flex-1 min-w-0 line-clamp-3">
+      <div className="glass-card p-3 relative">
+        <div className="flex items-center gap-2">
+          <Quote className="h-4 w-4 text-primary/30 flex-shrink-0" />
+          <p className="text-sm font-medium text-foreground leading-snug flex-1 min-w-0 line-clamp-2">
             {reminders[randomIndex]?.text}
           </p>
           <div className="flex items-center gap-1 flex-shrink-0">
