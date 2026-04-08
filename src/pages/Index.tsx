@@ -248,8 +248,8 @@ const Index = () => {
         </div>
       )}
 
-      <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-10">
-        <div className="flex items-center justify-between mb-4">
+      <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-6">
+        <div className="flex items-center justify-between mb-3">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
@@ -264,7 +264,7 @@ const Index = () => {
           <>
             <CompletionBanner todos={todos} />
             {isGuest && (
-              <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/20 text-sm text-muted-foreground text-center">
+              <div className="mb-3 p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-sm text-muted-foreground text-center">
                 Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
               </div>
             )}
