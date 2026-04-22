@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Phase = "inhale" | "hold" | "exhale" | "holdOut" | "idle";
@@ -19,9 +19,48 @@ const BreathingExercise = () => {
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [currentRound, setCurrentRound] = useState(1);
   const [countdown, setCountdown] = useState(PHASES[0].duration);
+  const [muted, setMuted] = useState(() => localStorage.getItem("breathing_muted") === "true");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const currentPhase = PHASES[currentPhaseIndex];
+
+  const playPhaseTone = useCallback((phase: Phase, duration: number) => {
+    if (muted) return;
+    try {
+      if (!audioCtxRef.current) {
+        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+        audioCtxRef.current = new Ctx();
+      }
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      const now = ctx.currentTime;
+      if (phase === "inhale") {
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.linearRampToValueAtTime(440, now + duration);
+      } else if (phase === "exhale") {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.linearRampToValueAtTime(220, now + duration);
+      } else {
+        osc.frequency.setValueAtTime(330, now);
+      }
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(now + duration + 0.05);
+    } catch {}
+  }, [muted]);
+
+  const toggleMute = () => {
+    setMuted(m => {
+      localStorage.setItem("breathing_muted", (!m).toString());
+      return !m;
+    });
+  };
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -81,15 +120,19 @@ const BreathingExercise = () => {
   useEffect(() => {
     if (sessionState === "active") {
       const phase = PHASES[currentPhaseIndex];
-      if (phase) setCountdown(phase.duration);
+      if (phase) {
+        setCountdown(phase.duration);
+        playPhaseTone(phase.phase, phase.duration);
+      }
     }
-  }, [currentPhaseIndex, currentRound]);
+  }, [currentPhaseIndex, currentRound, sessionState, playPhaseTone]);
 
   useEffect(() => {
     if (sessionState === "active" && countdown === 0 && currentPhaseIndex === 0) {
       setCountdown(PHASES[0].duration);
+      playPhaseTone(PHASES[0].phase, PHASES[0].duration);
     }
-  }, [sessionState]);
+  }, [sessionState, countdown, currentPhaseIndex, playPhaseTone]);
 
   const getCircleScale = () => {
     if (sessionState !== "active") return 1;
@@ -143,9 +186,14 @@ const BreathingExercise = () => {
       {/* Controls */}
       <div className="flex justify-center gap-3">
         {sessionState === "complete" ? (
-          <Button onClick={reset} variant="outline" size="sm" className="gap-2">
-            <RotateCcw className="w-4 h-4" /> Again
-          </Button>
+          <>
+            <Button onClick={reset} variant="outline" size="sm" className="gap-2">
+              <RotateCcw className="w-4 h-4" /> Again
+            </Button>
+            <Button onClick={toggleMute} variant="outline" size="icon" title={muted ? "Unmute" : "Mute"}>
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
+          </>
         ) : (
           <>
             {sessionState === "active" ? (
@@ -159,6 +207,9 @@ const BreathingExercise = () => {
             )}
             <Button onClick={reset} variant="outline" size="icon">
               <RotateCcw className="w-4 h-4" />
+            </Button>
+            <Button onClick={toggleMute} variant="outline" size="icon" title={muted ? "Unmute" : "Mute"}>
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </Button>
           </>
         )}

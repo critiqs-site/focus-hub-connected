@@ -50,11 +50,12 @@ const Index = () => {
 
   // Fetch active announcement
   useEffect(() => {
+    if (!user) return;
     supabase.from("announcements").select("message").eq("active", true).order("created_at", { ascending: false }).limit(1)
       .then(({ data }) => {
         if (data && data.length > 0) setAnnouncement(data[0].message);
       });
-  }, []);
+  }, [user]);
 
   const {
     todos, dividers, loading: todosLoading,
@@ -236,7 +237,7 @@ const Index = () => {
       <Navbar />
 
       {/* Announcement Banner */}
-      {announcement && !announcementDismissed && (
+      {user && announcement && !announcementDismissed && (
         <div className="relative z-20 bg-primary/15 border-b border-primary/20 px-4 py-2.5">
           <div className="max-w-6xl mx-auto flex items-center justify-center gap-3">
             <Megaphone className="h-4 w-4 text-primary flex-shrink-0" />
@@ -265,7 +266,11 @@ const Index = () => {
             <CompletionBanner todos={todos} />
             {isGuest && (
               <div className="mb-3 p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-sm text-muted-foreground text-center">
-                Guest mode — data is saved locally only. <button onClick={() => navigate("/auth")} className="text-primary font-medium hover:underline">Sign up to sync</button>
+                Guest users cannot use the full version of this app.{" "}
+                <button onClick={() => navigate("/auth")} className="text-primary font-medium underline hover:no-underline">
+                  Register now!
+                </button>{" "}
+                It's free.
               </div>
             )}
             <DailyReminders />
