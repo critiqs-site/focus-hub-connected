@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Play, Pause, RotateCcw, Settings } from "lucide-react";
+import { Play, Pause, RotateCcw, Settings, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
@@ -14,7 +14,37 @@ const PomodoroTimer = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [sessions, setSessions] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [muted, setMuted] = useState(() => localStorage.getItem("pomodoro_muted") === "true");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playTone = useCallback((freq: number, duration = 0.5) => {
+    if (muted) return;
+    try {
+      if (!audioCtxRef.current) {
+        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+        audioCtxRef.current = new Ctx();
+      }
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration + 0.05);
+    } catch {}
+  }, [muted]);
+
+  const toggleMute = () => {
+    setMuted(m => {
+      localStorage.setItem("pomodoro_muted", (!m).toString());
+      return !m;
+    });
+  };
 
   const totalTime = mode === "work" ? workMins * 60 : mode === "break" ? breakMins * 60 : longBreakMins * 60;
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
@@ -33,6 +63,7 @@ const PomodoroTimer = () => {
         if (prev <= 1) {
           setIsRunning(false);
           if (mode === "work") {
+            playTone(800, 0.6);
             const newSessions = sessions + 1;
             setSessions(newSessions);
             if (newSessions % 4 === 0) {
@@ -42,6 +73,7 @@ const PomodoroTimer = () => {
             setMode("break");
             return breakMins * 60;
           } else {
+            playTone(400, 0.6);
             setMode("work");
             return workMins * 60;
           }
@@ -50,7 +82,7 @@ const PomodoroTimer = () => {
       });
     }, 1000);
     return clearTimer;
-  }, [isRunning, mode, workMins, breakMins, longBreakMins, sessions, clearTimer]);
+  }, [isRunning, mode, workMins, breakMins, longBreakMins, sessions, clearTimer, playTone]);
 
   const reset = () => {
     clearTimer();
@@ -122,6 +154,9 @@ const PomodoroTimer = () => {
           {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </Button>
         <Button onClick={reset} variant="outline" size="icon"><RotateCcw className="w-4 h-4" /></Button>
+        <Button onClick={toggleMute} variant="outline" size="icon" title={muted ? "Unmute" : "Mute"}>
+          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </Button>
         <Button onClick={() => setShowSettings(!showSettings)} variant="outline" size="icon"><Settings className="w-4 h-4" /></Button>
       </div>
 
