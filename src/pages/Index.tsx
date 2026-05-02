@@ -18,6 +18,7 @@ import CompletionBanner from "@/components/CompletionBanner";
 import PremadeTodoChooser from "@/components/PremadeTodoChooser";
 import JournalView from "@/components/JournalView";
 import DailyReminders from "@/components/DailyReminders";
+import NotebookView from "@/components/NotebookView";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -362,6 +363,8 @@ const Index = () => {
           <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
         ) : activeTab === "journal" ? (
           <JournalView userId={user?.id} />
+        ) : activeTab === "notebook" ? (
+          <NotebookView userId={user?.id} isGuest={isGuest} />
         ) : activeTab === "tools" ? (
           <ToolsView onAskAI={handleAskAI} isGuest={isGuest} />
         ) : (

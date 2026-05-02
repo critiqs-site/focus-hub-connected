@@ -216,6 +216,44 @@
     animation: pulseLogo 2s ease-in-out infinite;
   }
 
+  .tab-new-glow {
+    animation: tabNewGlow 2.4s ease-in-out infinite;
+  }
+
+  @keyframes tabNewGlow {
+    0%, 100% { box-shadow: 0 0 8px hsl(var(--primary) / 0.35); }
+    50% { box-shadow: 0 0 18px hsl(var(--primary) / 0.65); }
+  }
+
+  .tiptap-editor :where(p, h1, h2, h3, ul, ol, blockquote, pre) { margin: 0.5em 0; }
+  .tiptap-editor h1 { font-size: 1.6em; font-weight: 700; }
+  .tiptap-editor h2 { font-size: 1.35em; font-weight: 700; }
+  .tiptap-editor h3 { font-size: 1.15em; font-weight: 600; }
+  .tiptap-editor ul { list-style: disc; padding-left: 1.4em; }
+  .tiptap-editor ol { list-style: decimal; padding-left: 1.4em; }
+  .tiptap-editor blockquote { border-left: 3px solid hsl(var(--primary) / 0.5); padding-left: 0.8em; color: hsl(var(--muted-foreground)); }
+  .tiptap-editor pre { background: hsl(var(--secondary) / 0.6); padding: 0.7em; border-radius: 0.5em; font-family: ui-monospace, monospace; font-size: 0.9em; overflow-x: auto; }
+  .tiptap-editor code { background: hsl(var(--secondary) / 0.6); padding: 0.1em 0.35em; border-radius: 0.3em; font-family: ui-monospace, monospace; font-size: 0.9em; }
+  .tiptap-editor pre code { background: transparent; padding: 0; }
+  .tiptap-editor a { color: hsl(var(--primary)); text-decoration: underline; }
+  .tiptap-editor u { text-decoration: underline; }
+  .tiptap-editor s { text-decoration: line-through; }
+  .tiptap-editor [data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    float: left;
+    height: 0;
+  }
+  .tiptap-editor p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    float: left;
+    height: 0;
+  }
+  .tiptap-editor:focus { outline: none; }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
