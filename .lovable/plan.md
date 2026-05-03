@@ -1,61 +1,105 @@
 
+## Plan: Polish + /may "Aurora" Revamp
 
-# Multi-Feature Polish & UX Improvements
+### 1. Voice recorder button — theme styling
+File: `src/components/VoiceRecorderButton.tsx`
+- Replace `bg-secondary` idle background with a glass/primary-tinted look so the border isn't dark on dark.
+- Idle: `bg-primary/10 backdrop-blur-xl border border-primary/40 text-primary` with `shadow-lg shadow-primary/30` and a soft inner ring on hover.
+- Recording: keep destructive red pulse.
+- Also add a subtle ambient glow ring (`ring-2 ring-primary/20`) so it pops on light themes too.
 
-## 1. Restrict Announcements to Registered Users Only
-**File**: `src/pages/Index.tsx`
-- Only fetch/show announcement banner when `user` is authenticated (not guest mode)
-- Wrap announcement query and banner render in `if (user && !isGuest)` check
+### 2. Toast position + semantic colors
+File: `src/components/ui/sonner.tsx`
+- Move Sonner to `position="top-right"` with `offset={80}` (visually "right-center-top") and `style={{ opacity: 0.92 }}`.
+- Use `richColors` so success/warning/error map to green/yellow/red automatically.
+- Add custom classNames per intent:
+  - success → green border + green text
+  - warning / default info → yellow accent
+  - error → red accent
+- Audit current toast call sites and swap neutral `toast(...)` to the right variant:
+  - `toast.success` for: Transcribed, Habit Added, Note saved, Doc saved, Completed, Restored
+  - `toast.warning` for: short recording, mic permission prompts, validation
+  - `toast.error` for: deletes, failures, mic denied, transcription failed
+- Quick scan with `rg "toast\\."` to update existing call sites.
 
-## 2. Keep AI Tools Available for Guests (Demo Access)
-**Files**: `src/components/EventsView.tsx` (CREATE FROM AI), `src/components/AddTodoDialog.tsx` (auto-detect icon)
-- Verify both features call edge functions without requiring auth gating on the client
-- Edge functions `schedule-ai` and icon detection already use Lovable AI Gateway — confirm guests can invoke them
-- Remove any client-side `if (!user) return` guards on these two specific actions
-- Other guest restrictions (sync, cloud save) remain intact
+### 3. Smarter Whisper output (clean filler words + better structure)
+File: `supabase/functions/transcribe-audio/index.ts`
+- Switch the upstream call to use Pollinations' transcription with `response_format=verbose_json` if supported, otherwise plain.
+- After getting `text`, do a lightweight server-side cleanup pass:
+  - Strip filler tokens: `\b(uh+|uhm+|um+|mhm+|hmm+|erm+|ah+|like,?|you know,?)\b` (case-insensitive), collapse double spaces, fix punctuation spacing.
+  - Capitalize sentence starts and ensure trailing period.
+- Return `{ text: cleanedText, raw: originalText }` so we keep the original if needed.
+- No second AI call needed (saves credits) — pure regex cleanup.
 
-## 3. Update Guest Banner Copy
-**File**: `src/pages/Index.tsx`
-- Replace current text: "Guest mode — data is saved locally only. Sign up to sync"
-- New text: `Guest users cannot use the full version of this app. <a>Register now!</a> It's free.`
-- "Register now!" is an underlined link routing to `/auth`
-- Keep the same banner styling/position
+### 4. Multi-line support in AI chat input
+File: `src/components/FloatingAIChat.tsx`
+- Replace the single-line `<input>` with a `<textarea>` (auto-grow up to ~5 rows).
+- Key handling: `Enter` sends, `Shift+Enter` inserts a newline.
+- Style: same rounded glass look, `resize-none`, `min-h-[40px] max-h-[140px]`, scroll on overflow.
+- Render assistant messages: ensure `ReactMarkdown` already preserves line breaks; add `remark-breaks` plugin OR use `whitespace-pre-wrap` on the prose container so newlines from the AI render as breaks (currently they collapse). Use `whitespace-pre-wrap` (no new dependency).
 
-## 4. Onboarding for New Guest Users
-**File**: `src/components/OnboardingDialog.tsx` (existing)
-- Confirm the existing two-step flow (name + 10 premade habits checklist, "pick at least one") also triggers for guest mode users on first visit
-- If currently auth-only, extend trigger to fire when guest mode is first activated and no todos exist
-- Use same persistence pattern (localStorage flag `onboarding_completed_guest`)
+### 5. "Aurora" — May Special Revamp Theme at `/may`
+A full vibe shift, not just a color swap. Activated by visiting `/may`, then persists in localStorage as `critiqs-revamp = "aurora"`. Visiting `/` works as normal but with the revamp applied.
 
-## 5. Add Sound Effects to Manual Tools
-**Files**: `src/components/PomodoroTimer.tsx`, `src/components/Stopwatch.tsx`, `src/components/BreathingExercise.tsx`
-- Use Web Audio API (`AudioContext`) to generate simple tones — no external audio files needed (keeps bundle small)
-- **Pomodoro**: bell tone (800Hz, 0.5s) when focus session ends, lower tone (400Hz) when break ends
-- **Stopwatch**: short click (1000Hz, 50ms) on start/pause, double-beep on lap
-- **Breathing**: soft sine wave tones cued to inhale (rising 200→400Hz) / exhale (falling 400→200Hz) phases
-- Add a mute toggle button (speaker icon) in each tool header, persisted to localStorage
+**Concept:** Aurora Borealis — deep midnight base with shifting cyan→magenta→violet gradients, frosted glass panels, soft motion everywhere, fluid typography.
 
-## 6. Enhanced Navbar Design
-**File**: `src/components/Navbar.tsx`
-- Current navbar is cluttered with three external links + logo
-- Redesign:
-  - Left: Logo (slightly larger, with subtle glow on hover)
-  - Right: Group external links into a compact dropdown menu ("More" button with ChevronDown) containing TERMS / PRIVACY / DONATE
-  - Add a primary CTA button on the right: "Register" (for guests) or user avatar/menu (for authenticated users)
-  - Improve spacing, add subtle bottom border with primary color accent
-  - Smooth backdrop-blur with refined glass effect
+Visual direction:
+- Base: very dark navy `hsl(230 40% 5%)` with animated multi-stop conic-gradient backdrop (slow 40s rotation) layered behind everything.
+- Primary accent: cyan `hsl(180 90% 60%)` shifting to magenta `hsl(300 85% 65%)` via gradient (`--primary-gradient`).
+- Glass cards: heavier blur (32px), 1px gradient border using `border-image`, soft inner glow.
+- Radius: `--radius: 1.25rem` (more pillowy).
+- Typography: keep Poppins but add letter-spacing on headings, larger weight contrast.
+- New animations:
+  - `aurora-shift` — background gradient slowly drifts.
+  - `glow-breath` — primary buttons gently pulse glow.
+  - `card-float` — cards hover-lift with tilt.
+- Mic + AI button get a glowing ring with conic gradient stroke.
+- Toasts: frosted with gradient left-border.
 
----
+Implementation:
+- New file `src/lib/revampTheme.ts` exposing `applyRevamp()` / `clearRevamp()` / `isRevampActive()`. Adds/removes class `revamp-aurora` on `<html>`.
+- New page `src/pages/MaySpecial.tsx`: on mount sets localStorage flag, shows a short hero ("Aurora unlocked ✨"), then `navigate("/")` after ~1.5s.
+- Add route `<Route path="/may" element={<MaySpecial />} />` in `src/App.tsx`.
+- Hook into bootstrap: in `src/main.tsx` (or `App.tsx` top-level effect), read flag and call `applyRevamp()` early so first paint already has the theme.
+- In `src/index.css`, add a new layer block scoped under `.revamp-aurora` overriding tokens + introducing keyframes:
+  ```
+  .revamp-aurora { --background: 230 40% 5%; --primary: 180 90% 60%; --radius: 1.25rem; ... }
+  .revamp-aurora body { background: conic-gradient(from 0deg at 50% 50%, ...); animation: aurora-shift 40s linear infinite; }
+  .revamp-aurora .glass-card { backdrop-filter: blur(32px) saturate(180%); border-image: linear-gradient(...) 1; }
+  @keyframes aurora-shift { to { background-position: 200% 0; } }
+  @keyframes glow-breath { 0%,100% { box-shadow: 0 0 20px hsl(var(--primary)/.4);} 50% { box-shadow: 0 0 40px hsl(var(--primary)/.7);} }
+  ```
+- Coexists with existing `useTheme` color themes — Aurora overrides at a higher specificity but still respects `--primary` if user picked one (we layer accent on top).
+- Add a tiny floating "Aurora" badge top-left when active so the user can confirm it's on (clickable to disable → removes class + clears flag).
 
-## Files Summary
+### Technical details (compact)
 
-| Action | File |
-|--------|------|
-| Edit | `src/pages/Index.tsx` (gate announcements, update guest banner copy) |
-| Edit | `src/components/OnboardingDialog.tsx` (trigger for guests) |
-| Edit | `src/components/PomodoroTimer.tsx` (sound + mute toggle) |
-| Edit | `src/components/Stopwatch.tsx` (sound + mute toggle) |
-| Edit | `src/components/BreathingExercise.tsx` (sound + mute toggle) |
-| Edit | `src/components/Navbar.tsx` (cleaner layout, dropdown for links, register CTA) |
-| Verify | `src/components/EventsView.tsx`, `src/components/AddTodoDialog.tsx` (AI features unblocked for guests) |
+- Sonner config:
+  ```tsx
+  <Sonner position="top-right" offset={72} richColors closeButton
+    toastOptions={{ style:{opacity:.94}, classNames:{ toast:"backdrop-blur-xl" } }} />
+  ```
+- Whisper cleanup regex (server):
+  ```ts
+  const FILLERS = /\b(uh+m*|um+|mhm+|hmm+|erm+|ah+|like|you know)\b[,]?/gi;
+  cleaned = text.replace(FILLERS,"").replace(/\s{2,}/g," ").replace(/\s([.,!?])/g,"$1").trim();
+  cleaned = cleaned.charAt(0).toUpperCase()+cleaned.slice(1);
+  if (cleaned && !/[.!?]$/.test(cleaned)) cleaned += ".";
+  ```
+- Textarea auto-grow: `onInput={e => { e.currentTarget.style.height='auto'; e.currentTarget.style.height=Math.min(e.currentTarget.scrollHeight,140)+'px'; }}`.
+- Memory: save Aurora as a `feature` memory so future sessions know `/may` activates the revamp and how to disable it.
 
+### Files touched
+- edit `src/components/VoiceRecorderButton.tsx`
+- edit `src/components/ui/sonner.tsx`
+- edit `supabase/functions/transcribe-audio/index.ts`
+- edit `src/components/FloatingAIChat.tsx`
+- edit `src/index.css`
+- edit `src/App.tsx`
+- edit `src/main.tsx` (early revamp bootstrap)
+- new `src/lib/revampTheme.ts`
+- new `src/pages/MaySpecial.tsx`
+- bulk-update toast call sites (sweep, ~10–15 spots) for semantic variants
+- new memory: `mem://features/themes/aurora-revamp`
+
+No new dependencies. No DB migration. One edge function redeploy (`transcribe-audio`).

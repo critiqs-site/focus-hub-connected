@@ -342,3 +342,158 @@
     }
   }
 }
+
+/* ============================================ */
+/* Aurora Revamp — May Special                  */
+/* Activated by visiting /may                   */
+/* ============================================ */
+.revamp-aurora {
+  --background: 230 45% 5%;
+  --foreground: 200 30% 96%;
+  --card: 235 40% 9%;
+  --card-foreground: 200 30% 96%;
+  --popover: 235 40% 9%;
+  --popover-foreground: 200 30% 96%;
+  --primary: 180 90% 60%;
+  --primary-foreground: 230 45% 5%;
+  --secondary: 240 30% 14%;
+  --secondary-foreground: 200 30% 96%;
+  --muted: 240 25% 14%;
+  --muted-foreground: 220 15% 70%;
+  --accent: 300 85% 65%;
+  --accent-foreground: 230 45% 5%;
+  --destructive: 350 90% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 40% 22%;
+  --input: 220 40% 18%;
+  --ring: 180 90% 60%;
+  --radius: 1.25rem;
+  --aurora-1: 180 90% 60%;
+  --aurora-2: 270 80% 65%;
+  --aurora-3: 320 85% 65%;
+  --aurora-4: 220 90% 60%;
+}
+
+.revamp-aurora body {
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 10%, hsl(var(--aurora-1) / 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 85% 20%, hsl(var(--aurora-3) / 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, hsl(var(--aurora-2) / 0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 100% 80%, hsl(var(--aurora-4) / 0.12) 0%, transparent 60%),
+    hsl(var(--background));
+  background-attachment: fixed;
+}
+
+.revamp-aurora body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--aurora-1) / 0.10),
+    hsl(var(--aurora-2) / 0.10),
+    hsl(var(--aurora-3) / 0.10),
+    hsl(var(--aurora-4) / 0.10),
+    hsl(var(--aurora-1) / 0.10)
+  );
+  filter: blur(120px);
+  animation: aurora-shift 40s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes aurora-shift {
+  to { transform: rotate(360deg); }
+}
+
+.revamp-aurora .glass-card {
+  background: hsla(235, 40%, 12%, 0.55);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.06),
+    0 8px 40px -12px hsl(var(--aurora-2) / 0.35);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.revamp-aurora .glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    hsl(var(--aurora-1) / 0.5),
+    hsl(var(--aurora-2) / 0.3),
+    hsl(var(--aurora-3) / 0.5));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+.revamp-aurora .glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 hsla(0, 0%, 100%, 0.08),
+    0 16px 50px -12px hsl(var(--aurora-1) / 0.45);
+}
+
+.revamp-aurora button[class*="bg-primary"],
+.revamp-aurora .primary-glow {
+  background-image: linear-gradient(135deg, hsl(var(--aurora-1)), hsl(var(--aurora-3)));
+  animation: glow-breath 4s ease-in-out infinite;
+}
+
+@keyframes glow-breath {
+  0%, 100% { box-shadow: 0 0 18px hsl(var(--aurora-1) / 0.45); }
+  50%      { box-shadow: 0 0 38px hsl(var(--aurora-3) / 0.7); }
+}
+
+.revamp-aurora h1, .revamp-aurora h2, .revamp-aurora h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Aurora gradient text utility */
+.aurora-text {
+  background: linear-gradient(135deg,
+    hsl(180 90% 70%),
+    hsl(270 85% 70%),
+    hsl(320 90% 70%));
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+}
+
+.aurora-bg {
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 20%, hsl(180 90% 60% / 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 75% 80%, hsl(300 85% 65% / 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 50%, hsl(270 80% 60% / 0.25) 0%, transparent 70%),
+    hsl(230 45% 5%);
+}
+
+.aurora-ring {
+  background: conic-gradient(from 0deg,
+    hsl(180 90% 60%),
+    hsl(270 80% 65%),
+    hsl(320 85% 65%),
+    hsl(180 90% 60%));
+  box-shadow: 0 0 60px hsl(270 80% 60% / 0.6);
+  animation: aurora-shift 8s linear infinite;
+}
+
+.aurora-badge {
+  background: linear-gradient(135deg, hsl(180 90% 60% / 0.25), hsl(300 85% 65% / 0.25));
+  border: 1px solid hsl(270 80% 65% / 0.5);
+  color: hsl(180 90% 85%);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px hsl(270 80% 50% / 0.3);
+}

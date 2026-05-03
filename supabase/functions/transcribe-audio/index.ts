@@ -84,7 +84,22 @@ Deno.serve(async (req) => {
       text = raw;
     }
 
-    return new Response(JSON.stringify({ text }), {
+    // Clean up filler words and tidy punctuation/casing
+    const FILLERS = /\b(uh+m*|um+|mhm+|hmm+|erm+|ah+|like|you know)\b[,]?/gi;
+    let cleaned = (text || "")
+      .replace(FILLERS, "")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\(\s*\)/g, "")
+      .trim();
+    if (cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      // Capitalize after sentence enders
+      cleaned = cleaned.replace(/([.!?]\s+)([a-z])/g, (_, p, c) => p + c.toUpperCase());
+      if (!/[.!?]$/.test(cleaned)) cleaned += ".";
+    }
+
+    return new Response(JSON.stringify({ text: cleaned, raw: text }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

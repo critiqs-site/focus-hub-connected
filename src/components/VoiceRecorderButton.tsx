@@ -151,12 +151,12 @@ const VoiceRecorderButton = ({ onTranscript }: VoiceRecorderButtonProps) => {
           state === "recording" ? "Stop & transcribe" :
           "Transcribing..."
         }
-        className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 disabled:hover:scale-100 ${
+        className={`w-14 h-14 rounded-full backdrop-blur-xl flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:hover:scale-100 ring-2 ${
           state === "recording"
-            ? "bg-destructive text-destructive-foreground shadow-destructive/40 animate-pulse"
+            ? "bg-destructive/90 text-destructive-foreground shadow-lg shadow-destructive/50 ring-destructive/40 animate-pulse"
             : state === "processing"
-            ? "bg-secondary text-muted-foreground shadow-black/30"
-            : "bg-secondary text-foreground border border-primary/30 shadow-primary/20 hover:bg-primary/10 hover:text-primary"
+            ? "bg-primary/10 text-primary/70 ring-primary/20 shadow-lg shadow-primary/20"
+            : "bg-primary/15 text-primary border border-primary/50 ring-primary/20 shadow-lg shadow-primary/30 hover:bg-primary/25 hover:ring-primary/40 hover:shadow-primary/50"
         }`}
       >
         {state === "processing" ? <Loader2 className="w-6 h-6 animate-spin" /> :
