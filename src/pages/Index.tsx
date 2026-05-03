@@ -19,6 +19,8 @@ import PremadeTodoChooser from "@/components/PremadeTodoChooser";
 import JournalView from "@/components/JournalView";
 import DailyReminders from "@/components/DailyReminders";
 import NotebookView from "@/components/NotebookView";
+import VoiceRecorderButton from "@/components/VoiceRecorderButton";
+import { voiceBus } from "@/lib/voiceBus";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -376,6 +378,10 @@ const Index = () => {
         <UserProfileMenu email="" onSignOut={handleSignOut} isGuest themeId={themeId} onSetTheme={setTheme} />
       ) : (
         <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} themeId={themeId} onSetTheme={setTheme} />
+      )}
+
+      {!isGuest && (
+        <VoiceRecorderButton onTranscript={(t) => voiceBus.emit(t)} />
       )}
 
       {!isGuest && (
