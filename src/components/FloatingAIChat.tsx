@@ -335,7 +335,7 @@ const FloatingAIChat = ({
           ) : (
             <>
               {cleanText && (
-                <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>ul]:mb-1 [&>ol]:mb-1">
+                <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap [&>p]:mb-1 [&>ul]:mb-1 [&>ol]:mb-1">
                   <ReactMarkdown>{cleanText}</ReactMarkdown>
                 </div>
               )}
@@ -437,10 +437,17 @@ const FloatingAIChat = ({
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); e.target.value = ""; }} />
-            <input value={input} onChange={(e) => setInput(e.target.value)}
+            <textarea value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onInput={(e) => {
+                const t = e.currentTarget;
+                t.style.height = "auto";
+                t.style.height = Math.min(t.scrollHeight, 140) + "px";
+              }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder="Ask anything..."
-              className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+              placeholder="Ask anything... (Shift+Enter for new line)"
+              rows={1}
+              className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none min-h-[40px] max-h-[140px] leading-snug"
               disabled={isLoading} />
             <button onClick={sendMessage} disabled={isLoading || (!input.trim() && !attachedImage)}
               className="text-primary hover:text-primary/80 transition-colors p-1 disabled:opacity-30">
