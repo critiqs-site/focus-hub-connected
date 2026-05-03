@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import type { Todo, Divider } from "@/types/todo";
 import { supabase } from "@/integrations/supabase/client";
 import critiqsLogo from "@/assets/critiqs-ai-logo.png";
+import { voiceBus } from "@/lib/voiceBus";
 
 import { TODO_ICON_NAMES, DIVIDER_ICON_NAMES } from "@/lib/icons";
 
@@ -157,6 +158,14 @@ const FloatingAIChat = ({
   useEffect(() => {
     if (!open) initialSent.current = false;
   }, [open]);
+
+  useEffect(() => {
+    return voiceBus.subscribe((text) => {
+      if (!open) onOpenChange(true);
+      setInput((prev) => (prev ? prev + " " + text : text));
+    });
+  }, [open, onOpenChange]);
+
 
   const sendMessage = async () => {
     const text = input.trim();
