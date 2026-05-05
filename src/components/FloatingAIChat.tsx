@@ -75,6 +75,7 @@ const FloatingAIChat = ({
   open, onOpenChange, initialMessage, onInitialMessageConsumed,
   todos = [], dividers = [], interests = [],
   onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon, onUpdateDescription,
+  disabled = false,
 }: FloatingAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -364,13 +365,13 @@ const FloatingAIChat = ({
     <>
       {!open && (
         <button onClick={() => { if (disabled) { toast.error("This feature is only available for registered users."); return; } onOpenChange(true); }}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 transition-transform duration-200">
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 transition-[...]
           <MessageSquare className="w-6 h-6" />
         </button>
       )}
 
       {open && !disabled && (
-        <div className="fixed bottom-6 right-6 z-50 w-[440px] sm:w-[480px] lg:w-[540px] h-[640px] max-h-[85vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-scale-in overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-[440px] sm:w-[480px] lg:w-[540px] h-[640px] max-h-[85vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shad[...]
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
               <img src={critiqsLogo} alt="CRITIQS AI" className="w-8 h-8 rounded-full object-cover" />
@@ -404,8 +405,8 @@ const FloatingAIChat = ({
                   ].map((q) => (
                     <button
                       key={q.msg}
-                      onClick={() => { setInput(q.msg); setTimeout(() => { const userMsg: Message = { role: "user", content: q.msg }; const newMessages = [...messages, userMsg]; setMessages(newMessages); setInput(""); sendToAI(newMessages); scrollToBottom(); }, 0); }}
-                      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/50 hover:border-primary/30 text-sm text-foreground transition-all duration-200"
+                      onClick={() => { setInput(q.msg); setTimeout(() => { const userMsg: Message = { role: "user", content: q.msg }; const newMessages = [...messages, userMsg]; setMessages(newMe[...]
+                      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/50 hover:border-primary/30 text-sm text-foreground transition-all [...]
                     >
                       {q.label}
                     </button>
@@ -451,7 +452,7 @@ const FloatingAIChat = ({
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               placeholder="Ask Anything…"
               rows={1}
-              className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none min-h-[40px] max-h-[140px] leading-snug"
+              className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 re[...]
               disabled={isLoading} />
             <button onClick={sendMessage} disabled={isLoading || (!input.trim() && !attachedImage)}
               className="text-primary hover:text-primary/80 transition-colors p-1 disabled:opacity-30">
