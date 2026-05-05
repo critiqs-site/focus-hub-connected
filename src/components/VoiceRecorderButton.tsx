@@ -2,12 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GUEST_AI_MESSAGE } from "@/lib/aiAccess";
 
 interface VoiceRecorderButtonProps {
   onTranscript: (text: string) => void;
+  disabled?: boolean;
 }
 
-const VoiceRecorderButton = ({ onTranscript }: VoiceRecorderButtonProps) => {
+const VoiceRecorderButton = ({ onTranscript, disabled }: VoiceRecorderButtonProps) => {
   const [state, setState] = useState<"idle" | "recording" | "processing">("idle");
   const [seconds, setSeconds] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -130,6 +132,7 @@ const VoiceRecorderButton = ({ onTranscript }: VoiceRecorderButtonProps) => {
   };
 
   const handleClick = () => {
+    if (disabled) { toast.error(GUEST_AI_MESSAGE); return; }
     if (state === "idle") start();
     else if (state === "recording") stop();
   };
@@ -147,12 +150,15 @@ const VoiceRecorderButton = ({ onTranscript }: VoiceRecorderButtonProps) => {
         onClick={handleClick}
         disabled={state === "processing"}
         title={
+          disabled ? "Sign in to use voice" :
           state === "idle" ? "Voice → AI" :
           state === "recording" ? "Stop & transcribe" :
           "Transcribing..."
         }
-        className={`w-14 h-14 rounded-full backdrop-blur-xl flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:hover:scale-100 ring-2 ${
-          state === "recording"
+        className={`w-16 h-16 rounded-full backdrop-blur-xl flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:hover:scale-100 ring-2 ${
+          disabled
+            ? "bg-primary/10 text-primary/60 ring-primary/20 cursor-not-allowed opacity-70"
+            : state === "recording"
             ? "bg-destructive/90 text-destructive-foreground shadow-lg shadow-destructive/50 ring-destructive/40 animate-pulse"
             : state === "processing"
             ? "bg-primary/10 text-primary/70 ring-primary/20 shadow-lg shadow-primary/20"

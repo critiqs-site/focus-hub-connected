@@ -7,6 +7,8 @@ import critiqsLogo from "@/assets/critiqs-ai-logo.png";
 import { voiceBus } from "@/lib/voiceBus";
 
 import { TODO_ICON_NAMES, DIVIDER_ICON_NAMES } from "@/lib/icons";
+import { toast } from "sonner";
+import { useAiUsage } from "@/hooks/useAiUsage";
 
 type Message = { role: "user" | "assistant"; content: string; image?: string };
 
@@ -37,6 +39,8 @@ interface FloatingAIChatProps {
   onTransferTodo?: (id: string, dividerId: string) => void;
   onUpdateIcon?: (id: string, icon: string) => void;
   onUpdateDescription?: (id: string, description: string | null) => void;
+  userId?: string;
+  disabled?: boolean;
 }
 
 function parseActions(text: string): { cleanText: string; actions: ActionButton[] } {
