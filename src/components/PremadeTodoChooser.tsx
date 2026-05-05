@@ -127,15 +127,10 @@ const PremadeTodoChooser = ({ onComplete }: PremadeTodoChooserProps) => {
                 className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg group"
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                  <>Get Started ({selected.size})<ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" /></>
+                  <>Start Now! ({selected.size})<ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" /></>
                 )}
               </Button>
-              <button
-                onClick={() => onComplete(name.trim(), [])}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
-              >
-                Skip — I'll add my own
-              </button>
+              <p className="text-xs text-muted-foreground text-center">Pick at least one to continue.</p>
             </div>
           </div>
         )}

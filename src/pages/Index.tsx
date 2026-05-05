@@ -79,33 +79,43 @@ const Index = () => {
   useEffect(() => {
     if (!authLoading && !user && !isGuest) {
       localStorage.setItem("guestMode", "true");
+      // No reload — just trigger a re-render via state. Show chooser on first visit.
       const hasSeenChooser = localStorage.getItem("hasSeenChooser");
-      if (!hasSeenChooser) {
-        setShowChooser(true);
-      }
-      window.location.reload();
+      if (!hasSeenChooser) setShowChooser(true);
+      // Force re-render so isGuest flips on next pass.
+      window.dispatchEvent(new Event("storage"));
     }
   }, [user, authLoading, isGuest]);
 
-  const handleChooserComplete = (name: string, habits: { text: string; icon: string }[]) => {
+  // Also: if we're already a guest and haven't seen the chooser, show it.
+  useEffect(() => {
+    if (isGuest && !localStorage.getItem("hasSeenChooser")) setShowChooser(true);
+  }, [isGuest]);
+
+  const handleChooserComplete = async (name: string, habits: { text: string; icon: string }[]) => {
     localStorage.setItem("hasSeenChooser", "true");
     if (name) localStorage.setItem("guestName", name);
     setShowChooser(false);
 
     if (habits.length === 0) return;
 
-    // Create a "My Habits" divider then add selected todos
-    handleAddDivider("My Habits", "Star").then(() => {
-      setTimeout(() => {
-        const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
-        const divider = guestDividers.find((d: any) => d.name === "My Habits");
-        if (divider) {
-          habits.forEach(habit => {
-            handleAddTodo(habit.text, divider.id, habit.icon);
-          });
-        }
-      }, 100);
-    });
+    // Create Morning + Night sections, then route each habit by keyword.
+    await handleAddDivider("Morning", "Sunrise");
+    await handleAddDivider("Night", "Moon");
+    setTimeout(() => {
+      const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
+      const morning = guestDividers.find((d: any) => d.name === "Morning");
+      const night = guestDividers.find((d: any) => d.name === "Night");
+      if (!morning || !night) return;
+      const isNightHabit = (text: string) => {
+        const t = text.toLowerCase();
+        return /(sleep|night|midnight|journal|read|parents|screen|tv|relax|wind ?down|bedtime|evening)/.test(t);
+      };
+      habits.forEach(h => {
+        const target = isNightHabit(h.text) ? night.id : morning.id;
+        handleAddTodo(h.text, target, h.icon);
+      });
+    }, 100);
   };
 
   const handleSignOut = async () => {
@@ -252,7 +262,7 @@ const Index = () => {
         </div>
       )}
 
-      <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-6">
+      <div className="relative z-10 max-w-6xl xl:max-w-[88rem] 2xl:max-w-[100rem] mx-auto px-4 lg:px-8 xl:px-12 2xl:px-16 py-4 lg:py-6">
         <div className="flex items-center justify-between mb-3">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
@@ -356,13 +366,13 @@ const Index = () => {
                 <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Add Section</span>
               </button>
             </div>
-            <AddTodoDialog open={showAddTodo} onOpenChange={(open) => { setShowAddTodo(open); if (!open) setSelectedDividerId(null); }} onAdd={handleAddTodo} dividers={dividers} preselectedDividerId={selectedDividerId} />
+            <AddTodoDialog open={showAddTodo} onOpenChange={(open) => { setShowAddTodo(open); if (!open) setSelectedDividerId(null); }} onAdd={handleAddTodo} dividers={dividers} preselectedDividerId={selectedDividerId} isGuest={isGuest} />
             <AddDividerDialog open={showAddDivider} onOpenChange={setShowAddDivider} onAdd={handleAddDivider} />
           </>
         ) : activeTab === "analytics" ? (
           <AnalyticsView todos={todos} />
         ) : activeTab === "events" ? (
-          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
+          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} isGuest={isGuest} />
         ) : activeTab === "journal" ? (
           <JournalView userId={user?.id} />
         ) : activeTab === "notebook" ? (
@@ -380,27 +390,25 @@ const Index = () => {
         <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} themeId={themeId} onSetTheme={setTheme} />
       )}
 
-      {!isGuest && (
-        <VoiceRecorderButton onTranscript={(t) => voiceBus.emit(t)} />
-      )}
+      <VoiceRecorderButton onTranscript={(t) => voiceBus.emit(t)} disabled={isGuest} />
 
-      {!isGuest && (
-        <FloatingAIChat
-          open={chatOpen}
-          onOpenChange={setChatOpen}
-          initialMessage={chatInitialMessage}
-          onInitialMessageConsumed={() => setChatInitialMessage(null)}
-          todos={todos}
-          dividers={dividers}
-          interests={profile?.interests || []}
-          onAddTodo={handleAddTodo}
-          onDeleteTodo={handleDelete}
-          onRenameTodo={handleEdit}
-          onTransferTodo={handleTransferTodo}
-          onUpdateIcon={handleUpdateIcon}
-          onUpdateDescription={handleUpdateDescription}
-        />
-      )}
+      <FloatingAIChat
+        open={isGuest ? false : chatOpen}
+        onOpenChange={isGuest ? () => {} : setChatOpen}
+        initialMessage={isGuest ? null : chatInitialMessage}
+        onInitialMessageConsumed={() => setChatInitialMessage(null)}
+        todos={isGuest ? [] : todos}
+        dividers={isGuest ? [] : dividers}
+        interests={isGuest ? [] : (profile?.interests || [])}
+        onAddTodo={isGuest ? (async () => {}) as any : handleAddTodo}
+        onDeleteTodo={isGuest ? (async () => {}) as any : handleDelete}
+        onRenameTodo={isGuest ? (async () => {}) as any : handleEdit}
+        onTransferTodo={isGuest ? (async () => {}) as any : handleTransferTodo}
+        onUpdateIcon={isGuest ? (async () => {}) as any : handleUpdateIcon}
+        onUpdateDescription={isGuest ? (async () => {}) as any : handleUpdateDescription}
+        userId={user?.id}
+        disabled={isGuest}
+      />
     </div>
   );
 };

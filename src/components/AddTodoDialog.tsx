@@ -141,9 +141,10 @@ interface AddTodoDialogProps {
   onAdd: (text: string, dividerId: string, icon: string, description?: string, goalDaysPerWeek?: number, targetAmount?: number, targetUnit?: string, color?: string) => void;
   dividers: Divider[];
   preselectedDividerId?: string | null;
+  isGuest?: boolean;
 }
 
-const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDividerId }: AddTodoDialogProps) => {
+const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDividerId, isGuest }: AddTodoDialogProps) => {
   const [text, setText] = useState("");
   const [description, setDescription] = useState("");
   const [dividerId, setDividerId] = useState(preselectedDividerId || dividers[0]?.id || "");
@@ -161,6 +162,7 @@ const AddTodoDialog = ({ open, onOpenChange, onAdd, dividers, preselectedDivider
   useEffect(() => { if (!open) { setSuggestedIcons([]); setGoalDays(7); setSelectedColor(null); } }, [open]);
 
   const handleAutoIcon = useCallback(async () => {
+    if (isGuest) { toast.error("This feature is only available for registered users."); return; }
     setIsAutoDetecting(true);
     try {
       const availableIcons = TODO_ICONS.map(icon => icon.name);

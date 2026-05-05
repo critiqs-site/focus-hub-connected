@@ -17,6 +17,7 @@ interface EventsViewProps {
   onEditEvent: (id: string, updates: Partial<Pick<ScheduledEvent, "title" | "description" | "time" | "timeEnd" | "completed" | "color">>) => void;
   onDeleteEvent: (id: string) => void;
   onToggleComplete: (id: string) => void;
+  isGuest?: boolean;
 }
 
 const glassStyle: React.CSSProperties = {
@@ -77,7 +78,7 @@ const getEventColors = (event: ScheduledEvent) => {
   return null; // use primary-based default
 };
 
-const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDeleteEvent, onToggleComplete }: EventsViewProps) => {
+const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDeleteEvent, onToggleComplete, isGuest }: EventsViewProps) => {
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
@@ -339,7 +340,10 @@ const EventsView = ({ events, onAddEvent, onAddMultipleEvents, onEditEvent, onDe
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => { setShowAIForm(!showAIForm); setShowAddForm(false); }}
+              onClick={() => {
+                if (isGuest) { toast.error("This feature is only available for registered users."); return; }
+                setShowAIForm(!showAIForm); setShowAddForm(false);
+              }}
               className="h-7 gap-1.5 px-2.5 hover:bg-primary/20 text-primary text-xs"
             >
               <Wand2 className="h-3.5 w-3.5" />

@@ -7,6 +7,8 @@ import critiqsLogo from "@/assets/critiqs-ai-logo.png";
 import { voiceBus } from "@/lib/voiceBus";
 
 import { TODO_ICON_NAMES, DIVIDER_ICON_NAMES } from "@/lib/icons";
+import { toast } from "sonner";
+import { useAiUsage } from "@/hooks/useAiUsage";
 
 type Message = { role: "user" | "assistant"; content: string; image?: string };
 
@@ -37,6 +39,8 @@ interface FloatingAIChatProps {
   onTransferTodo?: (id: string, dividerId: string) => void;
   onUpdateIcon?: (id: string, icon: string) => void;
   onUpdateDescription?: (id: string, description: string | null) => void;
+  userId?: string;
+  disabled?: boolean;
 }
 
 function parseActions(text: string): { cleanText: string; actions: ActionButton[] } {
@@ -359,14 +363,14 @@ const FloatingAIChat = ({
   return (
     <>
       {!open && (
-        <button onClick={() => onOpenChange(true)}
+        <button onClick={() => { if (disabled) { toast.error("This feature is only available for registered users."); return; } onOpenChange(true); }}
           className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 transition-transform duration-200">
           <MessageSquare className="w-6 h-6" />
         </button>
       )}
 
-      {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[560px] max-h-[80vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-scale-in overflow-hidden">
+      {open && !disabled && (
+        <div className="fixed bottom-6 right-6 z-50 w-[440px] sm:w-[480px] lg:w-[540px] h-[640px] max-h-[85vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 animate-scale-in overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
               <img src={critiqsLogo} alt="CRITIQS AI" className="w-8 h-8 rounded-full object-cover" />
@@ -445,7 +449,7 @@ const FloatingAIChat = ({
                 t.style.height = Math.min(t.scrollHeight, 140) + "px";
               }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder="Ask anything... (Shift+Enter for new line)"
+              placeholder="Ask Anything…"
               rows={1}
               className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none min-h-[40px] max-h-[140px] leading-snug"
               disabled={isLoading} />

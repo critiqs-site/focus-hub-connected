@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, LogOut, UserPlus, Palette } from "lucide-react";
+import { User, LogOut, UserPlus, Palette, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ThemePicker from "@/components/ThemePicker";
+import TimezoneDialog from "@/components/TimezoneDialog";
 
 interface UserProfileMenuProps {
   email: string;
@@ -22,6 +23,7 @@ interface UserProfileMenuProps {
 const UserProfileMenu = ({ email, name, onSignOut, isGuest, themeId, onSetTheme }: UserProfileMenuProps) => {
   const navigate = useNavigate();
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showTimezone, setShowTimezone] = useState(false);
 
   return (
     <>
@@ -39,6 +41,13 @@ const UserProfileMenu = ({ email, name, onSignOut, isGuest, themeId, onSetTheme 
                   <p className="text-sm text-muted-foreground">You're in guest mode</p>
                 </div>
                 <DropdownMenuSeparator className="bg-primary/10" />
+                <DropdownMenuItem
+                  onClick={() => setShowTimezone(true)}
+                  className="cursor-pointer focus:bg-primary/10"
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Change Timezone
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => navigate("/auth")}
                   className="cursor-pointer text-primary focus:bg-primary/10 focus:text-primary"
@@ -62,6 +71,13 @@ const UserProfileMenu = ({ email, name, onSignOut, isGuest, themeId, onSetTheme 
                   Theme
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  onClick={() => setShowTimezone(true)}
+                  className="cursor-pointer focus:bg-primary/10"
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Change Timezone
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={onSignOut}
                   className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
                 >
@@ -79,6 +95,7 @@ const UserProfileMenu = ({ email, name, onSignOut, isGuest, themeId, onSetTheme 
         currentThemeId={themeId}
         onSelectTheme={onSetTheme}
       />
+      <TimezoneDialog open={showTimezone} onOpenChange={setShowTimezone} />
     </>
   );
 };

@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          chars_used: number
+          created_at: string
+          hour_bucket: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chars_used?: number
+          created_at?: string
+          hour_bucket: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chars_used?: number
+          created_at?: string
+          hour_bucket?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           active: boolean
@@ -195,6 +222,7 @@ export type Database = {
           interests: string[] | null
           name: string | null
           onboarding_complete: boolean | null
+          timezone: string | null
           updated_at: string
           user_id: string
         }
@@ -204,6 +232,7 @@ export type Database = {
           interests?: string[] | null
           name?: string | null
           onboarding_complete?: boolean | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -213,6 +242,7 @@ export type Database = {
           interests?: string[] | null
           name?: string | null
           onboarding_complete?: boolean | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
