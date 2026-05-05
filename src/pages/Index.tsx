@@ -262,7 +262,7 @@ const Index = () => {
         </div>
       )}
 
-      <div className="relative z-10 max-w-6xl lg:max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-6">
+      <div className="relative z-10 max-w-6xl xl:max-w-[88rem] 2xl:max-w-[100rem] mx-auto px-4 lg:px-8 xl:px-12 2xl:px-16 py-4 lg:py-6">
         <div className="flex items-center justify-between mb-3">
           <Header activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
@@ -366,13 +366,13 @@ const Index = () => {
                 <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Add Section</span>
               </button>
             </div>
-            <AddTodoDialog open={showAddTodo} onOpenChange={(open) => { setShowAddTodo(open); if (!open) setSelectedDividerId(null); }} onAdd={handleAddTodo} dividers={dividers} preselectedDividerId={selectedDividerId} />
+            <AddTodoDialog open={showAddTodo} onOpenChange={(open) => { setShowAddTodo(open); if (!open) setSelectedDividerId(null); }} onAdd={handleAddTodo} dividers={dividers} preselectedDividerId={selectedDividerId} isGuest={isGuest} />
             <AddDividerDialog open={showAddDivider} onOpenChange={setShowAddDivider} onAdd={handleAddDivider} />
           </>
         ) : activeTab === "analytics" ? (
           <AnalyticsView todos={todos} />
         ) : activeTab === "events" ? (
-          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} />
+          <EventsView events={events} onAddEvent={addEvent} onAddMultipleEvents={addMultipleEvents} onEditEvent={editEvent} onDeleteEvent={deleteEvent} onToggleComplete={toggleComplete} isGuest={isGuest} />
         ) : activeTab === "journal" ? (
           <JournalView userId={user?.id} />
         ) : activeTab === "notebook" ? (
@@ -390,27 +390,25 @@ const Index = () => {
         <UserProfileMenu email={user!.email || ""} name={profile?.name || undefined} onSignOut={handleSignOut} themeId={themeId} onSetTheme={setTheme} />
       )}
 
-      {!isGuest && (
-        <VoiceRecorderButton onTranscript={(t) => voiceBus.emit(t)} />
-      )}
+      <VoiceRecorderButton onTranscript={(t) => voiceBus.emit(t)} disabled={isGuest} />
 
-      {!isGuest && (
-        <FloatingAIChat
-          open={chatOpen}
-          onOpenChange={setChatOpen}
-          initialMessage={chatInitialMessage}
-          onInitialMessageConsumed={() => setChatInitialMessage(null)}
-          todos={todos}
-          dividers={dividers}
-          interests={profile?.interests || []}
-          onAddTodo={handleAddTodo}
-          onDeleteTodo={handleDelete}
-          onRenameTodo={handleEdit}
-          onTransferTodo={handleTransferTodo}
-          onUpdateIcon={handleUpdateIcon}
-          onUpdateDescription={handleUpdateDescription}
-        />
-      )}
+      <FloatingAIChat
+        open={isGuest ? false : chatOpen}
+        onOpenChange={isGuest ? () => {} : setChatOpen}
+        initialMessage={isGuest ? null : chatInitialMessage}
+        onInitialMessageConsumed={() => setChatInitialMessage(null)}
+        todos={isGuest ? [] : todos}
+        dividers={isGuest ? [] : dividers}
+        interests={isGuest ? [] : (profile?.interests || [])}
+        onAddTodo={isGuest ? (async () => {}) as any : handleAddTodo}
+        onDeleteTodo={isGuest ? (async () => {}) as any : handleDelete}
+        onRenameTodo={isGuest ? (async () => {}) as any : handleEdit}
+        onTransferTodo={isGuest ? (async () => {}) as any : handleTransferTodo}
+        onUpdateIcon={isGuest ? (async () => {}) as any : handleUpdateIcon}
+        onUpdateDescription={isGuest ? (async () => {}) as any : handleUpdateDescription}
+        userId={user?.id}
+        disabled={isGuest}
+      />
     </div>
   );
 };
