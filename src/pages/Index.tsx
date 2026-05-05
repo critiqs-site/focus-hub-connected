@@ -79,33 +79,43 @@ const Index = () => {
   useEffect(() => {
     if (!authLoading && !user && !isGuest) {
       localStorage.setItem("guestMode", "true");
+      // No reload — just trigger a re-render via state. Show chooser on first visit.
       const hasSeenChooser = localStorage.getItem("hasSeenChooser");
-      if (!hasSeenChooser) {
-        setShowChooser(true);
-      }
-      window.location.reload();
+      if (!hasSeenChooser) setShowChooser(true);
+      // Force re-render so isGuest flips on next pass.
+      window.dispatchEvent(new Event("storage"));
     }
   }, [user, authLoading, isGuest]);
 
-  const handleChooserComplete = (name: string, habits: { text: string; icon: string }[]) => {
+  // Also: if we're already a guest and haven't seen the chooser, show it.
+  useEffect(() => {
+    if (isGuest && !localStorage.getItem("hasSeenChooser")) setShowChooser(true);
+  }, [isGuest]);
+
+  const handleChooserComplete = async (name: string, habits: { text: string; icon: string }[]) => {
     localStorage.setItem("hasSeenChooser", "true");
     if (name) localStorage.setItem("guestName", name);
     setShowChooser(false);
 
     if (habits.length === 0) return;
 
-    // Create a "My Habits" divider then add selected todos
-    handleAddDivider("My Habits", "Star").then(() => {
-      setTimeout(() => {
-        const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
-        const divider = guestDividers.find((d: any) => d.name === "My Habits");
-        if (divider) {
-          habits.forEach(habit => {
-            handleAddTodo(habit.text, divider.id, habit.icon);
-          });
-        }
-      }, 100);
-    });
+    // Create Morning + Night sections, then route each habit by keyword.
+    await handleAddDivider("Morning", "Sunrise");
+    await handleAddDivider("Night", "Moon");
+    setTimeout(() => {
+      const guestDividers = JSON.parse(localStorage.getItem("guest_dividers") || "[]");
+      const morning = guestDividers.find((d: any) => d.name === "Morning");
+      const night = guestDividers.find((d: any) => d.name === "Night");
+      if (!morning || !night) return;
+      const isNightHabit = (text: string) => {
+        const t = text.toLowerCase();
+        return /(sleep|night|midnight|journal|read|parents|screen|tv|relax|wind ?down|bedtime|evening)/.test(t);
+      };
+      habits.forEach(h => {
+        const target = isNightHabit(h.text) ? night.id : morning.id;
+        handleAddTodo(h.text, target, h.icon);
+      });
+    }, 100);
   };
 
   const handleSignOut = async () => {
