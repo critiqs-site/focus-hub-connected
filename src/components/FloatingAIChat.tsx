@@ -151,14 +151,14 @@ const FloatingAIChat = ({
   }, [todos, dividers, interests]);
 
   useEffect(() => {
-    if (open && initialMessage && !initialSent.current) {
+    if (open && initialMessage && !initialSent.current && !disabled) {
       initialSent.current = true;
       const userMsg: Message = { role: "user", content: initialMessage.text, image: initialMessage.image };
       setMessages(prev => [...prev, userMsg]);
       sendToAI([...messages, userMsg]);
       onInitialMessageConsumed?.();
     }
-  }, [open, initialMessage]);
+  }, [open, initialMessage, disabled]);
 
   useEffect(() => {
     if (!open) initialSent.current = false;
@@ -173,6 +173,10 @@ const FloatingAIChat = ({
 
 
   const sendMessage = async () => {
+    if (disabled) {
+      toast.error("This feature is only available for registered users.");
+      return;
+    }
     const text = input.trim();
     if (!text && !attachedImage) return;
     const userMsg: Message = {
@@ -189,6 +193,10 @@ const FloatingAIChat = ({
   };
 
   const handleFileSelect = async (file: File) => {
+    if (disabled) {
+      toast.error("This feature is only available for registered users.");
+      return;
+    }
     if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) return;
     const reader = new FileReader();
     reader.onload = (e) => setAttachedImage(e.target?.result as string);
@@ -198,15 +206,20 @@ const FloatingAIChat = ({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
+    if (disabled) return;
     const file = e.dataTransfer.files[0];
     if (file) handleFileSelect(file);
-  }, []);
+  }, [disabled]);
 
   const markDone = (key: string) => {
     setCompletedActions(prev => new Set(prev).add(key));
   };
 
   const handleAction = (action: ActionButton, allActions?: ActionButton[]) => {
+    if (disabled) {
+      toast.error("This feature is only available for registered users.");
+      return;
+    }
     const key = `${action.type}:${action.todoId || action.todoText || "all"}`;
     if (completedActions.has(key)) return;
 
@@ -253,8 +266,8 @@ const FloatingAIChat = ({
 
     if (action.type === "DELETE") {
       return (
-        <button key={index} onClick={() => handleAction(action)} disabled={done}
-          className={`${btnBase} ${done ? doneStyle : "bg-destructive/15 text-destructive hover:bg-destructive/25"}`}>
+        <button key={index} onClick={() => handleAction(action)} disabled={done || disabled}
+          className={`${btnBase} ${done ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-destructive/15 text-destructive hover:bg-destructive/25"}`}>
           {done ? <Check className="w-3 h-3" /> : <Trash2 className="w-3 h-3" />}
           {done ? "Deleted" : `Delete "${action.todoText}"`}
         </button>
@@ -262,8 +275,8 @@ const FloatingAIChat = ({
     }
     if (action.type === "RENAME") {
       return (
-        <button key={index} onClick={() => handleAction(action)} disabled={done}
-          className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
+        <button key={index} onClick={() => handleAction(action)} disabled={done || disabled}
+          className={`${btnBase} ${done ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
           {done ? <Check className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
           {done ? "Renamed" : `Rename to "${action.newText}"`}
         </button>
@@ -271,8 +284,8 @@ const FloatingAIChat = ({
     }
     if (action.type === "TRANSFER") {
       return (
-        <button key={index} onClick={() => handleAction(action)} disabled={done}
-          className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
+        <button key={index} onClick={() => handleAction(action)} disabled={done || disabled}
+          className={`${btnBase} ${done ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
           {done ? <Check className="w-3 h-3" /> : <ArrowRight className="w-3 h-3" />}
           {done ? "Moved" : `Move "${action.todoText}" → ${action.sectionName}`}
         </button>
@@ -280,8 +293,8 @@ const FloatingAIChat = ({
     }
     if (action.type === "ICON") {
       return (
-        <button key={index} onClick={() => handleAction(action)} disabled={done}
-          className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
+        <button key={index} onClick={() => handleAction(action)} disabled={done || disabled}
+          className={`${btnBase} ${done ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
           {done ? <Check className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
           {done ? "Icon changed" : `Change icon to ${action.iconName}`}
         </button>
@@ -289,8 +302,8 @@ const FloatingAIChat = ({
     }
     if (action.type === "DESCRIBE") {
       return (
-        <button key={index} onClick={() => handleAction(action)} disabled={done}
-          className={`${btnBase} ${done ? doneStyle : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
+        <button key={index} onClick={() => handleAction(action)} disabled={done || disabled}
+          className={`${btnBase} ${done ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-accent/50 text-accent-foreground hover:bg-accent/70"}`}>
           {done ? <Check className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
           {done ? "Description added" : `Add desc to "${action.todoText}"`}
         </button>
@@ -298,8 +311,8 @@ const FloatingAIChat = ({
     }
     if (action.type === "SUGGEST") {
       return (
-        <button key={index} onClick={() => handleAction(action)} disabled={done}
-          className={`${btnBase} ${done ? doneStyle : "bg-primary/15 text-primary hover:bg-primary/25"}`}>
+        <button key={index} onClick={() => handleAction(action)} disabled={done || disabled}
+          className={`${btnBase} ${done ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary/15 text-primary hover:bg-primary/25"}`}>
           {done ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
           {done ? "Added" : `Add "${action.todoText}"`}
         </button>
@@ -309,9 +322,9 @@ const FloatingAIChat = ({
       const suggestions = allActions.filter(a => a.type === "SUGGEST");
       const allDone = suggestions.every(s => completedActions.has(`SUGGEST:${s.todoText}`));
       return (
-        <button key={index} onClick={() => handleAction(action, allActions)} disabled={allDone}
+        <button key={index} onClick={() => handleAction(action, allActions)} disabled={allDone || disabled}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all mt-2 ${
-            allDone ? doneStyle : "bg-primary text-primary-foreground hover:bg-primary/90"
+            allDone ? doneStyle : disabled ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}>
           {allDone ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
           {allDone ? "All Added" : "Add All"}
@@ -364,20 +377,20 @@ const FloatingAIChat = ({
   return (
     <>
       {!open && (
-        <button onClick={() => { if (disabled) { toast.error("This feature is only available for registered users."); return; } onOpenChange(true); }}
+        <button onClick={() => onOpenChange(true)}
           className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 transition-[...]
           <MessageSquare className="w-6 h-6" />
         </button>
       )}
 
-      {open && !disabled && (
+      {open && (
         <div className="fixed bottom-6 right-6 z-50 w-[440px] sm:w-[480px] lg:w-[540px] h-[640px] max-h-[85vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shad[...]
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
               <img src={critiqsLogo} alt="CRITIQS AI" className="w-8 h-8 rounded-full object-cover" />
               <div>
                 <p className="text-sm font-semibold text-foreground">CRITIQS AI</p>
-                <p className="text-[10px] text-muted-foreground">Always here to help</p>
+                <p className="text-[10px] text-muted-foreground">{disabled ? "Sign up to unlock" : "Always here to help"}</p>
               </div>
             </div>
             <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -388,12 +401,19 @@ const FloatingAIChat = ({
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)} onDrop={handleDrop}>
-            {dragOver && (
+            {disabled && messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center gap-3 bg-secondary/20 rounded-lg p-4">
+                <img src={critiqsLogo} alt="CRITIQS AI" className="w-10 h-10 rounded-full object-cover opacity-60" />
+                <p className="text-sm font-medium text-foreground">Sign up to unlock AI Chat</p>
+                <p className="text-xs text-muted-foreground">Create an account to get personalized AI suggestions for your habits and todos.</p>
+              </div>
+            )}
+            {dragOver && !disabled && (
               <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-2xl flex items-center justify-center z-10">
                 <p className="text-primary font-medium">Drop image here</p>
               </div>
             )}
-            {messages.length === 0 && (
+            {messages.length === 0 && !disabled && (
               <div className="flex flex-col items-center justify-center h-full text-center gap-3">
                 <img src={critiqsLogo} alt="CRITIQS AI" className="w-10 h-10 rounded-full object-cover opacity-60" />
                 <p className="text-sm text-muted-foreground opacity-60">Hey! Ask me anything about fitness, nutrition, or manage your habits 💪</p>
@@ -425,7 +445,7 @@ const FloatingAIChat = ({
             )}
           </div>
 
-          {attachedImage && (
+          {attachedImage && !disabled && (
             <div className="px-4 pb-1 flex items-center gap-2">
               <img src={attachedImage} alt="Attached" className="w-10 h-10 object-cover rounded-lg border border-border" />
               <button onClick={() => setAttachedImage(null)} className="text-muted-foreground hover:text-destructive">
@@ -437,7 +457,7 @@ const FloatingAIChat = ({
           <p className="text-[10px] text-muted-foreground text-center py-1 border-t border-border/50">AI can make mistakes. Please double check.</p>
 
           <div className="px-3 py-3 border-t border-border flex items-center gap-2">
-            <button onClick={() => fileInputRef.current?.click()} className="text-muted-foreground hover:text-primary transition-colors p-1">
+            <button onClick={() => !disabled && fileInputRef.current?.click()} disabled={disabled} className="text-muted-foreground hover:text-primary transition-colors p-1 disabled:opacity-50">
               <Plus className="w-5 h-5" />
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
@@ -450,11 +470,11 @@ const FloatingAIChat = ({
                 t.style.height = Math.min(t.scrollHeight, 140) + "px";
               }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder="Ask Anything…"
+              placeholder={disabled ? "Sign up to chat..." : "Ask Anything…"}
               rows={1}
               className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 re[...]
-              disabled={isLoading} />
-            <button onClick={sendMessage} disabled={isLoading || (!input.trim() && !attachedImage)}
+              disabled={isLoading || disabled} />
+            <button onClick={sendMessage} disabled={isLoading || (!input.trim() && !attachedImage) || disabled}
               className="text-primary hover:text-primary/80 transition-colors p-1 disabled:opacity-30">
               <Send className="w-5 h-5" />
             </button>
