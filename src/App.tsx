@@ -8,8 +8,7 @@ import Auth from "./pages/Auth";
 import Download from "./pages/Download";
 import NotFound from "./pages/NotFound";
 import Owner from "./pages/Owner";
-import MaySpecial from "./pages/MaySpecial";
-import AuroraBadge from "./components/AuroraBadge";
+import ClickSpark from "./components/ClickSpark";
 
 const queryClient = new QueryClient();
 
@@ -19,13 +18,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuroraBadge />
+        <ClickSpark />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/download" element={<Download />} />
           <Route path="/owner" element={<Owner />} />
-          <Route path="/may" element={<MaySpecial />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
