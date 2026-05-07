@@ -101,15 +101,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] right-[10%] w-[600px] h-[600px] rounded-full opacity-30 blur-3xl" 
-          style={{ background: 'radial-gradient(circle, hsla(0, 60%, 35%, 0.4), transparent 70%)' }} />
-        <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-25 blur-3xl"
-          style={{ background: 'radial-gradient(circle, hsla(240, 70%, 50%, 0.3), transparent 70%)' }} />
-        <div className="absolute top-[40%] left-[5%] w-[400px] h-[400px] rounded-full opacity-20 blur-3xl"
-          style={{ background: 'radial-gradient(circle, hsla(280, 70%, 50%, 0.25), transparent 70%)' }} />
-      </div>
-
       <div className="w-full max-w-md relative z-10">
         <div className="flex justify-center mb-6 animate-scale-in">
           <img src={logoIcon} alt="CRITIQS logo" className="w-24 h-24 object-contain drop-shadow-2xl" style={{ mixBlendMode: 'screen' }} />
@@ -125,14 +116,7 @@ const Auth = () => {
         </div>
 
         {/* Premium glassmorphism card */}
-        <div className="p-8 rounded-3xl animate-slide-up relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, hsla(240, 10%, 12%, 0.4), hsla(240, 8%, 8%, 0.6))',
-            backdropFilter: 'blur(40px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-            border: '1px solid hsla(0, 0%, 100%, 0.18)',
-            boxShadow: 'inset 0 1px 2px hsla(0, 0%, 100%, 0.15), 0 20px 60px -10px hsla(0, 0%, 0%, 0.5), 0 0 0 1px hsla(240, 8%, 15%, 0.2)'
-          }}>
+        <div className="p-8 glass-panel-strong glass-border-glow animate-slide-up overflow-hidden">
           {/* Inline form message */}
           {formMessage && (
             <div
@@ -243,11 +227,7 @@ const Auth = () => {
             </div>
             <Button
               type="submit"
-              className="w-full h-14 font-bold text-lg shadow-xl transition-all hover:scale-[1.02] active:scale-95 rounded-2xl group"
-              style={{
-                background: 'linear-gradient(135deg, hsl(0, 60%, 35%), hsl(0, 60%, 30%))',
-                boxShadow: '0 0 40px hsla(0, 60%, 35%, 0.4), inset 0 1px 2px hsla(0, 0%, 100%, 0.2)'
-              }}
+              className="glass-pill glass-pill-primary w-full h-14 font-bold text-lg rounded-2xl group transition-transform hover:scale-[1.02] active:scale-95"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -276,12 +256,7 @@ const Auth = () => {
         {/* Guest Mode */}
         <button
           onClick={handleGuestMode}
-          className="w-full mt-6 py-4 text-sm text-muted-foreground hover:text-foreground transition-all flex items-center justify-center gap-2 rounded-2xl"
-          style={{
-            background: 'hsla(240, 10%, 10%, 0.3)',
-            border: '1px solid hsla(0, 0%, 100%, 0.1)',
-            backdropFilter: 'blur(20px)'
-          }}
+          className="glass-pill w-full mt-6 py-4 text-sm rounded-2xl"
         >
           <UserRound className="w-4 h-4" />
           Continue as Guest
