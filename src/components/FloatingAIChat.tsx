@@ -428,8 +428,16 @@ const FloatingAIChat = ({
                   ].map((q) => (
                     <button
                       key={q.msg}
-                      onClick={() => { setInput(q.msg); setTimeout(() => { const userMsg: Message = { role: "user", content: q.msg }; const newMessages = [...messages, userMsg]; setMessages(newMe[...]
-                      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/50 hover:border-primary/30 text-sm text-foreground transition-all [...]
+                      onClick={() => {
+                        if (disabled) { toast.error("This feature is only available for registered users."); return; }
+                        const userMsg: Message = { role: "user", content: q.msg };
+                        const newMessages = [...messages, userMsg];
+                        setMessages(newMessages);
+                        setInput("");
+                        scrollToBottom();
+                        sendToAI(newMessages);
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/50 hover:border-primary/30 text-sm text-foreground transition-all"
                     >
                       {q.label}
                     </button>
