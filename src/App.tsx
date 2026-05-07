@@ -9,6 +9,7 @@ import Download from "./pages/Download";
 import NotFound from "./pages/NotFound";
 import Owner from "./pages/Owner";
 import ClickSpark from "./components/ClickSpark";
+import ThemeBackground from "./components/ThemeBackground";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ThemeBackground />
         <ClickSpark />
         <Routes>
           <Route path="/" element={<Index />} />
