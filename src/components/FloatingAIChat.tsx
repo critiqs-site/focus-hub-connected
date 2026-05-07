@@ -483,7 +483,7 @@ const FloatingAIChat = ({
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               placeholder={disabled ? "Sign up to chat..." : "Ask Anything…"}
               rows={1}
-              className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 re[...]
+              className="flex-1 bg-secondary/50 border-none rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
               disabled={isLoading || disabled} />
             <button onClick={sendMessage} disabled={isLoading || (!input.trim() && !attachedImage) || disabled}
               className="text-primary hover:text-primary/80 transition-colors p-1 disabled:opacity-30">
