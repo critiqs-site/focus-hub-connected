@@ -377,14 +377,17 @@ const FloatingAIChat = ({
   return (
     <>
       {!open && (
-        <button onClick={() => onOpenChange(true)}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 transition-[...]
+        <button
+          onClick={() => onOpenChange(true)}
+          aria-label="Open AI chat"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-110 transition-transform"
+        >
           <MessageSquare className="w-6 h-6" />
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[440px] sm:w-[480px] lg:w-[540px] h-[640px] max-h-[85vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shad[...]
+        <div className="fixed bottom-6 right-6 z-50 w-[440px] sm:w-[480px] lg:w-[540px] h-[640px] max-h-[85vh] max-w-[calc(100vw-2rem)] flex flex-col bg-card border border-border rounded-2xl shadow-2xl shadow-primary/20 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-2">
               <img src={critiqsLogo} alt="CRITIQS AI" className="w-8 h-8 rounded-full object-cover" />
