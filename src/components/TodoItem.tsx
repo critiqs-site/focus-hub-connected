@@ -163,17 +163,15 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
           <button
             onClick={handleQuickToggle}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`relative p-2.5 md:p-3 lg:p-4 rounded-xl shrink-0 transition-all duration-300 ${
-              isTodayCompleted
-                ? "bg-primary/20 ring-2 ring-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
-                : "bg-primary/10 hover:bg-primary/20"
+            className={`glass-icon-tile relative shrink-0 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 ${
+              isTodayCompleted ? "ring-2 ring-primary" : ""
             }`}
             title={isTodayCompleted ? "Mark as not done today" : "Mark as done today"}
           >
             {isTodayCompleted && (
               <Check className="absolute -top-1 -right-1 h-4 w-4 text-primary-foreground bg-primary rounded-full p-0.5" />
             )}
-            <IconComponent className="h-5 w-5 md:h-6 md:w-6 lg:h-8 lg:w-8 text-primary" />
+            <IconComponent className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]" />
           </button>
 
           <div className="min-w-0 flex-1">
