@@ -31,8 +31,9 @@ const NotebookView = ({ userId, isGuest }: NotebookViewProps) => {
   const [pinAction, setPinAction] = useState<{ kind: "note" | "doc"; id: string; mode: "unlock" | "lock" } | null>(null);
 
   const sortedNotes = useMemo(() => {
+    const q = search.toLowerCase();
     const filtered = nb.notes.filter(n =>
-      n.title.toLowerCase().includes(search.toLowerCase()) || n.body.toLowerCase().includes(search.toLowerCase())
+      (n.title || "").toLowerCase().includes(q) || (n.body || "").toLowerCase().includes(q)
     );
     return [...filtered].sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
@@ -41,9 +42,10 @@ const NotebookView = ({ userId, isGuest }: NotebookViewProps) => {
   }, [nb.notes, search]);
 
   const sortedDocs = useMemo(() => {
+    const q = search.toLowerCase();
     const filtered = nb.docs.filter(d =>
-      d.title.toLowerCase().includes(search.toLowerCase()) ||
-      d.short_description.toLowerCase().includes(search.toLowerCase())
+      (d.title || "").toLowerCase().includes(q) ||
+      (d.short_description || "").toLowerCase().includes(q)
     );
     return [...filtered].sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
