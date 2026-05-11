@@ -127,7 +127,7 @@ const TodoItem = ({ todo, onToggleDay, onEdit, onDelete, onTogglePin, pinnedCoun
       {...listeners}
       className={`group p-4 lg:p-6 pt-6 lg:pt-8 transition-all duration-500 animate-scroll-fade-in relative overflow-hidden cursor-grab active:cursor-grabbing rounded-2xl ${
         todo.pinned ? "ring-1 ring-primary/30" : ""
-      } ${isDragging ? "opacity-60 scale-105 rotate-1 shadow-2xl z-50" : "opacity-100"}`}
+      } ${isDragging ? "opacity-60 scale-105 rotate-1 shadow-2xl z-50" : "opacity-100"} todo-glow-border`}
       style={{
         ...style,
         background: 'linear-gradient(135deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%)',
