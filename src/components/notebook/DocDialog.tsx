@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Save } from "lucide-react";
 import { Doc } from "@/hooks/useNotebook";
 import { format } from "date-fns";
 import RichEditor from "./RichEditor";
+import { useAutosaveDraft, draftKey, loadDraft, clearDraft } from "@/hooks/useAutosaveDraft";
 
 interface DocDialogProps {
   open: boolean;
@@ -20,19 +21,36 @@ export const DocDialog = ({ open, onOpenChange, doc, initial, onSave }: DocDialo
   const [shortDesc, setShortDesc] = useState("");
   const [body, setBody] = useState("");
   const [editing, setEditing] = useState(true);
+  const [restored, setRestored] = useState(false);
+  const dKey = draftKey("doc", doc?.id);
 
   useEffect(() => {
     if (open) {
-      setTitle(doc?.title || initial?.title || "");
-      setShortDesc(doc?.short_description || "");
-      setBody(doc?.body || (initial?.body ? `<p>${initial.body.replace(/\n/g, "</p><p>")}</p>` : ""));
-      setEditing(!doc);
+      const draft = loadDraft<{ title: string; shortDesc: string; body: string; ts: number }>(dKey);
+      const docUpdated = doc ? new Date(doc.updated_at).getTime() : 0;
+      if (draft && draft.ts > docUpdated && (draft.title || draft.body || draft.shortDesc)) {
+        setTitle(draft.title);
+        setShortDesc(draft.shortDesc);
+        setBody(draft.body);
+        setRestored(true);
+        setEditing(true);
+      } else {
+        setTitle(doc?.title || initial?.title || "");
+        setShortDesc(doc?.short_description || "");
+        setBody(doc?.body || (initial?.body ? `<p>${initial.body.replace(/\n/g, "</p><p>")}</p>` : ""));
+        setEditing(!doc);
+        setRestored(false);
+      }
     }
-  }, [open, doc, initial]);
+  }, [open, doc, initial, dKey]);
+
+  useAutosaveDraft(dKey, { title, shortDesc, body, ts: Date.now() }, open && editing);
 
   const handleSave = async () => {
     if (!title.trim() && !body.trim()) { onOpenChange(false); return; }
     await onSave({ id: doc?.id, title: title.trim(), short_description: shortDesc.trim(), body });
+    clearDraft(dKey);
+    setRestored(false);
     onOpenChange(false);
   };
 
@@ -50,6 +68,11 @@ export const DocDialog = ({ open, onOpenChange, doc, initial, onSave }: DocDialo
 
         {editing ? (
           <div className="space-y-3">
+            {restored && (
+              <div className="flex items-center gap-2 text-[11px] px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                <Save className="h-3 w-3" /> Restored unsaved draft
+              </div>
+            )}
             <Input
               placeholder="Title"
               value={title}
