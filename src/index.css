@@ -50,6 +50,88 @@
   }
 }
 
+/* ── Smooth scrolling globally ───────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* ── Per-todo subtle theme-tinted glow border ────────────────── */
+.todo-glow-border {
+  position: relative;
+}
+.todo-glow-border::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg,
+    hsl(var(--primary) / 0.0) 0%,
+    hsl(var(--primary) / 0.45) 50%,
+    hsl(var(--primary) / 0.0) 100%);
+  background-size: 220% 220%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: .55;
+  animation: todo-glow-shift 8s ease-in-out infinite alternate;
+}
+@keyframes todo-glow-shift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* ── Mic waveform bars ───────────────────────────────────────── */
+.mic-wave-bar {
+  display: inline-block;
+  width: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: mic-wave 0.9s ease-in-out infinite;
+}
+@keyframes mic-wave {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1);    }
+}
+
+/* AI usage hour pill — current hour glows */
+.ai-hour-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .15rem .55rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.25);
+  box-shadow: 0 0 12px hsl(var(--primary) / 0.35);
+  animation: ai-hour-glow 2.4s ease-in-out infinite;
+}
+.ai-hour-pill[data-low="true"] {
+  background: hsl(45 100% 50% / 0.15);
+  color: hsl(45 100% 60%);
+  border-color: hsl(45 100% 50% / 0.35);
+  box-shadow: 0 0 14px hsl(45 100% 50% / 0.4);
+}
+.ai-hour-pill[data-out="true"] {
+  background: hsl(0 84% 60% / 0.15);
+  color: hsl(0 84% 70%);
+  border-color: hsl(0 84% 60% / 0.4);
+  box-shadow: 0 0 14px hsl(0 84% 60% / 0.45);
+}
+@keyframes ai-hour-glow {
+  0%, 100% { box-shadow: 0 0 8px hsl(var(--primary) / 0.30); }
+  50%      { box-shadow: 0 0 18px hsl(var(--primary) / 0.55); }
+}
+
 @layer base {
   * {
     @apply border-border;

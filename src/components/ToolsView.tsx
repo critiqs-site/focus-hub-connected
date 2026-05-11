@@ -2,14 +2,10 @@ import physiqueIcon from "@/assets/tools/physique.png";
 import foodIcon from "@/assets/tools/food.png";
 import outfitIcon from "@/assets/tools/outfit.png";
 import breathingIcon from "@/assets/tools/breathing.png";
-import PhysiqueRater from "./PhysiqueRater";
-import OutfitRater from "./OutfitRater";
-import FoodScanner from "./FoodScanner";
 import BreathingExercise from "./BreathingExercise";
 import PomodoroTimer from "./PomodoroTimer";
 import Stopwatch from "./Stopwatch";
-import { Timer, Clock, Wrench, Bot, LogIn } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Timer, Clock, Wrench, Bot, Construction } from "lucide-react";
 
 interface ToolsViewProps {
   onAskAI?: (image: string, message: string) => void;
@@ -17,8 +13,6 @@ interface ToolsViewProps {
 }
 
 const ToolsView = ({ onAskAI, isGuest }: ToolsViewProps) => {
-  const navigate = useNavigate();
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Manual Tools Section */}
@@ -73,59 +67,27 @@ const ToolsView = ({ onAskAI, isGuest }: ToolsViewProps) => {
       </div>
       <p className="text-xs text-muted-foreground px-1 -mt-4">AI can make mistakes. Please double check.</p>
 
-      {isGuest ? (
-        <div className="glass-card p-8 flex flex-col items-center gap-4">
-          <LogIn className="h-10 w-10 text-primary/40" />
-          <p className="text-sm text-muted-foreground text-center">Sign in to use AI tools</p>
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-6 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Sign In
-          </button>
+      {[
+        { icon: physiqueIcon, name: "Physique Rater", desc: "Upload a body photo and get an AI rating out of 10" },
+        { icon: outfitIcon, name: "Outfit Rater", desc: "Upload an outfit photo → AI rates fit, color coordination, style & suggestions" },
+        { icon: foodIcon, name: "Food Scanner", desc: "Snap a meal photo → instant calorie & macro estimates" },
+      ].map((tool) => (
+        <div key={tool.name} className="glass-card p-5 relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-3 opacity-60">
+            <div className="p-1.5 rounded-lg">
+              <img src={tool.icon} alt={tool.name} className="h-10 w-10 object-contain" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{tool.name}</h2>
+              <p className="text-xs text-muted-foreground">{tool.desc}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2 py-6 rounded-xl border border-dashed border-primary/30 bg-primary/5">
+            <Construction className="h-5 w-5 text-primary" />
+            <p className="text-sm font-semibold text-primary tracking-wide uppercase">Under Construction</p>
+          </div>
         </div>
-      ) : (
-        <>
-          <div className="glass-card p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-1.5 rounded-lg">
-                <img src={physiqueIcon} alt="Physique Rater" className="h-10 w-10 object-contain" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Physique Rater</h2>
-                <p className="text-xs text-muted-foreground">Upload a body photo and get an AI rating out of 10</p>
-              </div>
-            </div>
-            <PhysiqueRater onAskAI={onAskAI} />
-          </div>
-
-          <div className="glass-card p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-1.5 rounded-lg">
-                <img src={outfitIcon} alt="Outfit Rater" className="h-10 w-10 object-contain" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Outfit Rater</h2>
-                <p className="text-xs text-muted-foreground">Upload an outfit photo → AI rates fit, color coordination, style & suggestions</p>
-              </div>
-            </div>
-            <OutfitRater onAskAI={onAskAI} />
-          </div>
-
-          <div className="glass-card p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-1.5 rounded-lg">
-                <img src={foodIcon} alt="Food Scanner" className="h-10 w-10 object-contain" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Food Scanner</h2>
-                <p className="text-xs text-muted-foreground">Snap a meal photo → instant calorie & macro estimates</p>
-              </div>
-            </div>
-            <FoodScanner onAskAI={onAskAI} />
-          </div>
-        </>
-      )}
+      ))}
     </div>
   );
 };

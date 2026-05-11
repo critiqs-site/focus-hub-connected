@@ -1,97 +1,154 @@
-# Glassmorphism Revamp + Crash Fix
+# Status Audit + Fix Plan
 
-A full, all-at-once visual overhaul to a premium glass UI inspired by your reference images, plus a fix for the FloatingAIChat / Notebook crash blocking the app.
+## Status of each item from your message
 
-## 0. Critical fix first (P0)
+| # | Item | Current status | Action |
+|---|------|----------------|--------|
+| 1 | Guest sees empty dashboard after name → must pick ≥1 premade todo | ❌ Not solved (PremadeTodoChooser exists but isn't enforced for guests; auto-routes to dashboard) | Fix |
+| 2 | Disabled mic + chat icon for guests with red toast "registered users only" | ❌ Currently hidden, not shown-disabled | Fix |
+| 3 | Schedule "Create from AI" → guest gets red toast instead of "Failed to generate" | ❌ Calls function, fails | Fix |
+| 4 | Every AI button visible but red-toast for guests | ⚠️ Partial — some hidden | Fix |
+| 5 | Timezone — auto-detect + manual picker w/ time-of-day color tint | ⚠️ TimezoneDialog exists, no list/auto-detect/time tint | Improve |
+| 6 | Wider desktop layout (don't break anything) | ❌ Container too narrow | Fix |
+| 7 | Remove Aurora revamp | ❌ Still in code (`/may`, badge, `revamp=aurora`) | Remove |
+| 8 | Whisper: clean um/uh, casing, spelling, no over-rewriting | ⚠️ transcribe-audio function exists, no cleanup pass | Improve |
+| 9 | Notebook autosave-as-draft on every change | ❌ useAutosaveDraft hook exists but not wired everywhere | Fix |
+| 10 | Theme-tinted glow border on every todo (subtle) | ⚠️ Has accent border, no animated glow | Add |
+| 11 | Click spark + smooth scroll | ⚠️ ClickSpark exists, smooth scroll missing | Add |
+| 12 | Sound (volume) slider → elastic feel | ❌ Static | Improve |
+| 13 | Mic bigger + live waveform while recording | ❌ Only stop button | Improve |
+| 14 | Chat box bigger; placeholder = "Ask anything…" | ❌ Tiny + space-enter hint | Fix |
+| 15 | All AI Tools → "Under Construction" lock (even for registered) | ❌ Active | Fix |
+| 16 | Model routing (llama-scout / mistral / nova-fast) per task | ❌ All on one model | Fix |
+| 17 | Auto-detect icon: scout for first 5 todos per user, then mistral | ❌ Not implemented | Add |
+| 18 | Schedule AI → mistral | ❌ | Update |
+| 19 | Chat → llama; 14000 chars/hour combined (user+AI), glowing "X remaining this hour", carry-over negative | ⚠️ useAiUsage hook is word-based per day | Rewrite |
+| 20 | Floating chat button missing on dashboard, only shows on Notebook in corner | ❌ Bug | Fix |
+| 21 | Glassy icon style upgrade (per reference images) | ⚠️ GlassIcon exists, weak | Improve |
 
-The white screen is caused by a **broken `<button>` JSX tag in `src/components/FloatingAIChat.tsx` line 380** — the `className` string is unterminated, so Vite throws a syntax error and the entire app crashes (which is why the Notebook button also "breaks" — it never mounts). Fix: properly close the className string and the opening tag before `<MessageSquare />`. After this, both Chat and Notebook work again.
+---
 
-## 1. Design system foundation
+## Phase 1 — Critical UX & guest gating
 
-Update `src/index.css` + `tailwind.config.ts`:
+**Guest onboarding enforcement**
+- `OnboardingDialog` for guests: after name step, force `PremadeTodoChooser`. "Start Now" disabled until ≥1 picked. Auto-create `Morning` and `Night` dividers and route picked items into them by tag.
 
-- New tokens: `--glass-bg`, `--glass-border`, `--glass-highlight`, `--glass-shadow`, `--theme-glow`, `--theme-tint`. All resolve from current `--primary`, so they auto-react to Orange/Purple/Maroon/etc.
-- New utilities:
-  - `.glass-panel` — backdrop-blur 24px, saturate 180%, layered inset highlight + outer theme-tinted glow border (image #1/#2 inspiration).
-  - `.glass-panel-strong` — heavier blur for modals/auth.
-  - `.glass-border-glow` — animated 1px gradient border using primary → transparent (the "hint of theme on the border" you liked).
-  - `.glass-button` — rounded-full pill, gradient sheen on top, theme glow underneath (image #5).
-  - `.glass-icon` — square rounded-2xl glass tile for wrapping any Lucide icon.
+**Floating chat visible everywhere for guests**
+- Always mount `FloatingAIChat` for guests in the same bottom-right slot.
+- Mic + send button visible but `disabled` styled (50% opacity, red ring on hover).
+- On click → red destructive toast: "This feature is only available for registered users."
+- Same treatment for Schedule "Create from AI", Add-Todo "Auto-detect icon" sparkle, all AI tool cards, voice on dashboard.
 
-## 2. Glassy icons everywhere (chosen approach: CSS-styled Lucide)
+**AI Tools lockdown (everyone)**
+- `ToolsView` cards: overlay "🚧 Under Construction" badge, disable click, route blocked. Keep visuals.
 
-Best of both worlds — keeps your 100+ icon set & all keyword logic intact, gets the look of image #3.
+---
 
-- New component `src/components/ui/GlassIcon.tsx`:
-  - Wraps any Lucide icon in a rounded-2xl tile with: gradient bg (`from-primary/30 to-primary/5`), inset white highlight (top-left), backdrop-blur, theme-tinted outer glow.
-  - Sizes: `sm | md | lg | xl`.
-  - Variants: `default | strong | soft`.
-- Refactor usage sites to wrap icons via `<GlassIcon icon={Star} />`:
-  - `TodoItem.tsx`, `TodoDivider.tsx`, `IconPickerGrid.tsx`, `AddTodoDialog.tsx`, `AddDividerDialog.tsx`, `Navbar.tsx`, `ToolsView.tsx`, `EventsView.tsx`, `JournalView.tsx`, `NotebookView.tsx`, `Header.tsx`.
-- `getIconComponent()` in `src/lib/icons.ts` is unchanged — only rendering changes.
+## Phase 2 — Timezone system
 
-## 3. Animated theme-reactive background
+- New `TimezoneDialog` v2:
+  - **Auto-detect** button → `Intl.DateTimeFormat().resolvedOptions().timeZone`.
+  - Searchable list of IANA zones with country, GMT offset, and **current local time** displayed live.
+  - Time-of-day tint chip per row: morning=sky, noon/afternoon=amber, evening=orange, night=indigo.
+- Persist for guests in localStorage (`critiqs-tz`), for users in `profiles.timezone`.
+- All date/time math (schedule, journal, completion windows, streaks, hourly AI quota) reads from a single `useTimezone()` selector.
 
-New `src/components/ThemeBackground.tsx` mounted in `App.tsx` (fixed, `inset-0`, `-z-10`, `pointer-events-none`):
+---
 
-- 3 large blurred radial orbs using `hsl(var(--primary))` with low alpha, each animated via CSS keyframes (slow 30–60s drift + pulse).
-- A subtle perspective grid overlay (CSS, theme-tinted) at the bottom (image #7 inspiration).
-- A faint noise texture (data URI SVG) for premium feel.
-- Light theme variant: pastel orbs, lower opacity. Auto-switches via existing `.light-theme` / `.dark-theme` classes from `useTheme`.
-- Body background simplified — heavy lifting moves into this component so it stays consistent across all pages.
+## Phase 3 — AI model routing + hourly char quota
 
-## 4. Auth pages (image #1, #2)
+**Routing matrix (server-side only, never tell user):**
+| Task | Model |
+|------|-------|
+| Add-todo auto-detect icon, first 5 per user | `llama-scout` |
+| Add-todo auto-detect icon, after 5 | `mistral` |
+| Schedule AI generation | `mistral` |
+| Floating chat | `llama-scout` |
+| Easy/short calls (future) | `nova-fast` |
 
-Rewrite `src/pages/Auth.tsx`:
+- Track per-user `icon_autodetect_count` in `profiles` (or localStorage for guests though guests are blocked anyway).
 
-- Centered glass card, max-w-md, `glass-panel-strong` + animated `glass-border-glow`.
-- Big "Welcome back" title, subtitle, glassy email input with a circular gradient submit button on the right (image #2).
-- "OR" divider with thin lines.
-- Glassy "Continue with Google" / "Continue as Guest" buttons (image #2 style).
-- Link to sign-up (theme-tinted).
-- Keep all existing Supabase auth logic and `useAuth` flow — purely presentational change.
+**Hourly char quota for chat (registered only)**
+- Table `ai_usage_hourly(user_id, hour_bucket timestamptz, chars_used int)`. RLS scoped to user.
+- Each chat round: edge function adds `userMsg.length + assistantReply.length` to current hour bucket.
+- Limit = 14,000 chars/hour. If next request would exceed → reject with friendly message; carry-over: any negative balance subtracts from next hour's 14,000.
+- UI: small pill above chat input "**X chars left this hour**", current hour glows (animated theme-color ring).
 
-## 5. Buttons & inputs (image #5)
+---
 
-`src/components/ui/button.tsx`: add new variants `glass`, `glass-primary`, `glass-icon`. Existing variants kept for backward compat.
+## Phase 4 — Voice (Whisper) cleanup pass
 
-`src/components/ui/input.tsx` + `textarea.tsx`: glass background + theme focus ring.
+- After transcription, run a tiny mistral pass with strict system prompt:
+  - Remove fillers (um, uh, hmm, like, you know).
+  - Fix casing + punctuation + obvious spelling.
+  - **Do not paraphrase, do not reorder beyond grammar fixes, preserve the speaker's words.**
+  - Example rule baked in: "hello my dad is 25 name saiful" → "Hello, my dad is 25 and his name is Saiful." (NOT "my dad's name is Saiful and he is 25").
+- Mic UI: bigger circular button, while recording show animated waveform from `AudioContext`/`AnalyserNode`; tap = stop.
 
-Apply across: dialogs, forms, AddTodoDialog, AddDividerDialog, Pomodoro/Stopwatch/Breathing controls.
+---
 
-## 6. Schedule view (image #6)
+## Phase 5 — Notebook autosave
 
-Rewrite `src/components/EventsView.tsx` layout (logic untouched):
+- Wire `useAutosaveDraft` into `NoteDialog` and `DocDialog`:
+  - Debounced 400ms save to localStorage key `notebook-draft-{noteId|new}`.
+  - On dialog open, if draft newer than saved record → restore + show "Restored unsaved draft" pill.
+  - Clear draft on successful save.
 
-- Big month/year header with chevron, day-strip pills horizontally scrollable. Today's pill = `glass-panel` + theme glow.
-- Vertical timeline with time labels on the left (e.g. `10 am / 02 pm`), dashed connectors between events.
-- Each event = glass card, status chip ("Active now" / "Upcoming" / "Done") in top-left tab style, title + subtitle, progress bar on the right.
-- ACTIVE NOW pulse preserved.
+---
 
-## 7. Other view polish
+## Phase 6 — Visual polish
 
-- `Header.tsx`, `Navbar.tsx`: convert to `glass-panel` + glass-icon nav items, theme-tinted active underline.
-- `FloatingAIChat.tsx`: glass-panel chat window, glassy input pill, send button as gradient circle (after fixing the crash).
-- `NotebookView.tsx`, `Note/Doc Dialog`: glass cards, glass icons.
-- `ToolsView.tsx`, `Pomodoro/Stopwatch/Breathing`: glass-panel cards with elastic glass sliders.
-- `AnalyticsView.tsx`, `JournalView.tsx`: glass-panel sections, glass icons on stats.
-- `OnboardingDialog.tsx` / `PremadeTodoChooser.tsx`: glass cards, glass-icon todo chips.
+**Wider desktop layout**
+- Bump `Index.tsx` main container `max-w-3xl` → `max-w-6xl xl:max-w-7xl`. Increase grid gaps and todo internal padding at `lg:`/`xl:` breakpoints. Mobile untouched.
 
-## 8. Memory updates
+**Glassy icon overhaul (per reference image #2)**
+- `GlassIcon` v2:
+  - Rounded-2xl 56px tile, `backdrop-blur(20px)`, layered gradient bg (white 8% → theme 6%).
+  - Inner top highlight `inset 0 1px 0 rgba(255,255,255,0.18)`.
+  - Outer halo `0 0 24px hsl(var(--primary)/0.35)`.
+  - Top-left gloss overlay div, animated bottom shimmer on hover.
+  - Icon gets `drop-shadow` in primary.
 
-Add `mem://style/glass-revamp` describing the new system; update Core to "Full glassmorphism v2: glass-panel/glass-icon/glass-button utilities, theme-reactive animated orb background, removed Aurora opt-in." Remove Aurora memory.
+**Per-todo border glow**
+- `.todo-glow-border` utility with `::after` masked 1px conic gradient using `--primary`, slow 8s rotation, subtle (opacity ~0.4). Business-tone, not flashy.
+
+**Click spark + smooth scroll**
+- Mount `ClickSpark` globally in `App.tsx`.
+- Add `html { scroll-behavior: smooth }` and Lenis-style inertia via tiny custom listener (no extra dep) on main scroll container.
+
+**Volume slider elastic**
+- Replace static slider with shadcn `Slider` wrapped in spring animation (`framer-motion` already used) — overshoot on release.
+
+**Chat box**
+- Width: `w-[420px] md:w-[480px] xl:w-[560px]`, height `h-[640px]`.
+- Placeholder: `Ask anything…` (remove space+enter hint).
+- Always-mounted bottom-right via fixed positioning in `App.tsx` (not per-view).
+
+---
+
+## Phase 7 — Aurora removal
+
+- Delete: `mem://features/themes/aurora-revamp`, all `revamp=aurora` localStorage reads, the floating Aurora badge component, `/may` route.
+- Keep the new glass system (it stays as default).
 
 ---
 
 ## Technical notes
 
-- All colors stay HSL via existing tokens — no hard-coded values.
-- Performance: backdrop-blur only on actual glass surfaces (cards/buttons), NOT on the animated background itself (orbs are pre-blurred via `filter: blur()` on static elements). This keeps fps high even on low-end devices.
-- No new heavy deps. No WebGL/canvas. Pure CSS + existing Lucide.
-- Dark + light themes both supported; light variant uses lower-opacity glass and softer orb colors.
-- Existing functional logic (auth, todos, schedule, notebook, AI chat, hooks) is untouched — only rendering and styling change.
+- **DB migration needed:** `profiles.timezone TEXT`, `profiles.icon_autodetect_count INT DEFAULT 0`, table `ai_usage_hourly`.
+- **Edge functions to update:** `ai-chat` (model=llama-scout + char quota), `schedule-ai` (mistral, guest-block), `transcribe-audio` (cleanup pass), new `detect-icon` (model switch logic).
+- **Never expose model names** in any client text or toast — internal only.
+- All AI failures still surface 429/402 toasts.
 
-## Files
+---
 
-**New:** `src/components/ui/GlassIcon.tsx`, `src/components/ThemeBackground.tsx`
-**Edited:** `src/index.css`, `tailwind.config.ts`, `src/App.tsx`, `src/pages/Auth.tsx`, `src/components/ui/button.tsx`, `src/components/ui/input.tsx`, `src/components/ui/textarea.tsx`, `src/components/FloatingAIChat.tsx` (crash fix + glass), `src/components/Header.tsx`, `src/components/Navbar.tsx`, `src/components/EventsView.tsx`, `src/components/NotebookView.tsx`, `src/components/notebook/NoteDialog.tsx`, `src/components/notebook/DocDialog.tsx`, `src/components/TodoItem.tsx`, `src/components/TodoDivider.tsx`, `src/components/IconPickerGrid.tsx`, `src/components/AddTodoDialog.tsx`, `src/components/AddDividerDialog.tsx`, `src/components/ToolsView.tsx`, `src/components/PomodoroTimer.tsx`, `src/components/Stopwatch.tsx`, `src/components/BreathingExercise.tsx`, `src/components/AnalyticsView.tsx`, `src/components/JournalView.tsx`, `src/components/OnboardingDialog.tsx`, `src/components/PremadeTodoChooser.tsx`.
+## Order of execution
+
+1. Phase 7 (remove Aurora — clears noise)
+2. Phase 1 (guest gating + floating chat fix — biggest UX bug)
+3. Phase 6 (wider layout + glass icons + chat box size — visible immediately)
+4. Phase 5 (notebook autosave)
+5. Phase 2 (timezone)
+6. Phase 3 (model routing + hourly quota — needs migration)
+7. Phase 4 (whisper cleanup + mic waveform)
+8. Final pass: click spark global, smooth scroll, elastic slider, todo glow border

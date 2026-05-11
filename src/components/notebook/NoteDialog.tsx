@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { StickyNote, FileText } from "lucide-react";
+import { StickyNote, FileText, Save } from "lucide-react";
 import { Note } from "@/hooks/useNotebook";
 import { format } from "date-fns";
+import { useAutosaveDraft, draftKey, loadDraft, clearDraft } from "@/hooks/useAutosaveDraft";
 
 export const NOTE_BODY_LIMIT = 500;
 
@@ -21,14 +22,29 @@ export const NoteDialog = ({ open, onOpenChange, note, onSave, onConvertToDoc }:
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [editing, setEditing] = useState(true);
+  const [restored, setRestored] = useState(false);
+  const dKey = draftKey("note", note?.id);
 
   useEffect(() => {
     if (open) {
-      setTitle(note?.title || "");
-      setBody(note?.body || "");
-      setEditing(!note); // new = edit, existing = view
+      const draft = loadDraft<{ title: string; body: string; ts: number }>(dKey);
+      const noteUpdated = note ? new Date(note.updated_at).getTime() : 0;
+      if (draft && draft.ts > noteUpdated && (draft.title || draft.body)) {
+        setTitle(draft.title);
+        setBody(draft.body);
+        setRestored(true);
+        setEditing(true);
+      } else {
+        setTitle(note?.title || "");
+        setBody(note?.body || "");
+        setEditing(!note);
+        setRestored(false);
+      }
     }
-  }, [open, note]);
+  }, [open, note, dKey]);
+
+  // Autosave draft while editing
+  useAutosaveDraft(dKey, { title, body, ts: Date.now() }, open && editing);
 
   const charCount = body.length;
   const overLimit = charCount >= NOTE_BODY_LIMIT;
@@ -36,6 +52,8 @@ export const NoteDialog = ({ open, onOpenChange, note, onSave, onConvertToDoc }:
   const handleSave = async () => {
     if (!title.trim() && !body.trim()) { onOpenChange(false); return; }
     await onSave({ id: note?.id, title: title.trim(), body });
+    clearDraft(dKey);
+    setRestored(false);
     onOpenChange(false);
   };
 
@@ -53,6 +71,11 @@ export const NoteDialog = ({ open, onOpenChange, note, onSave, onConvertToDoc }:
 
         {editing ? (
           <div className="space-y-3">
+            {restored && (
+              <div className="flex items-center gap-2 text-[11px] px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                <Save className="h-3 w-3" /> Restored unsaved draft
+              </div>
+            )}
             <Input
               placeholder="Title"
               value={title}
