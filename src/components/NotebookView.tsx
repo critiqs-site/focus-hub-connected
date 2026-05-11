@@ -224,7 +224,7 @@ const NotebookView = ({ userId, isGuest }: NotebookViewProps) => {
                 ) : (
                   <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap break-words">{n.body || "Empty"}</p>
                 )}
-                <p className="text-[10px] text-muted-foreground/70 mt-2">Edited {format(new Date(n.updated_at), "MMM d, p")}</p>
+                <p className="text-[10px] text-muted-foreground/70 mt-2">Edited {n.updated_at && !isNaN(new Date(n.updated_at).getTime()) ? format(new Date(n.updated_at), "MMM d, p") : "—"}</p>
               </div>
             ))}
           </div>
@@ -266,7 +266,7 @@ const NotebookView = ({ userId, isGuest }: NotebookViewProps) => {
               ) : (
                 <p className="text-xs text-muted-foreground line-clamp-2 italic">{d.short_description || "No description"}</p>
               )}
-              <p className="text-[10px] text-muted-foreground/70 mt-2">Edited {format(new Date(d.updated_at), "MMM d, p")}</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-2">Edited {d.updated_at && !isNaN(new Date(d.updated_at).getTime()) ? format(new Date(d.updated_at), "MMM d, p") : "—"}</p>
             </div>
           ))}
         </div>
