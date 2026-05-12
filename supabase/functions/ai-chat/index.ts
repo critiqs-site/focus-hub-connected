@@ -100,6 +100,47 @@ CONTEXT: You silently see user's todos, sections, interests, and mood entries. R
 
 const getEndpoint = () => Deno.env.get("AI_SERVICE_ENDPOINT") || "";
 
+const HOURLY_LIMIT = 14000;
+
+function currentHourBucketISO(): string {
+  const d = new Date();
+  d.setUTCMinutes(0, 0, 0);
+  return d.toISOString();
+}
+
+async function getUsageState(adminClient: any, userId: string) {
+  const bucket = currentHourBucketISO();
+  const prevBucket = new Date(new Date(bucket).getTime() - 60 * 60 * 1000).toISOString();
+  const { data } = await adminClient
+    .from("ai_usage")
+    .select("hour_bucket, chars_used")
+    .eq("user_id", userId)
+    .in("hour_bucket", [bucket, prevBucket]);
+  let now = 0, prev = 0;
+  for (const r of data || []) {
+    if (r.hour_bucket === bucket) now = r.chars_used;
+    else prev = r.chars_used;
+  }
+  const carry = Math.max(0, prev - HOURLY_LIMIT);
+  return { bucket, used: now, carry, remaining: HOURLY_LIMIT - now - carry };
+}
+
+async function recordUsage(adminClient: any, userId: string, bucket: string, currentUsed: number, addChars: number) {
+  const next = currentUsed + addChars;
+  // Try update first
+  const { data: existing } = await adminClient
+    .from("ai_usage")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("hour_bucket", bucket)
+    .maybeSingle();
+  if (existing?.id) {
+    await adminClient.from("ai_usage").update({ chars_used: next, updated_at: new Date().toISOString() }).eq("id", existing.id);
+  } else {
+    await adminClient.from("ai_usage").insert({ user_id: userId, hour_bucket: bucket, chars_used: next });
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -127,6 +168,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const userId = claimsData.claims.sub as string;
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     const { messages, context, type, todoText, availableIcons } = await req.json();
 
@@ -162,7 +208,7 @@ Rules:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "mistral",
+          model: "openai-fast",
           messages: [{ role: "user", content: iconPrompt }],
           stream: false,
         }),
@@ -234,6 +280,23 @@ Rules:
 
     console.log("Processing chat request with", messages.length, "messages");
 
+    // Quota check: count user input chars before calling the model
+    const userInputChars = (messages || []).reduce(
+      (n: number, m: any) => n + (typeof m?.content === "string" ? m.content.length : 0),
+      0,
+    );
+    const usage = await getUsageState(adminClient, userId);
+    if (usage.remaining <= 0 || userInputChars > usage.remaining) {
+      return new Response(
+        JSON.stringify({
+          error: "You've reached your hourly AI limit. Try again next hour.",
+          remaining: Math.max(0, usage.remaining),
+          limit: HOURLY_LIMIT,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
@@ -241,7 +304,7 @@ Rules:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral",
+        model: "llamascout",
         messages: [systemMessage, ...processedMessages],
         stream: false,
       }),
@@ -259,7 +322,15 @@ Rules:
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
 
-    return new Response(JSON.stringify({ reply }), {
+    // Record combined char usage (user input + AI reply)
+    const addChars = userInputChars + (typeof reply === "string" ? reply.length : 0);
+    try {
+      await recordUsage(adminClient, userId, usage.bucket, usage.used, addChars);
+    } catch (e) {
+      console.error("Failed to record AI usage:", e);
+    }
+
+    return new Response(JSON.stringify({ reply, usage: { used: usage.used + addChars, limit: HOURLY_LIMIT } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
