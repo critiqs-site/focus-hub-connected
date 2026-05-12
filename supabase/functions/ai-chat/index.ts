@@ -297,7 +297,7 @@ Rules:
       );
     }
 
-    const response = await fetch(getEndpoint(), {
+    let response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
