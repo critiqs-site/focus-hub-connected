@@ -208,7 +208,7 @@ Rules:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "openai-fast",
+          model: "mistral",
           messages: [{ role: "user", content: iconPrompt }],
           stream: false,
         }),
@@ -304,7 +304,7 @@ Rules:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llamascout",
+        model: "mistral",
         messages: [systemMessage, ...processedMessages],
         stream: false,
       }),
