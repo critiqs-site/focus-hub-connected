@@ -75,6 +75,7 @@ const FloatingAIChat = ({
   open, onOpenChange, initialMessage, onInitialMessageConsumed,
   todos = [], dividers = [], interests = [],
   onAddTodo, onDeleteTodo, onRenameTodo, onTransferTodo, onUpdateIcon, onUpdateDescription,
+  userId,
   disabled = false,
 }: FloatingAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,6 +87,7 @@ const FloatingAIChat = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initialSent = useRef(false);
+  const { used, remaining, limit, refresh: refreshUsage } = useAiUsage(userId);
 
   const scrollToBottom = () => {
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
@@ -137,10 +139,17 @@ const FloatingAIChat = ({
         },
       });
 
-      if (error) throw new Error("AI service error");
+      if (error) {
+        const msg = (error as any)?.context?.body?.error || (error as any)?.message || "AI service error";
+        if (String(msg).toLowerCase().includes("hourly")) {
+          toast.error("Hourly AI limit reached. Try again next hour.");
+        }
+        throw new Error(msg);
+      }
 
       const reply = data?.reply || "Sorry, something went wrong.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      refreshUsage();
     } catch (e) {
       console.error("Chat error:", e);
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, something went wrong. Please try again." }]);
@@ -148,7 +157,7 @@ const FloatingAIChat = ({
       setIsLoading(false);
       scrollToBottom();
     }
-  }, [todos, dividers, interests]);
+  }, [todos, dividers, interests, refreshUsage]);
 
   useEffect(() => {
     if (open && initialMessage && !initialSent.current && !disabled) {
@@ -396,9 +405,25 @@ const FloatingAIChat = ({
                 <p className="text-[10px] text-muted-foreground">{disabled ? "Sign up to unlock" : "Always here to help"}</p>
               </div>
             </div>
-            <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {!disabled && userId && (
+                <span
+                  title={`${used.toLocaleString()} / ${limit.toLocaleString()} chars used this hour`}
+                  className={`text-[10px] font-medium px-2 py-1 rounded-full border transition-colors ${
+                    remaining <= 0
+                      ? "bg-destructive/15 text-destructive border-destructive/30 animate-pulse"
+                      : remaining < 2000
+                      ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
+                      : "bg-primary/10 text-primary border-primary/20"
+                  }`}
+                >
+                  {Math.max(0, remaining).toLocaleString()} left
+                </span>
+              )}
+              <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3"
