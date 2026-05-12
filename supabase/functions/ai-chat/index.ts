@@ -208,7 +208,7 @@ Rules:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "mistral",
+          model: "nova-fast",
           messages: [{ role: "user", content: iconPrompt }],
           stream: false,
         }),
@@ -297,18 +297,36 @@ Rules:
       );
     }
 
-    const response = await fetch(getEndpoint(), {
+    let response = await fetch(getEndpoint(), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral",
+        model: "llama-scout",
         messages: [systemMessage, ...processedMessages],
         stream: false,
       }),
     });
+
+    // Fallback to mistral if alias is rejected
+    if (response.status === 400) {
+      const errBody = await response.text();
+      console.warn("Primary model rejected, retrying with mistral:", errBody);
+      response = await fetch(getEndpoint(), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "mistral",
+          messages: [systemMessage, ...processedMessages],
+          stream: false,
+        }),
+      });
+    }
 
     if (!response.ok) {
       const errText = await response.text();
